@@ -26,8 +26,8 @@ export interface IHealthProfileBase{
     gender?:'male' | 'female' | 'Prefer not to say' | 'other';
     bloodType?:'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'unknown';
     contactInfo?:{
-        phone?:string;
-        UserEmail?:string;
+        contact_phone?:string;
+        contact_email?:string;
     }
 
     //Health Condition Information

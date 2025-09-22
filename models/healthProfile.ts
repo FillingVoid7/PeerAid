@@ -22,9 +22,10 @@ const HealthProfileSchema: Schema = new Schema(
     },
 
     // Personal Information
-    age: { type: Number, min: 13, max: 120 },
+    age: { type: Number, min: 13, max: 120, required: true },
     gender: {
       type: String,
+      required: true,
       enum: ["male", "female", "prefer not to say", "other"],
     },
     nationality: { type: String },
@@ -34,8 +35,8 @@ const HealthProfileSchema: Schema = new Schema(
       enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
     },
     contactInfo: {
-      phone: { type: String },
-      email: { type: String },
+      contact_phone: { type: String },
+      contact_email: { type: String },
     },
 
     // Health Condition Information
@@ -55,7 +56,7 @@ const HealthProfileSchema: Schema = new Schema(
       index: true,
     },
     conditionName: { type: String, required: true, index: true },
-    conditionDescription: { type: String, required: true },
+    conditionDescription: { type: String },
 
     // Symptoms
     symptoms: [SymptomSchema],
@@ -78,7 +79,7 @@ const HealthProfileSchema: Schema = new Schema(
     },
     verificationDate: { type: Date },
 
-    // Statistics
+    // Stats for analysis
     helpfulCount: { type: Number, default: 0 },
     matchCount: { type: Number, default: 0 },
   },

@@ -62,6 +62,7 @@ const handler = NextAuth({
           email: token.email,
           alias: alias,
         });
+        console.log('created new user:', newUser);
         token.id = newUser._id.toString();
         token.alias = newUser.alias;
       } else {
