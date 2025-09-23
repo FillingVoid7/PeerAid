@@ -79,7 +79,7 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
           <select
             value={data.conditionCategory || ''}
             onChange={(e) => handleInputChange('conditionCategory', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
           >
             <option value="">Select a category</option>
             {conditionCategories.map((category) => (
@@ -117,7 +117,7 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
           <select
             value={data.onsetMonth || ''}
             onChange={(e) => handleInputChange('onsetMonth', e.target.value ? parseInt(e.target.value) : '')}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
           >
             <option value="">Select month (optional)</option>
             {monthNames.map((month, index) => (
@@ -131,7 +131,7 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
         {(data.onsetYear || data.onsetMonth) && (
           <div>
             <label className="block text-sm font-medium mb-2">Formatted Onset Date</label>
-            <div className="w-full p-2 border border-gray-200 rounded-md bg-gray-50 text-gray-700">
+            <div className="w-full p-2 border border-muted rounded-md bg-muted text-muted-foreground">
               {formatOnsetDate() || 'Please enter a year'}
             </div>
           </div>
@@ -154,7 +154,7 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
           <select
             value={data.onresolvedMonth || ''}
             onChange={(e) => handleInputChange('onresolvedMonth', e.target.value ? parseInt(e.target.value) : '')}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
           >
             <option value="">Select month (optional)</option>
             {monthNames.map((month, index) => (
@@ -168,7 +168,7 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
         {(data.onresolvedYear || data.onresolvedMonth) && (
           <div>
             <label className="block text-sm font-medium mb-2">Formatted Resolved Date</label>
-            <div className="w-full p-2 border border-gray-200 rounded-md bg-gray-50 text-gray-700">
+            <div className="w-full p-2 border border-muted rounded-md bg-muted text-muted-foreground">
               {formatResolvedDate() || 'Please enter a year'}
             </div>
           </div>
@@ -183,7 +183,7 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
             onChange={(e) => handleInputChange('conditionDescription', e.target.value)}
             placeholder="Describe your condition in detail..."
             rows={4}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
           />
         </div>
       </div>

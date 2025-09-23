@@ -37,8 +37,6 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
     });
   };
 
-  const isValid = data.age && data.gender;
-
   return (
     <main>
     <Card className="p-6 space-y-6">
@@ -154,7 +152,6 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
         )}
         <Button
           onClick={onNext}
-          disabled={!isValid}
           className="ml-auto"
         >
           Next

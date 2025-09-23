@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 import RoleTabs from "@/components/profile/RoleTabs";
 import PersonalInfoStep, { PersonalInfoData } from "@/components/profile/PersonalInfoStep";
 import MedicalConditionStep, { MedicalConditionData } from "@/components/profile/MedicalConditionStep";
@@ -77,6 +78,11 @@ export default function ProfileSetup() {
       if (draft.diagnosisTreatment) {
         setDiagnosisTreatment(draft.diagnosisTreatment);
       }
+      
+      toast.info('Draft loaded!', {
+        description: 'Your previously saved progress has been restored.',
+        duration: 3000,
+      });
     }
   }, []);
 
@@ -103,12 +109,20 @@ export default function ProfileSetup() {
   const handleNext = () => {
     if (currentStep < defaultSteps.length - 1) {
       setCurrentStep(currentStep + 1);
+      toast.success('Step completed!', {
+        description: `Moving to ${defaultSteps[currentStep + 1].name}`,
+        duration: 2000,
+      });
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      toast.info('Going back', {
+        description: `Returned to ${defaultSteps[currentStep - 1].name}`,
+        duration: 2000,
+      });
     }
   };
 
@@ -135,15 +149,24 @@ export default function ProfileSetup() {
       if (result.success) {
         profileService.clearDraft();
         
-        alert('Profile created successfully! 🎉');
+        toast.success('Profile created successfully! 🎉', {
+          description: 'Your health profile has been saved and you can now connect with others.',
+          duration: 5000,
+        });
         router.push('/healthProfile/viewProfile');
       } else {
-        alert(`Error: ${result.message}`);
+        toast.error('Failed to create profile', {
+          description: result.message,
+          duration: 5000,
+        });
       }
 
     } catch (error) {
       console.error('Profile submission error:', error);
-      alert('An unexpected error occurred. Please try again.');
+      toast.error('Something went wrong', {
+        description: 'An unexpected error occurred. Please try again.',
+        duration: 5000,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -154,7 +177,7 @@ export default function ProfileSetup() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-background to-indigo-50 dark:from-slate-900 dark:via-background dark:to-indigo-950">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -171,7 +194,7 @@ export default function ProfileSetup() {
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
             Create Your Health Profile
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Share your health journey to connect with others and build a supportive community. 
             Your story can help others facing similar challenges.
           </p>
@@ -189,7 +212,7 @@ export default function ProfileSetup() {
 
             {/* Form Container */}
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
                 {/* Step Header */}
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-6">
                   <div className="flex items-center justify-between text-white">
@@ -262,12 +285,12 @@ export default function ProfileSetup() {
 
             {/* Help Section */}
             <div className="max-w-4xl mx-auto mt-8">
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+              <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
                 <div className="flex items-start gap-4">
                   <div className="text-2xl">💡</div>
                   <div>
-                    <h3 className="font-semibold text-blue-900 mb-2">Need Help?</h3>
-                    <p className="text-blue-700 text-sm">
+                    <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Need Help?</h3>
+                    <p className="text-blue-700 dark:text-blue-300 text-sm">
                       All information is optional and can be updated later. Focus on sharing what you're comfortable with. 
                       Your privacy and security are our top priorities.
                     </p>
