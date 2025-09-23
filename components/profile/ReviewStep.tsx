@@ -4,15 +4,13 @@ import { Button } from '@/components/ui/button';
 import { PersonalInfoData } from './PersonalInfoStep';
 import { MedicalConditionData } from './MedicalConditionStep';
 import { SymptomsData } from './SymptomsStep';
-import { DiagnosisData } from './DiagnosisStep';
-import { TreatmentsData } from './TreatmentsStep';
+import { DiagnosisTreatmentData } from './DiagnosisTreatmentStep';
 
 interface ReviewStepProps {
   personalInfo: PersonalInfoData;
   medicalCondition: MedicalConditionData;
   symptoms: SymptomsData;
-  diagnosis: DiagnosisData;
-  treatments: TreatmentsData;
+  diagnosisTreatment: DiagnosisTreatmentData;
   role: 'seeker' | 'guide';
   onBack: () => void;
   onSubmit: () => void;
@@ -23,13 +21,29 @@ export default function ReviewStep({
   personalInfo,
   medicalCondition,
   symptoms,
-  diagnosis,
-  treatments,
+  diagnosisTreatment,
   role,
   onBack,
   onSubmit,
   isSubmitting,
 }: ReviewStepProps) {
+
+  const formatAmericanDate = (year?: number, month?: number | string) => {
+    if (!year) return 'Not specified';
+    
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    if (month && month !== '') {
+      const monthIndex = typeof month === 'number' ? month - 1 : parseInt(month as string) - 1;
+      const monthName = monthNames[monthIndex];
+      return `${monthName} ${year}`;
+    }
+    
+    return `${year}`;
+  };
   return (
     <Card className="p-6 space-y-6">
       <div>
@@ -62,67 +76,90 @@ export default function ReviewStep({
         <div className="border-l-4 border-green-500 pl-4">
           <h3 className="text-lg font-semibold mb-3">Medical Condition</h3>
           <div className="space-y-2 text-sm">
-            <div><strong>Category:</strong> {medicalCondition.conditionCategory}</div>
-            <div><strong>Condition:</strong> {medicalCondition.conditionName}</div>
+            {medicalCondition.conditionCategory && (
+              <div><strong>Category:</strong> {medicalCondition.conditionCategory.charAt(0).toUpperCase() + medicalCondition.conditionCategory.slice(1)}</div>
+            )}
+            {medicalCondition.conditionName && (
+              <div><strong>Condition:</strong> {medicalCondition.conditionName}</div>
+            )}
+            {medicalCondition.onsetYear && (
+              <div><strong>Onset Date:</strong> {formatAmericanDate(medicalCondition.onsetYear, medicalCondition.onsetMonth)}</div>
+            )}
+            {medicalCondition.onresolvedYear && (
+              <div><strong>Resolved Date:</strong> {formatAmericanDate(medicalCondition.onresolvedYear, medicalCondition.onresolvedMonth)}</div>
+            )}
             {medicalCondition.conditionDescription && (
               <div><strong>Description:</strong> {medicalCondition.conditionDescription}</div>
-            )}
-            <div><strong>Onset Date:</strong> {new Date(medicalCondition.onsetDate).toLocaleDateString()}</div>
-            {medicalCondition.resolvedDate && (
-              <div><strong>Resolved Date:</strong> {new Date(medicalCondition.resolvedDate).toLocaleDateString()}</div>
             )}
           </div>
         </div>
 
         {/* Symptoms */}
-        {symptoms.symptoms.length > 0 && (
+        {(symptoms.name_of_symptoms || symptoms.severity || symptoms.frequency || symptoms.symptomDuration || symptoms.symptomNotes) && (
           <div className="border-l-4 border-yellow-500 pl-4">
-            <h3 className="text-lg font-semibold mb-3">Symptoms ({symptoms.symptoms.length})</h3>
-            <div className="space-y-2">
-              {symptoms.symptoms.map((symptom, index) => (
-                <div key={index} className="bg-gray-50 p-2 rounded text-sm">
-                  <div className="font-medium">{symptom.name}</div>
-                  <div className="text-gray-600">
-                    {symptom.severity} • {symptom.frequency} • {symptom.duration}
-                    {symptom.notes && <span> • {symptom.notes}</span>}
-                  </div>
-                </div>
-              ))}
+            <h3 className="text-lg font-semibold mb-3">Symptoms</h3>
+            <div className="space-y-2 text-sm">
+              {symptoms.name_of_symptoms && (
+                <div><strong>Symptoms:</strong> {symptoms.name_of_symptoms}</div>
+              )}
+              {symptoms.severity && (
+                <div><strong>Severity:</strong> {symptoms.severity.charAt(0).toUpperCase() + symptoms.severity.slice(1)}</div>
+              )}
+              {symptoms.frequency && (
+                <div><strong>Frequency:</strong> {symptoms.frequency.charAt(0).toUpperCase() + symptoms.frequency.slice(1)}</div>
+              )}
+              {symptoms.symptomDuration && (
+                <div><strong>Duration:</strong> {symptoms.symptomDuration}</div>
+              )}
+              {symptoms.symptomNotes && (
+                <div><strong>Notes:</strong> {symptoms.symptomNotes}</div>
+              )}
             </div>
           </div>
         )}
 
-        {/* Diagnosis */}
-        <div className="border-l-4 border-purple-500 pl-4">
-          <h3 className="text-lg font-semibold mb-3">Diagnosis</h3>
-          <div className="space-y-2 text-sm">
-            <div><strong>Formally Diagnosed:</strong> {diagnosis.diagnosed ? 'Yes' : 'No'}</div>
-            <div><strong>Certainty Level:</strong> {diagnosis.certainty}</div>
-            {diagnosis.diagnosed && (
-              <>
-                {diagnosis.date && <div><strong>Diagnosis Date:</strong> {new Date(diagnosis.date).toLocaleDateString()}</div>}
-                {diagnosis.diagnosedBy && <div><strong>Diagnosed By:</strong> {diagnosis.diagnosedBy}</div>}
-                {diagnosis.conditionName && <div><strong>Condition Name:</strong> {diagnosis.conditionName}</div>}
-              </>
-            )}
-            {diagnosis.notes && <div><strong>Notes:</strong> {diagnosis.notes}</div>}
-          </div>
-        </div>
-
-        {/* Treatments */}
-        {treatments.treatments.length > 0 && (
-          <div className="border-l-4 border-red-500 pl-4">
-            <h3 className="text-lg font-semibold mb-3">Treatments ({treatments.treatments.length})</h3>
-            <div className="space-y-2">
-              {treatments.treatments.map((treatment, index) => (
-                <div key={index} className="bg-gray-50 p-2 rounded text-sm">
-                  <div className="font-medium">{treatment.name}</div>
-                  <div className="text-gray-600">
-                    {treatment.type} • {treatment.duration} • {treatment.effectiveness}
-                    {treatment.notes && <span> • {treatment.notes}</span>}
+        {/* Diagnosis & Treatment */}
+        {(diagnosisTreatment.diagnosed !== undefined || diagnosisTreatment.treatmentName) && (
+          <div className="border-l-4 border-purple-500 pl-4">
+            <h3 className="text-lg font-semibold mb-3">Diagnosis & Treatment</h3>
+            <div className="space-y-2 text-sm">
+              {diagnosisTreatment.diagnosed !== undefined && (
+                <div><strong>Formally Diagnosed:</strong> {diagnosisTreatment.diagnosed ? 'Yes' : 'No'}</div>
+              )}
+              {diagnosisTreatment.certainty && (
+                <div><strong>Certainty Level:</strong> {diagnosisTreatment.certainty.charAt(0).toUpperCase() + diagnosisTreatment.certainty.slice(1)}</div>
+              )}
+              {diagnosisTreatment.diagnosedYear && (
+                <div><strong>Diagnosed Date:</strong> {formatAmericanDate(diagnosisTreatment.diagnosedYear)}</div>
+              )}
+              {diagnosisTreatment.diagnosedBy && (
+                <div><strong>Diagnosed By:</strong> {diagnosisTreatment.diagnosedBy}</div>
+              )}
+              {diagnosisTreatment.diagnosisNotes && (
+                <div><strong>Diagnosis Notes:</strong> {diagnosisTreatment.diagnosisNotes}</div>
+              )}
+              
+              {/* Treatment Information */}
+              {diagnosisTreatment.treatmentName && (
+                <>
+                  <div className="border-t pt-2 mt-3">
+                    <div className="font-medium text-purple-700 mb-2">Treatment Information</div>
                   </div>
-                </div>
-              ))}
+                  <div><strong>Treatment Name:</strong> {diagnosisTreatment.treatmentName}</div>
+                  {diagnosisTreatment.treatmentType && (
+                    <div><strong>Treatment Type:</strong> {diagnosisTreatment.treatmentType.charAt(0).toUpperCase() + diagnosisTreatment.treatmentType.slice(1)}</div>
+                  )}
+                  {diagnosisTreatment.treatmentDuration && (
+                    <div><strong>Duration:</strong> {diagnosisTreatment.treatmentDuration}</div>
+                  )}
+                  {diagnosisTreatment.treatmentEffectiveness && (
+                    <div><strong>Effectiveness:</strong> {diagnosisTreatment.treatmentEffectiveness.charAt(0).toUpperCase() + diagnosisTreatment.treatmentEffectiveness.slice(1)}</div>
+                  )}
+                  {diagnosisTreatment.treatmentNotes && (
+                    <div><strong>Treatment Notes:</strong> {diagnosisTreatment.treatmentNotes}</div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         )}

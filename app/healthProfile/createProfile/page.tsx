@@ -2,35 +2,24 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-
-// Components
 import RoleTabs from "@/components/profile/RoleTabs";
-import ProgressIndicator from "@/components/profile/ProgressIndicator";
 import PersonalInfoStep, { PersonalInfoData } from "@/components/profile/PersonalInfoStep";
 import MedicalConditionStep, { MedicalConditionData } from "@/components/profile/MedicalConditionStep";
 import SymptomsStep, { SymptomsData } from "@/components/profile/SymptomsStep";
-import DiagnosisStep, { DiagnosisData } from "@/components/profile/DiagnosisStep";
-import TreatmentsStep, { TreatmentsData } from "@/components/profile/TreatmentsStep";
+import DiagnosisTreatmentStep, { DiagnosisTreatmentData } from "@/components/profile/DiagnosisTreatmentStep";
 import ReviewStep from "@/components/profile/ReviewStep";
-
-// Services
-import profileService, { ProfileFormData } from "@/lib/profileService";
-
-// Types
+import ProgressIndicator, { defaultSteps } from "@/components/profile/progressIndication";
 import { UserRole } from "@/models/types/profile.type";
-
-const steps = ["Personal Info", "Medical Condition", "Symptoms", "Diagnosis", "Treatments", "Review"];
+import { LoadingSpinner } from "@/components/isLoading";
+import profileService from "@/lib/profileService";
 
 export default function ProfileSetup() {
   const router = useRouter();
   const { data: session, status } = useSession();
-  
-  // State management
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Form data states
   const [personalInfo, setPersonalInfo] = useState<PersonalInfoData>({
     age: '',
     gender: '',
@@ -46,66 +35,73 @@ export default function ProfileSetup() {
   const [medicalCondition, setMedicalCondition] = useState<MedicalConditionData>({
     conditionCategory: '',
     conditionName: '',
+    onsetYear: new Date().getFullYear(),
     conditionDescription: '',
-    onsetDate: '',
-    resolvedDate: '',
   });
 
   const [symptoms, setSymptoms] = useState<SymptomsData>({
-    symptoms: [],
+    name_of_symptoms: '',
+    severity: 'mild',
   });
 
-  const [diagnosis, setDiagnosis] = useState<DiagnosisData>({
+  const [diagnosisTreatment, setDiagnosisTreatment] = useState<DiagnosisTreatmentData>({
     diagnosed: false,
-    date: '',
-    diagnosedBy: '',
-    conditionName: '',
-    certainty: 'suspected',
-    notes: '',
+    treatmentType: 'medication',
   });
 
-  const [treatments, setTreatments] = useState<TreatmentsData>({
-    treatments: [],
-  });
-
-  // Check authentication
-  // useEffect(() => {
-  //   if (status === "loading") return; // Still loading
+  useEffect(() => {
+    if (status === "loading") return; 
     
-  //   if (!session) {
-  //     router.push("/auth/login");
-  //     return;
-  //   }
-  // }, [session, status, router]);
+    if (!session) {
+      router.push("/auth/login");
+      return;
+    }
+  }, [session, status, router]);
 
-  // Load draft data on component mount
   useEffect(() => {
     const draft = profileService.loadDraft();
     if (draft && draft.role) {
       setSelectedRole(draft.role);
+      if (draft.step) {
+        setCurrentStep(draft.step);
+      }
+      if (draft.personalInfo) {
+        setPersonalInfo(draft.personalInfo);
+      }
+      if (draft.medicalCondition) {
+        setMedicalCondition(draft.medicalCondition);
+      }
+      if (draft.symptoms) {
+        setSymptoms(draft.symptoms);
+      }
+      if (draft.diagnosisTreatment) {
+        setDiagnosisTreatment(draft.diagnosisTreatment);
+      }
     }
   }, []);
 
-  // Save draft on form changes (simplified)
   useEffect(() => {
-    if (selectedRole && personalInfo.age) {
-      // Simple draft saving without full type validation
-      const simpleDraft = {
+    if (selectedRole && (personalInfo.age || medicalCondition.conditionName)) {
+      const draftData = {
         role: selectedRole,
-        conditionCategory: medicalCondition.conditionCategory,
-        conditionName: medicalCondition.conditionName,
+        step: currentStep,
+        personalInfo,
+        medicalCondition,
+        symptoms,
+        diagnosisTreatment,
+        lastSaved: new Date().toISOString()
       };
-      profileService.saveDraft(simpleDraft);
+      profileService.saveDraft(draftData);
     }
-  }, [selectedRole, personalInfo.age, medicalCondition.conditionCategory, medicalCondition.conditionName]);
+  }, [selectedRole, personalInfo, medicalCondition, symptoms, diagnosisTreatment, currentStep]);
 
   const handleRoleChange = (role: UserRole) => {
     setSelectedRole(role);
-    setCurrentStep(0); // Reset to first step when role changes
+    setCurrentStep(0);
   };
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
+    if (currentStep < defaultSteps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -122,66 +118,29 @@ export default function ProfileSetup() {
     setIsSubmitting(true);
 
     try {
-      // Prepare form data
-      const profileData: ProfileFormData = {
-        userId: session.user.id as any, // Type conversion for ObjectId
+      const profileData = {
+        userId: session.user.id,
         role: selectedRole,
-        
-        // Personal info
-        age: Number(personalInfo.age),
-        gender: personalInfo.gender as any,
-        Nationality: personalInfo.nationality,
-        Location: personalInfo.location,
-        bloodType: personalInfo.bloodType as any,
-        contactInfo: personalInfo.contactInfo,
-
-        // Medical condition
-        conditionCategory: medicalCondition.conditionCategory,
-        conditionName: medicalCondition.conditionName,
-        conditionDescription: medicalCondition.conditionDescription,
-        onsetDate: new Date(medicalCondition.onsetDate),
-        resolvedDate: medicalCondition.resolvedDate ? new Date(medicalCondition.resolvedDate) : undefined,
-
-        // Symptoms
-        symptoms: symptoms.symptoms,
-
-        // Diagnosis
-        diagnosis: {
-          ...diagnosis,
-          date: diagnosis.date,
-        },
-
-        // Treatments
-        treatments: treatments.treatments,
-
-        // Default values
+        personalInfo,
+        medicalCondition,
+        symptoms,
+        diagnosisTreatment,
         isVerified: false,
-        verificationMethod: 'self-Declared',
+        verificationMethod: 'self-declared',
       };
 
-      // Validate before submitting
-      const validation = profileService.validateProfile(profileData);
-      if (!validation.isValid) {
-        alert(`Please fix the following errors:\n${validation.errors.join('\n')}`);
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Submit profile
+      console.log('Submitting profile data:', profileData);
       const result = await profileService.profileSetup(profileData);
-
+      
       if (result.success) {
-        // Clear draft data
         profileService.clearDraft();
         
-        // Show success message
-        alert('Profile created successfully!');
-        
-        // Redirect to profile view or dashboard
+        alert('Profile created successfully! 🎉');
         router.push('/healthProfile/viewProfile');
       } else {
         alert(`Error: ${result.message}`);
       }
+
     } catch (error) {
       console.error('Profile submission error:', error);
       alert('An unexpected error occurred. Please try again.');
@@ -190,98 +149,131 @@ export default function ProfileSetup() {
     }
   };
 
-  // Show loading while checking authentication
   if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
-  // Render main component
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Health Profile</h1>
-          <p className="text-gray-600">
-            Share your health journey to connect with others and build a supportive community.
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234F46E5' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }} />
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* Header Section */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full mb-6 shadow-lg">
+            <span className="text-3xl">🏥</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
+            Create Your Health Profile
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            Share your health journey to connect with others and build a supportive community. 
+            Your story can help others facing similar challenges.
           </p>
         </div>
 
         {/* Role Selection */}
-        <RoleTabs selectedRole={selectedRole} onRoleChange={handleRoleChange} />
+        <div className="mb-8">
+          <RoleTabs selectedRole={selectedRole} onRoleChange={handleRoleChange} />
+        </div>
 
         {selectedRole && (
           <>
             {/* Progress Indicator */}
-            <ProgressIndicator steps={steps} currentStep={currentStep} />
+            <ProgressIndicator currentStep={currentStep} />
 
-            {/* Form Steps */}
-            <div className="bg-white rounded-lg shadow-sm">
-              {currentStep === 0 && (
-                <PersonalInfoStep
-                  data={personalInfo}
-                  onChange={setPersonalInfo}
-                  onNext={handleNext}
-                />
-              )}
+            {/* Form Container */}
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                {/* Step Header */}
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-6">
+                  <div className="flex items-center justify-between text-white">
+                    <div>
+                      <h2 className="text-2xl font-bold flex items-center gap-3">
+                        <span className="text-3xl">{defaultSteps[currentStep].icon}</span>
+                        {defaultSteps[currentStep].name}
+                      </h2>
+                      <p className="text-blue-100 mt-1">{defaultSteps[currentStep].description}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold">{currentStep + 1}</div>
+                      <div className="text-sm text-blue-200">of {defaultSteps.length}</div>
+                    </div>
+                  </div>
+                </div>
 
-              {currentStep === 1 && (
-                <MedicalConditionStep
-                  data={medicalCondition}
-                  onChange={setMedicalCondition}
-                  onNext={handleNext}
-                  onBack={handleBack}
-                />
-              )}
+                {/* Form Steps */}
+                <div className="p-8">
+                  {currentStep === 0 && (
+                    <PersonalInfoStep
+                      data={personalInfo}
+                      onChange={setPersonalInfo}
+                      onNext={handleNext}
+                    />
+                  )}
 
-              {currentStep === 2 && (
-                <SymptomsStep
-                  data={symptoms}
-                  onChange={setSymptoms}
-                  onNext={handleNext}
-                  onBack={handleBack}
-                />
-              )}
+                  {currentStep === 1 && (
+                    <MedicalConditionStep
+                      data={medicalCondition}
+                      onChange={setMedicalCondition}
+                      onNext={handleNext}
+                      onBack={handleBack}
+                    />
+                  )}
 
-              {currentStep === 3 && (
-                <DiagnosisStep
-                  data={diagnosis}
-                  onChange={setDiagnosis}
-                  onNext={handleNext}
-                  onBack={handleBack}
-                  role={selectedRole}
-                />
-              )}
+                  {currentStep === 2 && (
+                    <SymptomsStep
+                      data={symptoms}
+                      onChange={setSymptoms}
+                      onNext={handleNext}
+                      onBack={handleBack}
+                    />
+                  )}
 
-              {currentStep === 4 && (
-                <TreatmentsStep
-                  data={treatments}
-                  onChange={setTreatments}
-                  onNext={handleNext}
-                  onBack={handleBack}
-                  role={selectedRole}
-                />
-              )}
+                  {currentStep === 3 && (
+                    <DiagnosisTreatmentStep
+                      data={diagnosisTreatment}
+                      onChange={setDiagnosisTreatment}
+                      onNext={handleNext}
+                      onBack={handleBack}
+                    />
+                  )}
 
-              {currentStep === 5 && (
-                <ReviewStep
-                  personalInfo={personalInfo}
-                  medicalCondition={medicalCondition}
-                  symptoms={symptoms}
-                  diagnosis={diagnosis}
-                  treatments={treatments}
-                  role={selectedRole}
-                  onBack={handleBack}
-                  onSubmit={handleSubmit}
-                  isSubmitting={isSubmitting}
-                />
-              )}
+                  {currentStep === 4 && (
+                    <ReviewStep
+                      personalInfo={personalInfo}
+                      medicalCondition={medicalCondition}
+                      symptoms={symptoms}
+                      diagnosisTreatment={diagnosisTreatment}
+                      role={selectedRole}
+                      onBack={handleBack}
+                      onSubmit={handleSubmit}
+                      isSubmitting={isSubmitting}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Help Section */}
+            <div className="max-w-4xl mx-auto mt-8">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="text-2xl">💡</div>
+                  <div>
+                    <h3 className="font-semibold text-blue-900 mb-2">Need Help?</h3>
+                    <p className="text-blue-700 text-sm">
+                      All information is optional and can be updated later. Focus on sharing what you're comfortable with. 
+                      Your privacy and security are our top priorities.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </>
         )}

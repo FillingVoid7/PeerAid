@@ -1,13 +1,19 @@
 import axios from 'axios';
-import { IHealthProfileBase } from '@/models/types/profile.type';
-import { SymptomData } from '@/components/profile/SymptomsStep';
-import { DiagnosisData } from '@/components/profile/DiagnosisStep';
-import { TreatmentData } from '@/components/profile/TreatmentsStep';
+import { IHealthProfileBase, UserRole } from '@/models/types/profile.type';
+import { PersonalInfoData } from '@/components/profile/PersonalInfoStep';
+import { MedicalConditionData } from '@/components/profile/MedicalConditionStep';
+import { SymptomsData } from '@/components/profile/SymptomsStep';
+import { DiagnosisTreatmentData } from '@/components/profile/DiagnosisTreatmentStep';
 
-export interface ProfileFormData extends Omit<IHealthProfileBase, '_id' | 'createdAt' | 'updatedAt'> {
-  symptoms?: SymptomData[];
-  diagnosis?: DiagnosisData;
-  treatments?: TreatmentData[];
+export interface ProfileFormData {
+  userId: string;
+  role: UserRole;
+  personalInfo: PersonalInfoData;
+  medicalCondition: MedicalConditionData;
+  symptoms: SymptomsData;
+  diagnosisTreatment: DiagnosisTreatmentData;
+  isVerified: boolean;
+  verificationMethod: string;
 }
 
 export interface ProfileSetupResponse {
@@ -18,10 +24,6 @@ export interface ProfileSetupResponse {
 
 class ProfileService {
   private baseURL = '/api';
-
-  /**
-   * Submit complete profile data to the backend
-   */
   async profileSetup(profileData: ProfileFormData): Promise<ProfileSetupResponse> {
     try {
       const response = await axios.post<ProfileSetupResponse>(
@@ -31,7 +33,7 @@ class ProfileService {
           headers: {
             'Content-Type': 'application/json',
           },
-          timeout: 10000, // 10 second timeout
+          timeout: 10000, 
         }
       );
 
@@ -40,15 +42,12 @@ class ProfileService {
       console.error('Profile setup error:', error);
       
       if (axios.isAxiosError(error)) {
-        // Handle axios-specific errors
         if (error.response) {
-          // Server responded with error status
           return {
             success: false,
             message: error.response.data?.message || 'Server error occurred',
           };
         } else if (error.request) {
-          // Request was made but no response received
           return {
             success: false,
             message: 'Network error - please check your connection',
@@ -56,7 +55,6 @@ class ProfileService {
         }
       }
       
-      // Generic error fallback
       return {
         success: false,
         message: 'An unexpected error occurred',
@@ -64,76 +62,37 @@ class ProfileService {
     }
   }
 
-  /**
-   * Save profile data as draft (for multi-step form)
-   */
-  async saveDraft(draftData: Partial<ProfileFormData>): Promise<void> {
+
+
+saveDraft(draftData: any): void {
     try {
-      // Save to localStorage for now - could be extended to backend
-      localStorage.setItem('profileDraft', JSON.stringify(draftData));
+      localStorage.setItem('health-profile-draft', JSON.stringify(draftData));   //saved as json string
     } catch (error) {
       console.error('Failed to save draft:', error);
     }
   }
 
-  /**
-   * Load profile draft data
-   */
-  loadDraft(): Partial<ProfileFormData> | null {
+
+loadDraft(): any | null {
     try {
-      const draft = localStorage.getItem('profileDraft');
-      return draft ? JSON.parse(draft) : null;
+      const draft = localStorage.getItem('health-profile-draft');
+      return draft ? JSON.parse(draft) : null;    //converts json string back to object
     } catch (error) {
       console.error('Failed to load draft:', error);
       return null;
     }
   }
 
-  /**
-   * Clear profile draft data
-   */
-  clearDraft(): void {
+
+clearDraft(): void {
     try {
-      localStorage.removeItem('profileDraft');
+      localStorage.removeItem('health-profile-draft');
     } catch (error) {
       console.error('Failed to clear draft:', error);
     }
   }
 
-  /**
-   * Validate profile data before submission
-   */
-  validateProfile(profileData: ProfileFormData): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
-
-    // Required fields validation
-    if (!profileData.userId) errors.push('User ID is required');
-    if (!profileData.role) errors.push('Role is required');
-    if (!profileData.age || profileData.age < 13 || profileData.age > 120) {
-      errors.push('Age must be between 13 and 120');
-    }
-    if (!profileData.gender) errors.push('Gender is required');
-    if (!profileData.conditionCategory) errors.push('Condition category is required');
-    if (!profileData.conditionName) errors.push('Condition name is required');
-    if (!profileData.onsetDate) errors.push('Onset date is required');
-
-    // Role-specific validation
-    if (profileData.role === 'seeker') {
-      if (!profileData.diagnosis) errors.push('Diagnosis information is required for seekers');
-    }
-
-    if (profileData.role === 'guide') {
-      if (!profileData.treatments || profileData.treatments.length === 0) {
-        errors.push('At least one treatment is required for guides');
-      }
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-    };
-  }
 }
 
-export const profileService = new ProfileService();
+const profileService = new ProfileService();
 export default profileService;

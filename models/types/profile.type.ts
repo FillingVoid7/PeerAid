@@ -32,12 +32,12 @@ export interface IHealthProfileBase{
 
     //Health Condition Information
     conditionCategory:string;
-    conditionName:string;
+    conditionName?:string;
     conditionDescription?:string;
-
-    //Timeline
-    onsetDate:Date;
-    resolvedDate?:Date;
+    onsetYear: number;
+    onsetMonth?: number | string;
+    onresolvedYear?: number;
+    onresolvedMonth?: number | string;
 
     //Verification
     isVerified:boolean;

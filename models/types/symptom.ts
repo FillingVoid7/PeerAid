@@ -2,15 +2,15 @@ import { Schema, Document } from 'mongoose';
 import { FrequencyLevel, SeverityLevel } from './profile.type';
 
 export interface ISymptom extends Document {
-  username: string;
+  name_of_symptoms: string;
   severity: SeverityLevel;
-  frequency: FrequencyLevel;
-  duration: string;
-  notes?: string;
+  frequency?: FrequencyLevel;
+  symptomDuration?: string;
+  symptomNotes?: string;
 }
 
 export const SymptomSchema: Schema = new Schema({
-  name: { type: String, required: true },
+  name_of_symptoms: { type: String, required: true },
   severity: { 
     type: String, 
     required: true, 
@@ -21,6 +21,6 @@ export const SymptomSchema: Schema = new Schema({
     required: true, 
     enum: ['rarely', 'sometimes', 'often', 'constant'] 
   },
-  duration: { type: String, required: true },
-  notes: { type: String }
+  symptomDuration: { type: String },
+  symptomNotes: { type: String }
 }, { _id: false });

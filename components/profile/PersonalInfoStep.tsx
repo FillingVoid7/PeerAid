@@ -40,6 +40,7 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
   const isValid = data.age && data.gender;
 
   return (
+    <main>
     <Card className="p-6 space-y-6">
       <div>
         <h2 className="text-2xl font-bold mb-4">Personal Information</h2>
@@ -58,7 +59,6 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
             value={data.age}
             onChange={(e) => handleInputChange('age', parseInt(e.target.value) || '')}
             placeholder="Enter your age"
-            required
           />
         </div>
 
@@ -70,7 +70,7 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
             value={data.gender}
             onChange={(e) => handleInputChange('gender', e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
+            
           >
             <option value="">Select gender</option>
             <option value="male">Male</option>
@@ -161,5 +161,6 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
         </Button>
       </div>
     </Card>
+    </main>
   );
 }

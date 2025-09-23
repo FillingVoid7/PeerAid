@@ -3,8 +3,7 @@ import {
   IHealthProfile,
 } from "./types/profile.type";
 import { SymptomSchema, ISymptom } from "./types/symptom";
-import { TreatmentSchema, ITreatment } from "./types/treatment";
-import { DiagnosisSchema, IDiagnosis } from "./types/diagnosis";
+import { TreatmentSchema, DiagnosisSchema } from "./types/diagnosisTreatment";
 
 const HealthProfileSchema: Schema = new Schema(
   {
@@ -55,8 +54,12 @@ const HealthProfileSchema: Schema = new Schema(
       ],
       index: true,
     },
-    conditionName: { type: String, required: true, index: true },
+    conditionName: { type: String,  index: true },
     conditionDescription: { type: String },
+    onsetYear: { type: Number, required: true },
+    onsetMonth: { type: Number },
+    resolvedYear: { type: Number },
+    resolvedMonth: { type: Number },
 
     // Symptoms
     symptoms: [SymptomSchema],
@@ -66,10 +69,6 @@ const HealthProfileSchema: Schema = new Schema(
 
     // Treatments
     treatments: [TreatmentSchema],
-
-    // Timeline
-    onsetDate: { type: Date, required: true },
-    resolvedDate: { type: Date },
 
     // Verification
     isVerified: { type: Boolean, default: false, index: true },
