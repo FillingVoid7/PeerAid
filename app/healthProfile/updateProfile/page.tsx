@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -87,26 +87,14 @@ export default function UpdateProfilePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [profile, setProfile] = useState<HealthProfile | null>(null);
-  const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [formData, setFormData] = useState<Partial<HealthProfile>>({});
-  const mountedRef = useRef(true);
 
   useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (status === 'loading') return;
-    if (!session?.user?.id) {
-      router.push('/auth/login');
-      return;
+    if (session?.user?.id) {
+      fetchProfile();
     }
-    
-    fetchProfile();
-  }, [session, status, router]);
+  }, [session]);
 
   const fetchProfile = async () => {
     if (!session?.user?.id) return;
@@ -117,8 +105,6 @@ export default function UpdateProfilePage() {
       });
       const data = await response.json();
       
-      if (!mountedRef.current) return;
-      
       if (response.ok && data.profile) {
         setProfile(data.profile);
         setFormData(data.profile);
@@ -127,14 +113,8 @@ export default function UpdateProfilePage() {
         router.push('/healthProfile/viewProfile');
       }
     } catch (error) {
-      if (mountedRef.current) {
-        toast.error('Error loading profile');
-        router.push('/healthProfile/viewProfile');
-      }
-    } finally {
-      if (mountedRef.current) {
-        setLoading(false);
-      }
+      toast.error('Error loading profile');
+      router.push('/healthProfile/viewProfile');
     }
   };
 
@@ -170,8 +150,6 @@ export default function UpdateProfilePage() {
         body: JSON.stringify(formData),
       });
       
-      if (!mountedRef.current) return;
-      
       if (response.ok) {
         toast.success('Profile updated successfully');
         router.push('/healthProfile/viewProfile');
@@ -180,23 +158,30 @@ export default function UpdateProfilePage() {
         toast.error(errorData.message || 'Failed to update profile');
       }
     } catch (error) {
-      if (mountedRef.current) {
-        toast.error('Error updating profile');
-        console.error('Update error:', error);
-      }
+      toast.error('Error updating profile');
+      console.error('Update error:', error);
     } finally {
-      if (mountedRef.current) {
-        setUpdating(false);
-      }
+      setUpdating(false);
     }
   };
 
-  if (status === 'loading' || loading) {
-    return <LoadingSpinner />;
+  if (!session?.user?.id) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-background to-indigo-50 dark:from-slate-900 dark:via-background dark:to-indigo-950 flex items-center justify-center">
+        <Card className="max-w-md mx-auto text-center">
+          <CardContent className="pt-6">
+            <p className="text-muted-foreground mb-4">Please log in to access your profile.</p>
+            <Button onClick={() => router.push('/auth/login')}>
+              Go to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
-  if (!session || !profile) {
-    return null;
+  if (!profile) {
+    return <LoadingSpinner />;
   }
 
   return (

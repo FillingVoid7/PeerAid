@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +25,8 @@ import {
   Target,
   Edit,
   X,
-  AlertCircle
+  AlertCircle,
+  Tag
 } from 'lucide-react';
 
 interface HealthProfile {
@@ -97,13 +98,6 @@ const ViewProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const mountedRef = useRef(true);
-
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -119,12 +113,11 @@ const ViewProfilePage = () => {
     if (!session?.user?.id) return;
     
     try {
+      setLoading(true);
       const response = await fetch(`/api/get-profile/${session.user.id}`, {
         cache: 'no-store' 
       });
       const data = await response.json();
-      
-      if (!mountedRef.current) return;
       
       if (response.ok) {
         setProfile(data.profile);
@@ -132,14 +125,10 @@ const ViewProfilePage = () => {
         toast.error(data.message || 'Failed to load profile');
       }
     } catch (error) {
-      if (mountedRef.current) {
-        toast.error('Error loading profile');
-        console.error('Profile fetch error:', error);
-      }
+      toast.error('Error loading profile');
+      console.error('Profile fetch error:', error);
     } finally {
-      if (mountedRef.current) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
@@ -153,8 +142,6 @@ const ViewProfilePage = () => {
         method: 'DELETE',
       });
       
-      if (!mountedRef.current) return;
-      
       if (response.ok) {
         toast.success('Profile deleted successfully');
         router.push('/healthProfile/createProfile');
@@ -163,15 +150,11 @@ const ViewProfilePage = () => {
         toast.error(errorData.message || 'Failed to delete profile');
       }
     } catch (error) {
-      if (mountedRef.current) {
-        toast.error('Error deleting profile');
-        console.error('Delete error:', error);
-      }
+      toast.error('Error deleting profile');
+      console.error('Delete error:', error);
     } finally {
-      if (mountedRef.current) {
-        setDeleting(false);
-        setShowDeleteDialog(false);
-      }
+      setDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -235,18 +218,18 @@ const ViewProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/50 via-white to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto space-y-8">
+      <div className="container mx-auto px-4 py-6">
+        <div className="max-w-5xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-            <div className="space-y-3">
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
                 Your Health Profile
               </h1>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Role:</span>
-                  <span className={`capitalize font-semibold px-4 py-2 rounded-full text-sm shadow-sm ${
+                  <span className="text-muted-foreground text-sm">Role:</span>
+                  <span className={`capitalize font-medium px-3 py-1 rounded-full text-sm ${
                     profile.role === 'guide' 
                       ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200' 
                       : 'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200'
@@ -255,18 +238,18 @@ const ViewProfilePage = () => {
                   </span>
                 </div>
                 {profile.isVerified && (
-                  <div className="flex items-center gap-2 text-green-600 bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-2 rounded-full text-sm border border-green-200 shadow-sm">
-                    <Shield className="w-4 h-4" />
-                    <span className="font-medium">Verified Profile</span>
+                  <div className="flex items-center gap-2 text-green-600 bg-gradient-to-r from-green-50 to-emerald-50 px-2 py-1 rounded-full text-xs border border-green-200">
+                    <Shield className="w-3 h-3" />
+                    <span className="font-medium">Verified</span>
                   </div>
                 )}
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <Button 
                 onClick={() => router.push('/healthProfile/updateProfile')}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-200"
-                size="lg"
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                size="sm"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Profile
@@ -275,68 +258,78 @@ const ViewProfilePage = () => {
                 onClick={() => setShowDeleteDialog(true)}
                 variant="destructive"
                 disabled={deleting}
-                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-md hover:shadow-lg transition-all duration-200"
-                size="lg"
+                size="sm"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Delete Profile
+                Delete
               </Button>
             </div>
           </div>
 
         {/* Personal Information */}
-        <Card className="shadow-xl border-0 bg-white/70 backdrop-blur-sm dark:bg-slate-800/70">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-700 dark:to-slate-600 rounded-t-xl">
-            <CardTitle className="flex items-center gap-3 text-xl">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+        <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm dark:bg-slate-800/70">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-700 dark:to-slate-600 rounded-t-xl pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <div className="p-1.5 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               </div>
               Personal Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                <Calendar className="w-5 h-5 text-blue-500" />
-                <div>
-                  <span className="font-medium text-gray-600 dark:text-gray-300">Age:</span>
-                  <span className="ml-2 font-semibold text-gray-900 dark:text-white">{profile.age} years old</span>
+          <CardContent className="space-y-3 p-5">
+            <div className="grid gap-3">
+              <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                <div className="flex items-center gap-2 mb-1">
+                  <Calendar className="w-4 h-4 text-blue-500" />
+                  <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Age</span>
+                </div>
+                <div className="ml-6">
+                  <span className="text-base font-semibold text-gray-900 dark:text-white">{profile.age} years old</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                <User className="w-5 h-5 text-purple-500" />
-                <div>
-                  <span className="font-medium text-gray-600 dark:text-gray-300">Gender:</span>
-                  <span className="ml-2 font-semibold text-gray-900 dark:text-white capitalize">{profile.gender}</span>
+
+              <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                <div className="flex items-center gap-2 mb-1">
+                  <User className="w-4 h-4 text-purple-500" />
+                  <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Gender</span>
+                </div>
+                <div className="ml-6">
+                  <span className="text-base font-semibold text-gray-900 dark:text-white capitalize">{profile.gender}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                <Heart className="w-5 h-5 text-red-500" />
-                <div>
-                  <span className="font-medium text-gray-600 dark:text-gray-300">Blood Type:</span>
-                  <span className="ml-2 font-mono bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-3 py-1 rounded-full font-bold">
+
+              <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-red-50/50 to-rose-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                <div className="flex items-center gap-2 mb-1">
+                  <Heart className="w-4 h-4 text-red-500" />
+                  <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Blood Type</span>
+                </div>
+                <div className="ml-6">
+                  <span className="font-mono bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-1 rounded text-sm font-bold">
                     {profile.bloodType}
                   </span>
                 </div>
               </div>
-            </div>
-            
-            <div className="space-y-4">
+
               {profile.nationality && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                  <MapPin className="w-5 h-5 text-green-500" />
-                  <div>
-                    <span className="font-medium text-gray-600 dark:text-gray-300">Nationality:</span>
-                    <span className="ml-2 font-semibold text-gray-900 dark:text-white">{profile.nationality}</span>
+                <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                  <div className="flex items-center gap-2 mb-1">
+                    <MapPin className="w-4 h-4 text-green-500" />
+                    <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Nationality</span>
+                  </div>
+                  <div className="ml-6">
+                    <span className="text-base font-semibold text-gray-900 dark:text-white">{profile.nationality}</span>
                   </div>
                 </div>
               )}
+
               {profile.location && (
-                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
-                  <MapPin className="w-5 h-5 text-indigo-500" />
-                  <div>
-                    <span className="font-medium text-gray-600 dark:text-gray-300">Location:</span>
-                    <span className="ml-2 font-semibold text-gray-900 dark:text-white">{profile.location}</span>
+                <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-indigo-50/50 to-blue-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                  <div className="flex items-center gap-2 mb-1">
+                    <MapPin className="w-4 h-4 text-indigo-500" />
+                    <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Location</span>
+                  </div>
+                  <div className="ml-6">
+                    <span className="text-base font-semibold text-gray-900 dark:text-white">{profile.location}</span>
                   </div>
                 </div>
               )}
@@ -346,31 +339,31 @@ const ViewProfilePage = () => {
 
         {/* Contact Information */}
         {(profile.contactInfo?.contact_phone || profile.contactInfo?.contact_email) && (
-          <Card className="shadow-xl border-0 bg-white/70 backdrop-blur-sm dark:bg-slate-800/70">
-            <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-slate-700 dark:to-slate-600 rounded-t-xl">
-              <CardTitle className="flex items-center gap-3 text-xl">
-                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                  <Phone className="w-6 h-6 text-green-600 dark:text-green-400" />
+          <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm dark:bg-slate-800/70">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-slate-700 dark:to-slate-600 rounded-t-xl pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <div className="p-1.5 bg-green-100 dark:bg-green-900 rounded-lg">
+                  <Phone className="w-4 h-4 text-green-600 dark:text-green-400" />
                 </div>
                 Contact Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 p-8">
+            <CardContent className="space-y-3 p-5">
               {profile.contactInfo.contact_phone && (
-                <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-slate-700 rounded-lg border border-green-200 dark:border-slate-600">
-                  <Phone className="w-5 h-5 text-green-600" />
+                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-slate-700 rounded-lg border border-green-200 dark:border-slate-600">
+                  <Phone className="w-4 h-4 text-green-600" />
                   <div>
-                    <span className="font-medium text-gray-600 dark:text-gray-300">Phone:</span>
-                    <span className="ml-2 font-semibold text-gray-900 dark:text-white">{profile.contactInfo.contact_phone}</span>
+                    <span className="font-medium text-gray-600 dark:text-gray-300 text-sm">Phone:</span>
+                    <span className="ml-2 font-semibold text-gray-900 dark:text-white text-sm">{profile.contactInfo.contact_phone}</span>
                   </div>
                 </div>
               )}
               {profile.contactInfo.contact_email && (
-                <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-slate-700 rounded-lg border border-blue-200 dark:border-slate-600">
-                  <Mail className="w-5 h-5 text-blue-600" />
+                <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-slate-700 rounded-lg border border-blue-200 dark:border-slate-600">
+                  <Mail className="w-4 h-4 text-blue-600" />
                   <div>
-                    <span className="font-medium text-gray-600 dark:text-gray-300">Email:</span>
-                    <span className="ml-2 font-semibold text-gray-900 dark:text-white">{profile.contactInfo.contact_email}</span>
+                    <span className="font-medium text-gray-600 dark:text-gray-300 text-sm">Email:</span>
+                    <span className="ml-2 font-semibold text-gray-900 dark:text-white text-sm">{profile.contactInfo.contact_email}</span>
                   </div>
                 </div>
               )}
@@ -380,102 +373,134 @@ const ViewProfilePage = () => {
 
         {/* Health Condition */}
         {(profile.conditionCategory || profile.conditionName || profile.conditionDescription) && (
-          <Card className="shadow-xl border-0 bg-white/70 backdrop-blur-sm dark:bg-slate-800/70">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-slate-700 dark:to-slate-600 rounded-t-xl">
-              <CardTitle className="flex items-center gap-3 text-xl">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                  <Stethoscope className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm dark:bg-slate-800/70">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-slate-700 dark:to-slate-600 rounded-t-xl pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <div className="p-1.5 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                  <Stethoscope className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                 </div>
                 Health Condition
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6 p-8">
-              {profile.conditionCategory && (
-                <div className="flex items-center gap-3">
-                  <span className="font-medium text-gray-600 dark:text-gray-300">Category:</span>
-                  <span className="capitalize bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 text-purple-800 dark:text-purple-200 px-4 py-2 rounded-full text-sm font-semibold border border-purple-200 dark:border-purple-700">
-                    {profile.conditionCategory}
-                  </span>
-                </div>
-              )}
-              {profile.conditionName && (
-                <div className="p-4 bg-purple-50 dark:bg-slate-700 rounded-lg border border-purple-200 dark:border-slate-600">
-                  <span className="font-medium text-gray-600 dark:text-gray-300">Condition:</span>
-                  <span className="ml-2 font-semibold text-gray-900 dark:text-white">{profile.conditionName}</span>
-                </div>
-              )}
-              {profile.conditionDescription && (
-                <div className="space-y-2">
-                  <span className="font-medium text-gray-600 dark:text-gray-300">Description:</span>
-                  <div className="mt-2 text-gray-700 dark:text-gray-300 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-slate-700 dark:to-slate-600 p-6 rounded-xl border border-gray-200 dark:border-slate-600 leading-relaxed">
-                    {profile.conditionDescription}
+            <CardContent className="space-y-3 p-5">
+              <div className="grid gap-3">
+                {profile.conditionCategory && (
+                  <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Tag className="w-4 h-4 text-purple-600" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Category</span>
+                    </div>
+                    <div className="ml-6">
+                      <span className="capitalize bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-full text-sm font-medium border border-purple-200 dark:border-purple-700">
+                        {String(profile.conditionCategory)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {(profile.onsetYear || profile.resolvedYear) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                  {profile.onsetYear && (
-                    <div className="flex items-center gap-3 p-4 bg-orange-50 dark:bg-slate-700 rounded-lg border border-orange-200 dark:border-slate-600">
-                      <Clock className="w-5 h-5 text-orange-600" />
-                      <div>
-                        <span className="font-medium text-gray-600 dark:text-gray-300">Onset:</span>
-                        <span className="ml-2 font-semibold text-gray-900 dark:text-white">{formatDate(profile.onsetYear, profile.onsetMonth)}</span>
+                )}
+
+                {profile.conditionName && (
+                  <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Stethoscope className="w-4 h-4 text-blue-600" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Condition Name</span>
+                    </div>
+                    <div className="ml-6">
+                      <span className="text-base font-semibold text-gray-900 dark:text-white">{String(profile.conditionName)}</span>
+                    </div>
+                  </div>
+                )}
+
+                {profile.conditionDescription && (
+                  <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-gray-50/50 to-blue-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                    <div className="flex items-start gap-2 mb-1">
+                      <FileText className="w-4 h-4 text-gray-600 mt-0.5" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Description</span>
+                    </div>
+                    <div className="ml-6">
+                      <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                        {String(profile.conditionDescription)}
                       </div>
                     </div>
-                  )}
-                  {profile.resolvedYear && (
-                    <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-slate-700 rounded-lg border border-green-200 dark:border-slate-600">
-                      <Clock className="w-5 h-5 text-green-600" />
-                      <div>
-                        <span className="font-medium text-gray-600 dark:text-gray-300">Resolved:</span>
-                        <span className="ml-2 font-semibold text-gray-900 dark:text-white">{formatDate(profile.resolvedYear, profile.resolvedMonth)}</span>
+                  </div>
+                )}
+
+                {(profile.onsetYear || profile.resolvedYear) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {profile.onsetYear && (
+                      <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 bg-gradient-to-r from-orange-50/50 to-yellow-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Clock className="w-5 h-5 text-orange-600" />
+                          <span className="font-medium text-gray-700 dark:text-gray-300">Onset Date</span>
+                        </div>
+                        <div className="ml-8">
+                          <span className="text-lg font-semibold text-gray-900 dark:text-white">{formatDate(profile.onsetYear, profile.onsetMonth)}</span>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                    {profile.resolvedYear && (
+                      <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Clock className="w-5 h-5 text-green-600" />
+                          <span className="font-medium text-gray-700 dark:text-gray-300">Resolved Date</span>
+                        </div>
+                        <div className="ml-8">
+                          <span className="text-lg font-semibold text-gray-900 dark:text-white">{formatDate(profile.resolvedYear, profile.resolvedMonth)}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}
 
         {/* Symptoms */}
         {profile.symptoms && profile.symptoms.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
+          <Card className="shadow-lg border-0 bg-white/70 backdrop-blur-sm dark:bg-slate-800/70">
+            <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-slate-700 dark:to-slate-600 rounded-t-xl pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <div className="p-1.5 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                  <AlertTriangle className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                </div>
                 Symptoms
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
+            <CardContent className="space-y-3 p-5">
+              <div className="grid gap-3">
                 {profile.symptoms.map((symptom, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                  <div key={index} className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-orange-50/30 to-red-50/30 dark:from-slate-700/30 dark:to-slate-600/30">
                     <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium">{symptom.name_of_symptoms}</h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(symptom.severity)}`}>
-                        {symptom.severity}
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5" />
+                        <h4 className="font-medium text-base text-gray-900 dark:text-white">{String(symptom.name_of_symptoms || '')}</h4>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getSeverityColor(String(symptom.severity || ''))}`}>
+                        {String(symptom.severity || '')}
                       </span>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs ml-6">
                       {symptom.frequency && (
-                        <div>
-                          <span className="font-medium">Frequency:</span> {symptom.frequency}
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-3 h-3 text-muted-foreground" />
+                          <span className="font-medium text-gray-600 dark:text-gray-300">Frequency:</span>
+                          <span className="text-gray-900 dark:text-white capitalize">{String(symptom.frequency)}</span>
                         </div>
                       )}
                       {symptom.symptomDuration && (
-                        <div>
-                          <span className="font-medium">Duration:</span> {symptom.symptomDuration}
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-3 h-3 text-muted-foreground" />
+                          <span className="font-medium text-gray-600 dark:text-gray-300">Duration:</span>
+                          <span className="text-gray-900 dark:text-white">{String(symptom.symptomDuration)}</span>
                         </div>
                       )}
                     </div>
                     
                     {symptom.symptomNotes && (
-                      <div className="mt-2 text-sm">
-                        <span className="font-medium">Notes:</span>
-                        <p className="text-muted-foreground mt-1">{symptom.symptomNotes}</p>
+                      <div className="mt-2 ml-6">
+                        <span className="font-medium text-gray-600 dark:text-gray-300 text-xs">Notes:</span>
+                        <p className="text-gray-700 dark:text-gray-300 mt-1 text-xs leading-relaxed bg-white/50 dark:bg-slate-800/50 p-2 rounded border">{String(symptom.symptomNotes)}</p>
                       </div>
                     )}
                   </div>
@@ -487,92 +512,122 @@ const ViewProfilePage = () => {
 
         {/* Diagnosis */}
         {profile.diagnosis && profile.diagnosis.diagnosed && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5" />
+          <Card className="shadow-xl border-0 bg-white/70 backdrop-blur-sm dark:bg-slate-800/70">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-slate-700 dark:to-slate-600 rounded-t-xl">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                  <Activity className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
                 Diagnosis Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {profile.diagnosis.diagnosedBy && (
-                <div>
-                  <span className="font-medium">Diagnosed by:</span>
-                  <span className="ml-2">{profile.diagnosis.diagnosedBy}</span>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {profile.diagnosis.diagnosedYear && (
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-medium">Diagnosis Date:</span>
-                    <span>{profile.diagnosis.diagnosedYear}</span>
+            <CardContent className="space-y-4 p-8">
+              <div className="grid gap-4">
+                {profile.diagnosis.diagnosedBy && (
+                  <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                    <div className="flex items-center gap-3 mb-2">
+                      <User className="w-5 h-5 text-blue-600" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Diagnosed by</span>
+                    </div>
+                    <div className="ml-8">
+                      <span className="text-lg font-semibold text-gray-900 dark:text-white">{String(profile.diagnosis.diagnosedBy)}</span>
+                    </div>
                   </div>
                 )}
-                {profile.diagnosis.certainty && (
-                  <div className="flex items-center gap-2">
-                    <Target className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-medium">Certainty:</span>
-                    <span className="capitalize">{profile.diagnosis.certainty}</span>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {profile.diagnosis.diagnosedYear && (
+                    <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Calendar className="w-5 h-5 text-green-600" />
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Diagnosis Date</span>
+                      </div>
+                      <div className="ml-8">
+                        <span className="text-lg font-semibold text-gray-900 dark:text-white">{String(profile.diagnosis.diagnosedYear)}</span>
+                      </div>
+                    </div>
+                  )}
+                  {profile.diagnosis.certainty && (
+                    <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Target className="w-5 h-5 text-purple-600" />
+                        <span className="font-medium text-gray-700 dark:text-gray-300">Certainty</span>
+                      </div>
+                      <div className="ml-8">
+                        <span className="text-lg font-semibold text-gray-900 dark:text-white capitalize">{String(profile.diagnosis.certainty)}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {profile.diagnosis.diagnosisNotes && (
+                  <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 bg-gradient-to-r from-gray-50/50 to-blue-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                    <div className="flex items-start gap-3 mb-2">
+                      <FileText className="w-5 h-5 text-gray-600 mt-1" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Notes</span>
+                    </div>
+                    <div className="ml-8">
+                      <div className="text-gray-700 dark:text-gray-300 leading-relaxed bg-white/50 dark:bg-slate-800/50 p-4 rounded border">
+                        {String(profile.diagnosis.diagnosisNotes)}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
-              
-              {profile.diagnosis.diagnosisNotes && (
-                <div>
-                  <span className="font-medium">Notes:</span>
-                  <p className="mt-1 text-muted-foreground bg-gray-50 p-3 rounded">
-                    {profile.diagnosis.diagnosisNotes}
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
         )}
 
         {/* Treatments */}
         {profile.treatments && profile.treatments.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Pill className="w-5 h-5" />
+          <Card className="shadow-xl border-0 bg-white/70 backdrop-blur-sm dark:bg-slate-800/70">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-slate-700 dark:to-slate-600 rounded-t-xl">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                  <Pill className="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
                 Treatment History
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4 p-8">
               <div className="grid gap-4">
                 {profile.treatments.map((treatment, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium">
-                        {treatment.treatmentName || `Treatment ${index + 1}`}
-                      </h4>
+                  <div key={index} className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 bg-gradient-to-r from-green-50/30 to-emerald-50/30 dark:from-slate-700/30 dark:to-slate-600/30">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <Pill className="w-5 h-5 text-green-600 mt-1" />
+                        <h4 className="font-semibold text-lg text-gray-900 dark:text-white">
+                          {String(treatment.treatmentName || `Treatment ${index + 1}`)}
+                        </h4>
+                      </div>
                       {treatment.treatmentEffectiveness && (
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEffectivenessColor(treatment.treatmentEffectiveness)}`}>
-                          {treatment.treatmentEffectiveness}
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getEffectivenessColor(String(treatment.treatmentEffectiveness))}`}>
+                          {String(treatment.treatmentEffectiveness)}
                         </span>
                       )}
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm ml-8">
                       {treatment.treatmentType && (
-                        <div>
-                          <span className="font-medium">Type:</span> 
-                          <span className="ml-1 capitalize">{treatment.treatmentType}</span>
+                        <div className="flex items-center gap-2">
+                          <Tag className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium text-gray-600 dark:text-gray-300">Type:</span>
+                          <span className="text-gray-900 dark:text-white capitalize">{String(treatment.treatmentType)}</span>
                         </div>
                       )}
                       {treatment.treatmentDuration && (
-                        <div>
-                          <span className="font-medium">Duration:</span> {treatment.treatmentDuration}
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium text-gray-600 dark:text-gray-300">Duration:</span>
+                          <span className="text-gray-900 dark:text-white">{String(treatment.treatmentDuration)}</span>
                         </div>
                       )}
                     </div>
                     
                     {treatment.treatmentNotes && (
-                      <div className="mt-2 text-sm">
-                        <span className="font-medium">Notes:</span>
-                        <p className="text-muted-foreground mt-1">{treatment.treatmentNotes}</p>
+                      <div className="mt-3 ml-8">
+                        <span className="font-medium text-gray-600 dark:text-gray-300 text-sm">Notes:</span>
+                        <p className="text-gray-700 dark:text-gray-300 mt-1 text-sm leading-relaxed bg-white/50 dark:bg-slate-800/50 p-3 rounded border">{String(treatment.treatmentNotes)}</p>
                       </div>
                     )}
                   </div>
@@ -583,34 +638,50 @@ const ViewProfilePage = () => {
         )}
 
         {/* Profile Metadata */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
+        <Card className="shadow-xl border-0 bg-white/70 backdrop-blur-sm dark:bg-slate-800/70">
+          <CardHeader className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-slate-700 dark:to-slate-600 rounded-t-xl">
+            <CardTitle className="flex items-center gap-3 text-xl">
+              <div className="p-2 bg-gray-100 dark:bg-gray-900 rounded-lg">
+                <FileText className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+              </div>
               Profile Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium">Created:</span>
-                <span>{new Date(profile.createdAt).toLocaleDateString()}</span>
+          <CardContent className="space-y-4 p-8">
+            <div className="grid gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Clock className="w-5 h-5 text-blue-600" />
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Created</span>
+                  </div>
+                  <div className="ml-8">
+                    <span className="text-lg font-semibold text-gray-900 dark:text-white">{new Date(profile.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Clock className="w-5 h-5 text-green-600" />
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Last Updated</span>
+                  </div>
+                  <div className="ml-8">
+                    <span className="text-lg font-semibold text-gray-900 dark:text-white">{new Date(profile.updatedAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium">Last Updated:</span>
-                <span>{new Date(profile.updatedAt).toLocaleDateString()}</span>
-              </div>
+              
+              {profile.verificationMethod && (
+                <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Shield className="w-5 h-5 text-purple-600" />
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Verification Method</span>
+                  </div>
+                  <div className="ml-8">
+                    <span className="text-lg font-semibold text-gray-900 dark:text-white capitalize">{String(profile.verificationMethod).replace('_', ' ')}</span>
+                  </div>
+                </div>
+              )}
             </div>
-            
-            {profile.verificationMethod && (
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium">Verification Method:</span>
-                <span className="capitalize">{profile.verificationMethod.replace('_', ' ')}</span>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
