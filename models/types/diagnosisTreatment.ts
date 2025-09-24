@@ -27,7 +27,7 @@ export interface IDiagnosisTreatment extends Document {
 // Diagnosis schema
 export const DiagnosisSchema: Schema = new Schema({
   diagnosed: { type: Boolean, required: true, default: false },
-  diagnosedYear: { type: Number },
+  diagnoseYear: { type: Number },
   diagnosedBy: { type: String },
   certainty: { 
     type: String, 
@@ -41,7 +41,6 @@ export const DiagnosisSchema: Schema = new Schema({
 export const TreatmentSchema: Schema = new Schema({
   treatmentName: { type: String},
   treatmentType: {
-    type: String,
     enum: ['medication', 'therapy', 'surgery', 'lifestyle', 'alternative']
   },
   treatmentDuration: { type: String },

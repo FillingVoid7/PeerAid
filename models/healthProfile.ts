@@ -1,4 +1,4 @@
-import { Schema, Model, model, models } from "mongoose";
+import { Schema, Model, model } from "mongoose";
 import {
   IHealthProfile,
 } from "./types/profile.type";
@@ -87,7 +87,7 @@ const HealthProfileSchema: Schema = new Schema(
   }
 );
 
-const HealthProfile: Model<IHealthProfile> = models.HealthProfile || model<IHealthProfile>(
+const HealthProfile: Model<IHealthProfile> = model<IHealthProfile>(
   "HealthProfile",
   HealthProfileSchema
 );

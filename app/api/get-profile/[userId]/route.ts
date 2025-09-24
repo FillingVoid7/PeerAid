@@ -28,3 +28,51 @@ export async function GET (
     );
     }
 }
+
+export async function PATCH(
+    req: NextRequest,
+    {params} : {params: Promise<{userId:string}>}
+) {
+    try{
+         await connectDB();
+         const {userId} = await params;
+         const body = await req.json();
+         const updatedProfile = await HealthProfile.findOneAndUpdate(
+             {userId},
+             {...body},
+             {new:true}
+         );
+         return NextResponse.json(
+             {profile:updatedProfile},
+             {status:200}
+         );
+    }catch(error){
+        return NextResponse.json(
+            {message:'Error updating profile',error},
+            {status:500}
+        );
+    }
+}
+
+
+export async function DELETE(
+    req: NextRequest,
+    {params} : {params: Promise<{userId:string}>}
+) {
+    try{
+            await connectDB();
+            const {userId} = await params;
+            await HealthProfile.findOneAndDelete({userId});
+            return NextResponse.json(
+                {message:'Profile deleted successfully'},
+                {status:200}
+            );
+    }
+    catch(error){
+        return NextResponse.json(
+            {message:'Error deleting profile',error},
+            {status:500}
+        );
+    }
+}
+
