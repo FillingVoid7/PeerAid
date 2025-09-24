@@ -45,10 +45,10 @@ export default function ReviewStep({
     return `${year}`;
   };
   return (
-    <Card className="p-6 space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Review Your Profile</h2>
-        <p className="text-gray-600 mb-6">
+    <div className="space-y-8">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Review Your Profile</h2>
+        <p className="text-muted-foreground text-lg">
           Please review all the information before submitting your {role} profile.
         </p>
       </div>
@@ -174,18 +174,18 @@ export default function ReviewStep({
         </p>
       </div>
 
-      <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={onBack} disabled={isSubmitting}>
+      <div className="flex justify-between pt-8">
+        <Button variant="outline" onClick={onBack} disabled={isSubmitting} className="px-8 py-3 text-lg">
           Back
         </Button>
         <Button
           onClick={onSubmit}
           disabled={isSubmitting}
-          className="bg-green-600 hover:bg-green-700"
+          className="px-8 py-3 text-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
         >
           {isSubmitting ? 'Submitting...' : 'Submit Profile'}
         </Button>
       </div>
-    </Card>
+    </div>
   );
 }

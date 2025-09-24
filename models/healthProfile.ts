@@ -1,4 +1,4 @@
-import { Schema, Model, model } from "mongoose";
+import { Schema, Model, model, models } from "mongoose";
 import {
   IHealthProfile,
 } from "./types/profile.type";
@@ -21,16 +21,17 @@ const HealthProfileSchema: Schema = new Schema(
     },
 
     // Personal Information
-    age: { type: Number, min: 13, max: 120, required: true },
+    age: { type: Number, min: 13, max: 120 ,required:true},
     gender: {
       type: String,
-      required: true,
       enum: ["male", "female", "prefer not to say", "other"],
+      required:true
     },
     nationality: { type: String },
     location: { type: String },
     bloodType: {
       type: String,
+      required:true,
       enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
     },
     contactInfo: {
@@ -41,7 +42,6 @@ const HealthProfileSchema: Schema = new Schema(
     // Health Condition Information
     conditionCategory: {
       type: String,
-      required: true,
       enum: [
         "skin",
         "internal",
@@ -56,7 +56,7 @@ const HealthProfileSchema: Schema = new Schema(
     },
     conditionName: { type: String,  index: true },
     conditionDescription: { type: String },
-    onsetYear: { type: Number, required: true },
+    onsetYear: { type: Number },
     onsetMonth: { type: Number },
     resolvedYear: { type: Number },
     resolvedMonth: { type: Number },
@@ -65,7 +65,7 @@ const HealthProfileSchema: Schema = new Schema(
     symptoms: [SymptomSchema],
 
     // Diagnosis Information
-    diagnosis: { type: DiagnosisSchema, required: true },
+    diagnosis: { type: DiagnosisSchema },
 
     // Treatments
     treatments: [TreatmentSchema],
@@ -74,7 +74,7 @@ const HealthProfileSchema: Schema = new Schema(
     isVerified: { type: Boolean, default: false, index: true },
     verificationMethod: {
       type: String,
-      enum: ["self-Declared", "Community-Validated", "medical_document"],
+      enum: ["self-declared", "community-validated", "medical_document"],
     },
     verificationDate: { type: Date },
 
@@ -87,7 +87,7 @@ const HealthProfileSchema: Schema = new Schema(
   }
 );
 
-const HealthProfile: Model<IHealthProfile> = model<IHealthProfile>(
+const HealthProfile: Model<IHealthProfile> = models.HealthProfile || model<IHealthProfile>(
   "HealthProfile",
   HealthProfileSchema
 );

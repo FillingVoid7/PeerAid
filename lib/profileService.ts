@@ -22,6 +22,13 @@ export interface ProfileSetupResponse {
   profile?: any;
 }
 
+export interface ProfileCheckResponse {
+  success: boolean;
+  hasProfile: boolean;
+  profile?: any;
+  message?: string;
+}
+
 class ProfileService {
   private baseURL = '/api';
   async profileSetup(profileData: ProfileFormData): Promise<ProfileSetupResponse> {
@@ -62,7 +69,60 @@ class ProfileService {
     }
   }
 
+  async checkProfileExists(userId: string): Promise<ProfileCheckResponse> {
+    try {
+      const response = await axios.get(
+        `${this.baseURL}/get-profile/${userId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        }
+      );
 
+      // If we get a successful response, check if profile exists
+      const hasProfile = response.data.profile !== null && response.data.profile !== undefined;
+      
+      return {
+        success: true,
+        hasProfile,
+        profile: response.data.profile || null,
+      };
+    } catch (error) {
+      console.error('Profile check error:', error);
+      
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // If profile not found (404), user doesn't have a profile
+          if (error.response.status === 404) {
+            return {
+              success: true,
+              hasProfile: false,
+              profile: null,
+            };
+          }
+          return {
+            success: false,
+            hasProfile: false,
+            message: error.response.data?.message || 'Server error occurred',
+          };
+        } else if (error.request) {
+          return {
+            success: false,
+            hasProfile: false,
+            message: 'Network error - please check your connection',
+          };
+        }
+      }
+      
+      return {
+        success: false,
+        hasProfile: false,
+        message: 'An unexpected error occurred',
+      };
+    }
+  }
 
 saveDraft(draftData: any): void {
     try {

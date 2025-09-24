@@ -6,14 +6,14 @@ export interface IDiagnosis extends Document {
   diagnosed: boolean;
   diagnosedYear?: number; 
   diagnosedBy?: string;
-  certainty: CertaintyLevel;
+  certainty?: CertaintyLevel;
   diagnosisNotes?: string;
 }
 
 // Treatment interface
 export interface ITreatment extends Document {
   treatmentName?: string;
-  treatmentType: TreatmentType;
+  treatmentType?: TreatmentType;
   treatmentDuration?: string;
   treatmentEffectiveness?: EffectivenessLevel;
   treatmentNotes?: string;
@@ -27,7 +27,7 @@ export interface IDiagnosisTreatment extends Document {
 // Diagnosis schema
 export const DiagnosisSchema: Schema = new Schema({
   diagnosed: { type: Boolean, required: true, default: false },
-  diagnoseYear: { type: Number },
+  diagnosedYear: { type: Number },
   diagnosedBy: { type: String },
   certainty: { 
     type: String, 
@@ -39,16 +39,14 @@ export const DiagnosisSchema: Schema = new Schema({
 
 // Treatment schema
 export const TreatmentSchema: Schema = new Schema({
-  treatmentName: { type: String, required: true },
+  treatmentName: { type: String},
   treatmentType: {
     type: String,
-    required: true,
     enum: ['medication', 'therapy', 'surgery', 'lifestyle', 'alternative']
   },
-  treatmentDuration: { type: String, required: true },
+  treatmentDuration: { type: String },
   treatmentEffectiveness: {
     type: String,
-    required: true,
     enum: ['not effective', 'somewhat effective', 'effective', 'very effective']
   },
   treatmentNotes: { type: String }

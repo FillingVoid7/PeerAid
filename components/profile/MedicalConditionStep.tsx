@@ -41,36 +41,12 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
     onChange({ ...data, [field]: value });
   };
 
-  const formatOnsetDate = () => {
-    if (!data.onsetYear) return '';
-    
-    if (data.onsetMonth && data.onsetMonth !== '') {
-      const monthIndex = typeof data.onsetMonth === 'number' ? data.onsetMonth - 1 : parseInt(data.onsetMonth as string) - 1;
-      const monthName = monthNames[monthIndex];
-      return `${monthName} ${data.onsetYear}`;
-    }
-    
-    return `${data.onsetYear}`;
-  };
-
-  const formatResolvedDate = () => {
-    if (!data.onresolvedYear) return '';
-    
-    if (data.onresolvedMonth && data.onresolvedMonth !== '') {
-      const monthIndex = typeof data.onresolvedMonth === 'number' ? data.onresolvedMonth - 1 : parseInt(data.onresolvedMonth as string) - 1;
-      const monthName = monthNames[monthIndex];
-      return `${monthName} ${data.onresolvedYear}`;
-    }
-    
-    return `${data.onresolvedYear}`;
-  };
 
   return (
-    <main>
-    <Card className="p-6 space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Medical Condition</h2>
-        <p className="text-gray-600 mb-6">Please provide details about your health condition.</p>
+    <div className="space-y-8">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Medical Condition</h2>
+        <p className="text-muted-foreground text-lg">Please provide details about your health condition.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -79,7 +55,7 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
           <select
             value={data.conditionCategory || ''}
             onChange={(e) => handleInputChange('conditionCategory', e.target.value)}
-            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
+            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent text-foreground"
           >
             <option value="">Select a category</option>
             {conditionCategories.map((category) => (
@@ -91,7 +67,7 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Condition Name</label>
+          <label className="block text-sm font-medium mb-2">Condition Name (Optional)</label>
           <Input
             type="text"
             value={data.conditionName || ''}
@@ -117,9 +93,9 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
           <select
             value={data.onsetMonth || ''}
             onChange={(e) => handleInputChange('onsetMonth', e.target.value ? parseInt(e.target.value) : '')}
-            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
+            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent text-foreground"
           >
-            <option value="">Select month (optional)</option>
+            <option value="">Select month</option>
             {monthNames.map((month, index) => (
               <option key={month} value={index + 1}>
                 {month}
@@ -128,14 +104,6 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
           </select>
         </div>
 
-        {(data.onsetYear || data.onsetMonth) && (
-          <div>
-            <label className="block text-sm font-medium mb-2">Formatted Onset Date</label>
-            <div className="w-full p-2 border border-muted rounded-md bg-muted text-muted-foreground">
-              {formatOnsetDate() || 'Please enter a year'}
-            </div>
-          </div>
-        )}
 
         <div>
           <label className="block text-sm font-medium mb-2">Resolved Year</label>
@@ -154,9 +122,9 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
           <select
             value={data.onresolvedMonth || ''}
             onChange={(e) => handleInputChange('onresolvedMonth', e.target.value ? parseInt(e.target.value) : '')}
-            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent"
+            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent text-foreground"
           >
-            <option value="">Select month (optional)</option>
+            <option value="">Select month</option>
             {monthNames.map((month, index) => (
               <option key={month} value={index + 1}>
                 {month}
@@ -165,19 +133,11 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
           </select>
         </div>
 
-        {(data.onresolvedYear || data.onresolvedMonth) && (
-          <div>
-            <label className="block text-sm font-medium mb-2">Formatted Resolved Date</label>
-            <div className="w-full p-2 border border-muted rounded-md bg-muted text-muted-foreground">
-              {formatResolvedDate() || 'Please enter a year'}
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-2">Condition Description</label>
+          <label className="block text-sm font-medium mb-2">Condition Description (Optional)</label>
           <textarea
             value={data.conditionDescription || ''}
             onChange={(e) => handleInputChange('conditionDescription', e.target.value)}
@@ -188,20 +148,19 @@ export default function MedicalConditionStep({ data, onChange, onNext, onBack }:
         </div>
       </div>
 
-      <div className="flex justify-between pt-6">
+      <div className="flex justify-between pt-8">
         {onBack && (
-          <Button variant="outline" onClick={onBack}>
+          <Button variant="outline" onClick={onBack} className="px-8 py-3 text-lg">
             Back
           </Button>
         )}
         <Button
           onClick={onNext}
-          className="ml-auto"
+          className="ml-auto px-8 py-3 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
         >
           Next
         </Button>
       </div>
-    </Card>
-    </main>
+    </div>
   );
 }

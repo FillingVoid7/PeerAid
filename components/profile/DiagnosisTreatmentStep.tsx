@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CertaintyLevel, TreatmentType, EffectivenessLevel } from '@/models/types/profile.type';
@@ -34,11 +33,10 @@ export default function DiagnosisTreatmentStep({ data, onChange, onNext, onBack 
   };
 
   return (
-    <main>
-    <Card className="p-6 space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Diagnosis & Treatment Information</h2>
-        <p className="text-gray-600 mb-6">Please provide information about your diagnosis and any treatments you've tried.</p>
+    <div className="space-y-8">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Diagnosis & Treatment Information</h2>
+        <p className="text-muted-foreground text-lg">Please provide information about your diagnosis and any treatments you've tried.</p>
       </div>
 
       {/* Diagnosis Section */}
@@ -72,34 +70,37 @@ export default function DiagnosisTreatmentStep({ data, onChange, onNext, onBack 
         </div>
 
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Diagnosed By</label>
-            <Input
-              type="text"
-              value={data.diagnosedBy || ''}
-              onChange={(e) => handleInputChange('diagnosedBy', e.target.value)}
-              placeholder="e.g., Dr. Smith, City Hospital"
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-medium mb-2">Diagnosed By (Optional)</label>
+          <Input
+            type="text"
+            value={data.diagnosedBy || ''}
+            onChange={(e) => handleInputChange('diagnosedBy', e.target.value)}
+            placeholder="e.g., Dr. Smith, City Hospital"
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Diagnosed By</label>
-            <Input
-              type="text"
-              value={data.diagnosedYear || ''}
-              onChange={(e) => handleInputChange('diagnosedYear', e.target.value)}
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-medium mb-2">Diagnosed Year (Optional)</label>
+          <Input
+            type="number"
+            min="1900"
+            max={new Date().getFullYear()}
+            value={data.diagnosedYear || ''}
+            onChange={(e) => handleInputChange('diagnosedYear', parseInt(e.target.value) || '')}
+            placeholder="e.g., 2023"
+          />
+        </div>
 
 
 
 
         <div>
-          <label className="block text-sm font-medium mb-2">Certainty Level</label>
+          <label className="block text-sm font-medium mb-2">Certainty Level (Optional)</label>
           <select
             value={data.certainty || ''}
             onChange={(e) => handleInputChange('certainty', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent text-foreground"
           >
             <option value="">Select certainty level</option>
             {certaintyOptions.map((option) => (
@@ -114,13 +115,13 @@ export default function DiagnosisTreatmentStep({ data, onChange, onNext, onBack 
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Diagnosis Notes</label>
+          <label className="block text-sm font-medium mb-2">Diagnosis Notes (Optional)</label>
           <textarea
             value={data.diagnosisNotes || ''}
             onChange={(e) => handleInputChange('diagnosisNotes', e.target.value)}
             placeholder="Any additional information about your diagnosis..."
             rows={3}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-background text-foreground"
           />
         </div>
       </div>
@@ -131,7 +132,7 @@ export default function DiagnosisTreatmentStep({ data, onChange, onNext, onBack 
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Treatment Name</label>
+            <label className="block text-sm font-medium mb-2">Treatment Name (Optional)</label>
             <Input
               type="text"
               value={data.treatmentName || ''}
@@ -141,11 +142,11 @@ export default function DiagnosisTreatmentStep({ data, onChange, onNext, onBack 
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Treatment Type</label>
+            <label className="block text-sm font-medium mb-2">Treatment Type (Optional)</label>
             <select
               value={data.treatmentType || ''}
               onChange={(e) => handleInputChange('treatmentType', e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent text-foreground"
             >
               <option value="">Select treatment type</option>
               {treatmentTypes.map((option) => (
@@ -157,7 +158,7 @@ export default function DiagnosisTreatmentStep({ data, onChange, onNext, onBack 
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Treatment Duration</label>
+            <label className="block text-sm font-medium mb-2">Treatment Duration (Optional)</label>
             <Input
               type="text"
               value={data.treatmentDuration || ''}
@@ -167,11 +168,11 @@ export default function DiagnosisTreatmentStep({ data, onChange, onNext, onBack 
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Treatment Effectiveness</label>
+            <label className="block text-sm font-medium mb-2">Treatment Effectiveness (Optional)</label>
             <select
               value={data.treatmentEffectiveness || ''}
               onChange={(e) => handleInputChange('treatmentEffectiveness', e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent text-foreground"
             >
               <option value="">Select effectiveness</option>
               {effectivenessOptions.map((option) => (
@@ -184,31 +185,30 @@ export default function DiagnosisTreatmentStep({ data, onChange, onNext, onBack 
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Treatment Notes</label>
+          <label className="block text-sm font-medium mb-2">Treatment Notes (Optional)</label>
           <textarea
             value={data.treatmentNotes || ''}
             onChange={(e) => handleInputChange('treatmentNotes', e.target.value)}
             placeholder="Any additional details about your treatment..."
             rows={3}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-background text-foreground"
           />
         </div>
       </div>
 
-      <div className="flex justify-between pt-6">
+      <div className="flex justify-between pt-8">
         {onBack && (
-          <Button variant="outline" onClick={onBack}>
+          <Button variant="outline" onClick={onBack} className="px-8 py-3 text-lg">
             Back
           </Button>
         )}
         <Button
           onClick={onNext}
-          className="ml-auto"
+          className="ml-auto px-8 py-3 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
         >
           Next
         </Button>
       </div>
-    </Card>
-    </main>
+    </div>
   );
 }

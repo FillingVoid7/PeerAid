@@ -20,12 +20,12 @@ export interface IHealthProfileBase{
     role:UserRole;
 
     //Personal information
-    age?:number;
+    age:number;
     Nationality?:string;
     Location?:string;
-    gender?:'male' | 'female' | 'Prefer not to say' | 'other';
-    bloodType?:'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'unknown';
-    contactInfo?:{
+    gender:'male' | 'female' | 'Prefer not to say' | 'other';
+    bloodType:'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | 'unknown';
+    contactInfo:{
         contact_phone?:string;
         contact_email?:string;
     }

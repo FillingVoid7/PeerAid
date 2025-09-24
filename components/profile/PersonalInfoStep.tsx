@@ -8,8 +8,8 @@ export interface PersonalInfoData {
   gender: 'male' | 'female' | 'prefer not to say' | 'other' | '';
   nationality?: string;
   location?: string;
-  bloodType?: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | '';
-  contactInfo?: {
+  bloodType: 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | 'O+' | 'O-' | '';
+  contactInfo: {
     contact_phone?: string;
     contact_email?: string;
   };
@@ -38,17 +38,16 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
   };
 
   return (
-    <main>
-    <Card className="p-6 space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Personal Information</h2>
-        <p className="text-gray-600 mb-6">Please provide your basic personal details.</p>
+    <div className="space-y-8">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Personal Information</h2>
+        <p className="text-muted-foreground text-lg">Please provide your basic personal details.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-2">
-            Age <span className="text-red-500">*</span>
+            Age
           </label>
           <Input
             type="number"
@@ -62,13 +61,12 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
 
         <div>
           <label className="block text-sm font-medium mb-2">
-            Gender <span className="text-red-500">*</span>
+            Gender 
           </label>
           <select
             value={data.gender}
             onChange={(e) => handleInputChange('gender', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            
+            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent text-foreground"
           >
             <option value="">Select gender</option>
             <option value="male">Male</option>
@@ -79,7 +77,7 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Nationality</label>
+          <label className="block text-sm font-medium mb-2">Nationality (Optional)</label>
           <Input
             type="text"
             value={data.nationality || ''}
@@ -89,7 +87,7 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Location</label>
+          <label className="block text-sm font-medium mb-2">Location (Optional)</label>
           <Input
             type="text"
             value={data.location || ''}
@@ -103,7 +101,7 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
           <select
             value={data.bloodType || ''}
             onChange={(e) => handleInputChange('bloodType', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent text-foreground"
           >
             <option value="">Select blood type</option>
             <option value="A+">A+</option>
@@ -118,12 +116,12 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
         </div>
       </div>
 
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Contact Information</h3>
+      <div className="space-y-6">
+        <h3 className="text-xl font-semibold text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Contact Information</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Phone Number</label>
+            <label className="block text-sm font-medium mb-2">Phone Number (Optional)</label>
             <Input
               type="tel"
               value={data.contactInfo?.contact_phone || ''}
@@ -133,7 +131,7 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
+            <label className="block text-sm font-medium mb-2">Email (Optional)</label>
             <Input
               type="email"
               value={data.contactInfo?.contact_email || ''}
@@ -144,20 +142,19 @@ export default function PersonalInfoStep({ data, onChange, onNext, onBack }: Per
         </div>
       </div>
 
-      <div className="flex justify-between pt-6">
+      <div className="flex justify-between pt-8">
         {onBack && (
-          <Button variant="outline" onClick={onBack}>
+          <Button variant="outline" onClick={onBack} className="px-8 py-3 text-lg">
             Back
           </Button>
         )}
         <Button
           onClick={onNext}
-          className="ml-auto"
+          className="ml-auto px-8 py-3 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
         >
           Next
         </Button>
       </div>
-    </Card>
-    </main>
+    </div>
   );
 }

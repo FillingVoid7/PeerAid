@@ -29,11 +29,10 @@ export default function SymptomsStep({ data, onChange, onNext, onBack }: Symptom
 
 
   return (
-    <main>
-    <Card className="p-6 space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Symptoms</h2>
-        <p className="text-gray-600 mb-6">Please provide information about your symptoms.</p>
+    <div className="space-y-8">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Symptoms</h2>
+        <p className="text-muted-foreground text-lg">Please provide information about your symptoms.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -53,7 +52,7 @@ export default function SymptomsStep({ data, onChange, onNext, onBack }: Symptom
           <select
             value={data.severity || ''}
             onChange={(e) => handleInputChange('severity', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent text-foreground"
           >
             <option value="">Select severity</option>
             {severityOptions.map((option) => (
@@ -65,11 +64,11 @@ export default function SymptomsStep({ data, onChange, onNext, onBack }: Symptom
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Frequency</label>
+          <label className="block text-sm font-medium mb-2">Frequency (Optional) </label>
           <select
             value={data.frequency || ''}
             onChange={(e) => handleInputChange('frequency', e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-ring focus:border-transparent text-foreground"
           >
             <option value="">Select frequency</option>
             {frequencyOptions.map((option) => (
@@ -81,7 +80,7 @@ export default function SymptomsStep({ data, onChange, onNext, onBack }: Symptom
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Symptom Duration</label>
+          <label className="block text-sm font-medium mb-2">Symptom Duration (Optional)</label>
           <Input
             type="text"
             value={data.symptomDuration || ''}
@@ -91,31 +90,30 @@ export default function SymptomsStep({ data, onChange, onNext, onBack }: Symptom
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Symptom Notes</label>
+          <label className="block text-sm font-medium mb-2">Symptom Notes (Optional)</label>
           <textarea
             value={data.symptomNotes || ''}
             onChange={(e) => handleInputChange('symptomNotes', e.target.value)}
             placeholder="Any additional details about your symptoms..."
             rows={4}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-background text-foreground"
           />
         </div>
       </div>
 
-      <div className="flex justify-between pt-6">
+      <div className="flex justify-between pt-8">
         {onBack && (
-          <Button variant="outline" onClick={onBack}>
+          <Button variant="outline" onClick={onBack} className="px-8 py-3 text-lg">
             Back
           </Button>
         )}
         <Button
           onClick={onNext}
-          className="ml-auto"
+          className="ml-auto px-8 py-3 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
         >
           Next
         </Button>
       </div>
-    </Card>
-    </main>
+    </div>
   );
 }

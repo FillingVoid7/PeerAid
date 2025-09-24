@@ -13,13 +13,17 @@ import ProgressIndicator, { defaultSteps } from "@/components/profile/progressIn
 import { UserRole } from "@/models/types/profile.type";
 import { LoadingSpinner } from "@/components/isLoading";
 import profileService from "@/lib/profileService";
+import ProfileExistsDialog from "@/components/profile/ProfileExistsDialog";
 
 export default function ProfileSetup() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  console.log('data received from session:', session);
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
+  const [showProfileExistsDialog, setShowProfileExistsDialog] = useState(false);
   
   const [personalInfo, setPersonalInfo] = useState<PersonalInfoData>({
     age: '',
@@ -57,6 +61,26 @@ export default function ProfileSetup() {
       router.push("/auth/login");
       return;
     }
+
+    // Check if user already has a profile
+    const checkExistingProfile = async () => {
+      if (session?.user?.id) {
+        try {
+          const result = await profileService.checkProfileExists(session.user.id);
+          if (result.success && result.hasProfile) {
+            setShowProfileExistsDialog(true);
+          }
+        } catch (error) {
+          console.error('Error checking profile:', error);
+        } finally {
+          setIsCheckingProfile(false);
+        }
+      } else {
+        setIsCheckingProfile(false);
+      }
+    };
+
+    checkExistingProfile();
   }, [session, status, router]);
 
   useEffect(() => {
@@ -106,23 +130,40 @@ export default function ProfileSetup() {
     setCurrentStep(0);
   };
 
+  const validateStep = (stepIndex: number) => {
+    switch (stepIndex) {
+      case 0: // Personal Info
+        return personalInfo.age && personalInfo.gender && personalInfo.bloodType;
+      case 1: // Medical Condition
+        return medicalCondition.conditionCategory && medicalCondition.onsetYear;
+      case 2: // Symptoms
+        return symptoms.name_of_symptoms && symptoms.severity;
+      case 3: // Diagnosis & Treatment
+        return diagnosisTreatment.treatmentType;
+      default:
+        return true;
+    }
+  };
+
+  const validateCurrentStep = () => validateStep(currentStep);
+
   const handleNext = () => {
+    if (!validateCurrentStep()) {
+      toast.error('Please fill in all required fields', {
+        description: 'Some required information is missing. Please complete all marked fields.',
+        duration: 3000,
+      });
+      return;
+    }
+
     if (currentStep < defaultSteps.length - 1) {
       setCurrentStep(currentStep + 1);
-      toast.success('Step completed!', {
-        description: `Moving to ${defaultSteps[currentStep + 1].name}`,
-        duration: 2000,
-      });
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
-      toast.info('Going back', {
-        description: `Returned to ${defaultSteps[currentStep - 1].name}`,
-        duration: 2000,
-      });
     }
   };
 
@@ -172,13 +213,14 @@ export default function ProfileSetup() {
     }
   };
 
-  if (status === "loading") {
+  if (status === "loading" || isCheckingProfile) {
     return <LoadingSpinner />;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-background to-indigo-50 dark:from-slate-900 dark:via-background dark:to-indigo-950">
       {/* Background Pattern */}
+      <div className={`${showProfileExistsDialog ? 'blur-sm pointer-events-none' : ''}`}>
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%234F46E5' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -187,14 +229,11 @@ export default function ProfileSetup() {
 
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full mb-6 shadow-lg">
-            <span className="text-3xl">🏥</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
+        <div className="text-center mb-16">
+          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6 leading-tight">
             Create Your Health Profile
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Share your health journey to connect with others and build a supportive community. 
             Your story can help others facing similar challenges.
           </p>
@@ -208,30 +247,61 @@ export default function ProfileSetup() {
         {selectedRole && (
           <>
             {/* Progress Indicator */}
-            <ProgressIndicator currentStep={currentStep} />
+            <ProgressIndicator 
+              currentStep={currentStep} 
+              onStepClick={(stepIndex) => {
+                if (stepIndex < currentStep) {
+                  setCurrentStep(stepIndex);
+                  return;
+                }
+                
+                if (stepIndex > currentStep) {
+                  let canNavigate = true;
+                  for (let i = 0; i < stepIndex; i++) {
+                    if (!validateStep(i)) {
+                      canNavigate = false;
+                      break;
+                    }
+                  }
+                  
+                  if (canNavigate) {
+                    setCurrentStep(stepIndex);
+                  } else {
+                    toast.error('Please complete previous steps first', {
+                      description: 'All required fields in previous steps must be filled.',
+                      duration: 3000,
+                    });
+                  }
+                }
+              }}
+            />
 
             {/* Form Container */}
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
+            <div className="max-w-5xl mx-auto">
+              <div className="bg-card rounded-3xl shadow-2xl border border-border overflow-hidden backdrop-blur-sm">
                 {/* Step Header */}
-                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-6">
+                <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 px-10 py-8">
                   <div className="flex items-center justify-between text-white">
                     <div>
-                      <h2 className="text-2xl font-bold flex items-center gap-3">
-                        <span className="text-3xl">{defaultSteps[currentStep].icon}</span>
+                      <h2 className="text-3xl font-bold flex items-center gap-4">
+                        <span className="text-4xl font-black bg-white/20 rounded-xl px-3 py-2 backdrop-blur-sm">
+                          {defaultSteps[currentStep].icon}
+                        </span>
                         {defaultSteps[currentStep].name}
                       </h2>
-                      <p className="text-blue-100 mt-1">{defaultSteps[currentStep].description}</p>
+                      <p className="text-blue-100 mt-2 text-lg">{defaultSteps[currentStep].description}</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-bold">{currentStep + 1}</div>
-                      <div className="text-sm text-blue-200">of {defaultSteps.length}</div>
+                      <div className="text-4xl font-black bg-white/20 rounded-xl px-4 py-3 backdrop-blur-sm">
+                        {currentStep + 1}
+                      </div>
+                      <div className="text-sm text-blue-200 mt-2 font-medium">of {defaultSteps.length}</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Form Steps */}
-                <div className="p-8">
+                <div className="p-10">
                   {currentStep === 0 && (
                     <PersonalInfoStep
                       data={personalInfo}
@@ -284,13 +354,13 @@ export default function ProfileSetup() {
             </div>
 
             {/* Help Section */}
-            <div className="max-w-4xl mx-auto mt-8">
-              <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
-                <div className="flex items-start gap-4">
-                  <div className="text-2xl">💡</div>
+            <div className="max-w-5xl mx-auto mt-12">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 border border-blue-200 dark:border-blue-800 rounded-2xl p-8 shadow-lg">
+                <div className="flex items-start gap-6">
+                  <div className="text-3xl bg-blue-100 dark:bg-blue-900 rounded-full p-3">💡</div>
                   <div>
-                    <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Need Help?</h3>
-                    <p className="text-blue-700 dark:text-blue-300 text-sm">
+                    <h3 className="font-bold text-blue-900 dark:text-blue-100 mb-3 text-lg">Need Help?</h3>
+                    <p className="text-blue-700 dark:text-blue-300 leading-relaxed">
                       All information is optional and can be updated later. Focus on sharing what you're comfortable with. 
                       Your privacy and security are our top priorities.
                     </p>
@@ -301,6 +371,14 @@ export default function ProfileSetup() {
           </>
         )}
       </div>
+      
+      </div>
+
+      {/* Profile Exists Dialog */}
+      <ProfileExistsDialog 
+        isOpen={showProfileExistsDialog}
+        onClose={() => setShowProfileExistsDialog(false)}
+      />
     </div>
   );
 }

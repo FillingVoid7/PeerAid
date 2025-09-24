@@ -51,25 +51,25 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user }) {
       await connectDB();
-      
-      const existingUser = await User.findOne({ email: token.email });
-      
+      const existingUser = await User.findOne({ email: user.email });
       if (!existingUser) {
         const alias = await generateAnonymousAlias();
-        const newUser = await User.create({
-          email: token.email,
-          alias: alias,
-        });
-        console.log('created new user:', newUser);
-        token.id = newUser._id.toString();
-        token.alias = newUser.alias;
+        const created = await User.create({ email: user.email!, alias });
+        (user as any).dbId = created._id.toString();
+        (user as any).alias = created.alias;
       } else {
-        token.id = existingUser._id.toString();
-        token.alias = existingUser.alias;
+        (user as any).dbId = existingUser._id.toString();
+        (user as any).alias = existingUser.alias;
       }
-      
+      return true;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = (user as any).dbId as string;
+        token.alias = (user as any).alias as string;
+      }
       return token;
     },
     async session({ session, token }) {
