@@ -195,10 +195,11 @@ export default function UpdateProfilePage() {
               Back to Profile
             </Button>
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Edit Your Health Profile
-          </h1>
-          <p className="text-muted-foreground mt-2">Update your health information</p>
+          <div className='flex flex-col items-center justify-center text-center space-y-4'>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Edit Your Health Profile
+            </h1>
+          </div>
         </div>
 
         <div className="max-w-4xl mx-auto space-y-6">

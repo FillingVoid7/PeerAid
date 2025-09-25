@@ -41,6 +41,7 @@ export const DiagnosisSchema: Schema = new Schema({
 export const TreatmentSchema: Schema = new Schema({
   treatmentName: { type: String},
   treatmentType: {
+    type: String,
     enum: ['medication', 'therapy', 'surgery', 'lifestyle', 'alternative']
   },
   treatmentDuration: { type: String },

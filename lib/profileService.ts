@@ -114,7 +114,6 @@ class ProfileService {
         }
       );
 
-      // If we get a successful response, check if profile exists
       const hasProfile = response.data.profile !== null && response.data.profile !== undefined;
       
       return {
@@ -127,7 +126,6 @@ class ProfileService {
       
       if (axios.isAxiosError(error)) {
         if (error.response) {
-          // If profile not found (404), user doesn't have a profile
           if (error.response.status === 404) {
             return {
               success: true,
