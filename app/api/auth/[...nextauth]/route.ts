@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import {faker} from '@faker-js/faker';
 import User from "@/models/User";
@@ -35,7 +35,7 @@ async function generateAnonymousAlias() {
   return `user${faker.number.int({ min: 100, max: 999 })}${Date.now().toString().slice(-6)}`.toLowerCase();
 }
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
@@ -80,6 +80,8 @@ const handler = NextAuth({
       return session;
     },
   },
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
