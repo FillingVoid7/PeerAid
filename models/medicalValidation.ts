@@ -14,6 +14,9 @@ export interface IMedicalValidation extends Document {
         publicId: string;  // for deletion/updation
         url: string;
         type: "image" | "video" | "pdf";
+        fileName?: string;
+        fileSize?: number;
+        format?: string;
     };
 
     verificationInfo: {

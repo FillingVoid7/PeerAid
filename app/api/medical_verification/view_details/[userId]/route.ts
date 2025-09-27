@@ -87,7 +87,26 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const updateData: any = {...body};
+        const updateData: any = {};
+        
+        if (body.document_metadata) {
+            updateData.document_metadata = {
+                ...body.document_metadata,
+                userId: userId 
+            };
+        }
+        
+        if (body.uploadedFile) {
+            updateData.uploadedFile = body.uploadedFile;
+        }
+        
+        if (body.verificationInfo) {
+            updateData.verificationInfo = body.verificationInfo;
+        }
+        
+        if (body.isConsentChecked !== undefined) {
+            updateData.isConsentChecked = body.isConsentChecked;
+        }
 
         const updatedReport = await MedicalValidation.findOneAndUpdate(
             {"document_metadata.userId":userId},
