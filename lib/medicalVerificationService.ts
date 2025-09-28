@@ -52,6 +52,32 @@ export interface MedicalReportResponse {
   message?: string;
 }
 
+export interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+  limit: number;
+}
+
+export interface StatusCounts {
+  total: number;
+  pending: number;
+  verified: number;
+  rejected: number;
+}
+
+export interface AllMedicalReportsResponse {
+  success: boolean;
+  data?: {
+    reportsByUserId: { [key: string]: IMedicalValidation[] };
+    totalUsers: number;
+    counts: StatusCounts;
+  };
+  message?: string;
+}
+
 class MedicalVerificationService {
   private baseURL = '/api/medical_verification';
 
@@ -315,6 +341,90 @@ class MedicalVerificationService {
     }
 
     return { isValid: true };
+  }
+
+  // Get all medical reports for admin verification 
+  async getAllMedicalReports(
+    status?: 'pending' | 'verified' | 'rejected'
+  ): Promise<AllMedicalReportsResponse> {
+    try {
+      const params = new URLSearchParams();
+
+      if (status) {
+        params.append('status', status);
+      }
+
+      const url = params.toString() 
+        ? `${this.baseURL}/view_all_details?${params.toString()}`
+        : `${this.baseURL}/view_all_details`;
+
+      const response = await axios.get(
+        url,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: 15000,
+        }
+      );
+
+      return {
+        success: true,
+        data: response.data.data,
+      };
+    } catch (error) {
+      console.error('Get all medical reports error:', error);
+      
+      if (axios.isAxiosError(error)) {
+        return {
+          success: false,
+          message: error.response?.data?.error || error.response?.data?.message || 'Failed to fetch reports',
+        };
+      }
+      
+      return {
+        success: false,
+        message: 'An unexpected error occurred while fetching reports',
+      };
+    }
+  }
+
+  // Update verification status (Admin only)
+  async updateVerificationStatus(
+    userId: string, 
+    verificationStatus: 'pending' | 'verified' | 'rejected'
+  ): Promise<MedicalVerificationResponse> {
+    try {
+      const response = await axios.post<MedicalVerificationResponse>(
+        `${this.baseURL}/verify_details`,
+        {
+          userId,
+          verificationStatus,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('Verification status update error:', error);
+      
+      if (axios.isAxiosError(error)) {
+        return {
+          success: false,
+          message: error.response?.data?.error || error.response?.data?.message || 'Verification update failed',
+        };
+      }
+      
+      return {
+        success: false,
+        message: 'An unexpected error occurred during verification update',
+      };
+    }
   }
 }
 
