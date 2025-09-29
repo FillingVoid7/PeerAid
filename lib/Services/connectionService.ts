@@ -55,7 +55,6 @@ export class ConnectionService {
     connectionRequest.status = 'accepted';
     await connectionRequest.save();
 
-    // Create chat conversation
     const [seekerProfile, guideProfile] = await Promise.all([
       HealthProfile.findOne({ userId: connectionRequest.fromUser }),
       HealthProfile.findOne({ userId: connectionRequest.toUser })
@@ -69,16 +68,15 @@ export class ConnectionService {
     return { connectionRequest };
   }
 
-  /**
-   * Get all pending connection requests for a user
-   */
+  // Get all pending connection requests for a user
+
   async getPendingRequests(userId: Types.ObjectId, role: 'seeker' | 'guide') {
     const query = role === 'guide' 
       ? { toUser: userId, status: 'pending' }
       : { fromUser: userId, status: 'pending' };
 
     return await ConnectionRequest.find(query)
-      .populate(role === 'guide' ? 'fromUser' : 'toUser', 'randomUsername displayName showProfile avatar')
+      .populate(role === 'guide' ? 'fromUser' : 'toUser')
       .sort({ createdAt: -1 });
   }
 
