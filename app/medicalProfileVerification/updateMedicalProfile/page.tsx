@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import medicalVerificationService, { UploadedFile, FileUploadResponse } from '@/lib/medicalVerificationService';
+import medicalVerificationService, { UploadedFile, FileUploadResponse } from '@/lib/Services/medicalVerificationService';
 import { IMedicalValidation } from '@/models/medicalValidation';
 
 const mediaTypes = [

@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 import HealthProfile from '@/models/healthProfile';
-import { ISymptom } from '../models/types/symptom';
+import { ISymptom } from '../../models/types/symptom';
 
 export interface MatchResult {
   guideProfile: any;

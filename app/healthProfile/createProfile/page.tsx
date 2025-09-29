@@ -12,7 +12,7 @@ import ReviewStep from "@/components/profile/ReviewStep";
 import ProgressIndicator, { defaultSteps } from "@/components/profile/progressIndication";
 import { UserRole } from "@/models/types/profile.type";
 import { LoadingSpinner } from "@/components/isLoading";
-import profileService from "@/lib/profileService";
+import profileService from "@/lib/Services/profileService";
 import ProfileExistsDialog from "@/components/profile/ProfileExistsDialog";
 
 export default function ProfileSetup() {

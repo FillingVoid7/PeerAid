@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import medicalVerificationService from '@/lib/medicalVerificationService';
+import medicalVerificationService from '@/lib/Services/medicalVerificationService';
 import { IMedicalValidation } from '@/models/medicalValidation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

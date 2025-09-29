@@ -12,7 +12,7 @@ import medicalVerificationService, {
   MedicalVerificationFormData, 
   UploadedFile, 
   FileUploadResponse 
-} from '@/lib/medicalVerificationService';
+} from '@/lib/Services/medicalVerificationService';
 
 interface FormData {
   document_metadata: {

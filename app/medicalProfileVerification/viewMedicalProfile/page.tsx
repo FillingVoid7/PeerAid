@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/dialog';
-import medicalVerificationService from '@/lib/medicalVerificationService';
+import medicalVerificationService from '@/lib/Services/medicalVerificationService';
 import { IMedicalValidation } from '@/models/medicalValidation';
 
 export default function ViewMedicalProfile() {
