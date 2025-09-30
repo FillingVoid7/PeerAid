@@ -42,7 +42,7 @@ export class MatchingService {
     );
     
     return matches
-      .filter(match => match.matchScore > 0.3) // Minimum threshold
+      .filter(match => match.matchScore > 0.2) // Lowered minimum threshold to be more inclusive
       .sort((a, b) => b.matchScore - a.matchScore)
       .slice(0, limit);
   }
@@ -67,8 +67,9 @@ export class MatchingService {
   private async findPotentialGuides(seeker: any) {
     return await HealthProfile.find({
       role: 'guide',
-      conditionCategory: seeker.conditionCategory,
-      isVerified: true
+      conditionCategory: seeker.conditionCategory
+      // Removed isVerified: true to allow matching with unverified guides
+      // Verification status is still considered in the scoring algorithm
     }).populate('userId');
   }
 
@@ -222,7 +223,7 @@ export class MatchingService {
   // Calculate verification score
 
   private calculateVerificationScore(guide: any): number {
-    if (!guide.isVerified) return 0;
+    if (!guide.isVerified) return 0.1; // Give small score to unverified guides instead of 0
 
     const verificationScores = {
       'medical_document': 1.0,
