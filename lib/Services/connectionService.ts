@@ -2,8 +2,14 @@ import { Types } from 'mongoose';
 import HealthProfile from '@/models/healthProfile';
 import ConnectionRequest, { IConnectionRequest } from '@/models/connectionRequest';
 import { MatchingService } from './matchingService';
+import { NotificationService } from './notificationService';
 
 export class ConnectionService {
+  private notificationService: NotificationService;
+
+  constructor() {
+    this.notificationService = new NotificationService();
+  }
    // Send connection request from seeker to guide
     
   async sendConnectionRequest(seekerId: Types.ObjectId, guideId: Types.ObjectId, message?: string) {
@@ -33,7 +39,7 @@ export class ConnectionService {
     await connectionRequest.save();
 
     // Send notification to guide (email/push)
-    // await this.notifyGuideOfConnectionRequest(guideId, seekerId, connectionRequest);
+    await this.notificationService.notifyGuideOfConnectionRequest(guideId, seekerId, connectionRequest);
 
     return connectionRequest;
   }
@@ -63,7 +69,7 @@ export class ConnectionService {
 
 
     // Notify seeker
-    // await this.notifySeekerOfAcceptedRequest(connectionRequest.fromUser, guideId);
+    await this.notificationService.notifySeekerOfAcceptedRequest(connectionRequest.fromUser, guideId);
 
     return { connectionRequest };
   }
@@ -78,6 +84,29 @@ export class ConnectionService {
     return await ConnectionRequest.find(query)
       .populate(role === 'guide' ? 'fromUser' : 'toUser')
       .sort({ createdAt: -1 });
+  }
+
+  // Guide rejects connection request
+  
+  async rejectConnectionRequest(requestId: Types.ObjectId, guideId: Types.ObjectId) {
+    const connectionRequest = await ConnectionRequest.findOne({
+      _id: requestId,
+      toUser: guideId,
+      status: 'pending'
+    });
+
+    if (!connectionRequest) {
+      throw new Error('Connection request not found or already processed');
+    }
+
+    // Update request status
+    connectionRequest.status = 'rejected';
+    await connectionRequest.save();
+
+    // Notify seeker
+    await this.notificationService.notifySeekerOfRejectedRequest(connectionRequest.fromUser, guideId);
+
+    return { connectionRequest };
   }
 
 }
