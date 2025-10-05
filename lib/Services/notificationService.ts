@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
 import User from '@/models/User';
 import HealthProfile from '@/models/healthProfile';
+import { getValidatedSeeker, getValidatedGuide, findPotentialGuides } from './profileValidationService';
 
 export interface NotificationData {
   type: 'connection_request' | 'connection_accepted' | 'connection_rejected';
@@ -10,21 +11,13 @@ export interface NotificationData {
 }
 
 export class NotificationService {
-  
-  /**
-   * Send notification when a guide receives a connection request
-   */
-  async notifyGuideOfConnectionRequest(
-    guideId: Types.ObjectId, 
-    seekerId: Types.ObjectId, 
-    connectionRequest: any
-  ) {
+  async notifyGuideOfConnectionRequest(guideId: Types.ObjectId, seekerId: Types.ObjectId, connectionRequest: any) {
     try {
-      // Get user details
-      const [guide, seeker, seekerProfile] = await Promise.all([
+      // Validate seeker profile and get user details
+      const seekerProfile = await getValidatedSeeker(seekerId);
+      const [guide, seeker] = await Promise.all([
         User.findById(guideId),
-        User.findById(seekerId),
-        HealthProfile.findOne({ userId: seekerId, role: 'seeker' })
+        User.findById(seekerId)
       ]);
 
       if (!guide || !seeker || !seekerProfile) {
@@ -69,14 +62,18 @@ export class NotificationService {
     guideId: Types.ObjectId
   ) {
     try {
-      // Get user details
-      const [seeker, guide, guideProfile] = await Promise.all([
+      // Validate both seeker and guide profiles
+      const [seekerProfile, guideProfile] = await Promise.all([
+        getValidatedSeeker(seekerId),
+        getValidatedGuide(guideId)
+      ]);
+      
+      const [seeker, guide] = await Promise.all([
         User.findById(seekerId),
-        User.findById(guideId),
-        HealthProfile.findOne({ userId: guideId, role: 'guide' })
+        User.findById(guideId)
       ]);
 
-      if (!seeker || !guide || !guideProfile) {
+      if (!seeker || !guide || !seekerProfile || !guideProfile) {
         console.error('Failed to load user data for notification');
         return;
       }
@@ -115,12 +112,18 @@ export class NotificationService {
     guideId: Types.ObjectId
   ) {
     try {
+      // Validate both seeker and guide profiles
+      const [seekerProfile, guideProfile] = await Promise.all([
+        getValidatedSeeker(seekerId),
+        getValidatedGuide(guideId)
+      ]);
+      
       const [seeker, guide] = await Promise.all([
         User.findById(seekerId),
         User.findById(guideId)
       ]);
 
-      if (!seeker || !guide) {
+      if (!seeker || !guide || !seekerProfile || !guideProfile) {
         console.error('Failed to load user data for notification');
         return;
       }

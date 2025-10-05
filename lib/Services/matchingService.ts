@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
 import HealthProfile from '@/models/healthProfile';
 import { ISymptom } from '../../models/types/symptom';
+import { getValidatedSeeker, findPotentialGuides } from './profileValidationService';
 
 export interface MatchResult {
   guideProfile: any;
@@ -31,10 +32,10 @@ export class MatchingService {
 
   async findMatches(seekerId: Types.ObjectId, limit: number = 20): Promise<MatchResult[]> {
     // Validate seeker exists and has correct role
-    const seeker = await this.getValidatedSeeker(seekerId);
+    const seeker = await getValidatedSeeker(seekerId);
     
     // Find potential guides
-    const guides = await this.findPotentialGuides(seeker);
+    const guides = await findPotentialGuides(seeker);
     
     // Calculate matches and sort by score
     const matches = await Promise.all(
@@ -45,32 +46,6 @@ export class MatchingService {
       .filter(match => match.matchScore > 0.2) // Lowered minimum threshold to be more inclusive
       .sort((a, b) => b.matchScore - a.matchScore)
       .slice(0, limit);
-  }
-
-   // Validate seeker exists and has correct role
-    
-  private async getValidatedSeeker(seekerId: Types.ObjectId) {
-    const seeker = await HealthProfile.findOne({ 
-      userId: seekerId, 
-      role: 'seeker' 
-    }).populate('userId');
-    
-    if (!seeker) {
-      throw new Error(`No seeker profile found for user: ${seekerId}`);
-    }
-    
-    return seeker;
-  }
-
-  // Find potential guides based on seeker's condition
-
-  private async findPotentialGuides(seeker: any) {
-    return await HealthProfile.find({
-      role: 'guide',
-      conditionCategory: seeker.conditionCategory
-      // Removed isVerified: true to allow matching with unverified guides
-      // Verification status is still considered in the scoring algorithm
-    }).populate('userId');
   }
 
   // Calculate match between seeker and guide

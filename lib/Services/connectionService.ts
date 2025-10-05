@@ -3,6 +3,7 @@ import HealthProfile from '@/models/healthProfile';
 import ConnectionRequest, { IConnectionRequest } from '@/models/connectionRequest';
 import { MatchingService } from './matchingService';
 import { NotificationService } from './notificationService';
+import { getValidatedSeeker, getValidatedGuide, findPotentialGuides } from './profileValidationService';
 
 export class ConnectionService {
   private notificationService: NotificationService;
@@ -13,15 +14,11 @@ export class ConnectionService {
    // Send connection request from seeker to guide
     
   async sendConnectionRequest(seekerId: Types.ObjectId, guideId: Types.ObjectId, message?: string) {
-    // Check if profiles exist and have correct roles
+    // Validate profiles exist and have correct roles
     const [seekerProfile, guideProfile] = await Promise.all([
-      HealthProfile.findOne({ userId: seekerId, role: 'seeker' }),
-      HealthProfile.findOne({ userId: guideId, role: 'guide' })
+      getValidatedSeeker(seekerId),
+      getValidatedGuide(guideId)
     ]);
-
-    if (!seekerProfile || !guideProfile) {
-      throw new Error('Invalid user roles for connection');
-    }
 
     // Calculate match score for context
     const matchingService = new MatchingService();
@@ -61,9 +58,10 @@ export class ConnectionService {
     connectionRequest.status = 'accepted';
     await connectionRequest.save();
 
+    // Validate both user profiles
     const [seekerProfile, guideProfile] = await Promise.all([
-      HealthProfile.findOne({ userId: connectionRequest.fromUser }),
-      HealthProfile.findOne({ userId: connectionRequest.toUser })
+      getValidatedSeeker(connectionRequest.fromUser),
+      getValidatedGuide(connectionRequest.toUser)
     ]);
 
 
