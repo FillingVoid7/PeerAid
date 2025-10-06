@@ -1,9 +1,20 @@
-import { Types } from 'mongoose';
-import HealthProfile from '@/models/healthProfile';
-import ConnectionRequest, { IConnectionRequest } from '@/models/connectionRequest';
-import { MatchingService } from './matchingService';
+import { Types, Document } from 'mongoose';
+import ConnectionRequest from '@/models/connectionRequest';
 import { NotificationService } from './notificationService';
-import { getValidatedSeeker, getValidatedGuide, findPotentialGuides } from '../utilities/profileValidationService';
+import { getValidatedSeeker, returnGuideProfile } from '../utilities/profileValidationService';
+import { IHealthProfile } from '@/models/types/profile.type';
+
+export async function getProfilesByIds(requestId: Types.ObjectId, guideId: Types.ObjectId): Promise<{
+  seekerProfile: Document<unknown, {}, IHealthProfile> & IHealthProfile;
+  guideProfile: Document<unknown, {}, IHealthProfile> & IHealthProfile;
+}> {
+  const [seekerProfile, guideProfile] = await Promise.all([
+    getValidatedSeeker(requestId),
+    returnGuideProfile(guideId),
+  ]);
+  return { seekerProfile, guideProfile };
+}
+
 
 export class ConnectionService {
   private notificationService: NotificationService;
@@ -11,112 +22,55 @@ export class ConnectionService {
   constructor() {
     this.notificationService = new NotificationService();
   }
+
    // Send connection request from seeker to guide
-    
-  async sendConnectionRequest(seekerId: Types.ObjectId, guideId: Types.ObjectId, message?: string) {
-    // Validate profiles exist and have correct roles
-    const [seekerProfile, guideProfile] = await Promise.all([
-      getValidatedSeeker(seekerId),
-      getValidatedGuide(guideId)
-    ]);
-
-    // Calculate match score for context
-    const matchingService = new MatchingService();
-    const matchResult = await matchingService.calculateMatchScore(seekerProfile, guideProfile);
-
-    // Create connection request
+  async sendConnectionRequest(requestId: Types.ObjectId, guideId: Types.ObjectId, message?: string) {
+    const { seekerProfile, guideProfile } = await getProfilesByIds(requestId, guideId);
     const connectionRequest = new ConnectionRequest({
-      fromUser: seekerId,
-      toUser: guideId,
+      fromUser: seekerProfile._id,
+      toUser: guideProfile._id,
       message: message || "I'd like to connect and learn from your experience",
-      sharedSymptoms: matchResult.sharedSymptoms,
-      matchScore: matchResult.matchScore
     });
 
     await connectionRequest.save();
-
-    // Send notification to guide (email/push)
-    await this.notificationService.notifyGuideOfConnectionRequest(guideId, seekerId, connectionRequest);
-
+    await this.notificationService.notifyGuideOfConnectionRequest(seekerProfile, guideProfile, connectionRequest);
     return connectionRequest;
   }
   
-   // Guide accepts connection request
-   
-  async acceptConnectionRequest(requestId: Types.ObjectId, guideId: Types.ObjectId) {
+   // Guide accepts connection request 
+  async acceptConnectionRequest(seekerId: Types.ObjectId, guideId: Types.ObjectId) {
+    const { seekerProfile, guideProfile } = await getProfilesByIds(seekerId, guideId);
+
     const connectionRequest = await ConnectionRequest.findOne({
-      _id: requestId,
-      toUser: guideId,
-      status: 'pending'
+      fromUser: seekerProfile._id,  
+      toUser: guideProfile._id,     
+      status: 'pending',
     });
 
     if (!connectionRequest) {
       throw new Error('Connection request not found or already processed');
     }
-
-    // Update request status
     connectionRequest.status = 'accepted';
     await connectionRequest.save();
-
-    // Validate both user profiles
-    const [seekerProfile, guideProfile] = await Promise.all([
-      getValidatedSeeker(connectionRequest.fromUser),
-      getValidatedGuide(connectionRequest.toUser)
-    ]);
-
-
-
-    // Notify seeker
-    await this.notificationService.notifySeekerOfAcceptedRequest(connectionRequest.fromUser, guideId);
-
+    await this.notificationService.notifySeekerOfAcceptedRequest(connectionRequest.fromUser, connectionRequest.toUser);
     return { connectionRequest };
   }
 
-  // Get all pending connection requests for a user
-
-  async getPendingRequests(userId: Types.ObjectId, role: 'seeker' | 'guide') {
-    const query = role === 'guide' 
-      ? { toUser: userId, status: 'pending' }
-      : { fromUser: userId, status: 'pending' };
-
-    return await ConnectionRequest.find(query)
-      .populate(role === 'guide' ? 'fromUser' : 'toUser')
-      .sort({ createdAt: -1 });
-  }
-
-  // Guide rejects connection request
   
-  async rejectConnectionRequest(requestId: Types.ObjectId, guideId: Types.ObjectId) {
+  async rejectConnectionRequest(seekerId: Types.ObjectId, guideId: Types.ObjectId) {
+    const { seekerProfile, guideProfile } = await getProfilesByIds(seekerId, guideId);
     const connectionRequest = await ConnectionRequest.findOne({
-      _id: requestId,
-      toUser: guideId,
+      fromUser: seekerProfile._id,  
+      toUser: guideProfile._id,     
       status: 'pending'
     });
-
     if (!connectionRequest) {
       throw new Error('Connection request not found or already processed');
     }
-
-    // Update request status
     connectionRequest.status = 'rejected';
     await connectionRequest.save();
-
-    // Notify seeker
-    await this.notificationService.notifySeekerOfRejectedRequest(connectionRequest.fromUser, guideId);
-
+    await this.notificationService.notifySeekerOfRejectedRequest(connectionRequest.fromUser, connectionRequest.toUser);
     return { connectionRequest };
   }
-
 }
 
-/*
-┌─────────────────────────────────────────────┐
-│               User Dashboard                │
-├─────────────────────────────────────────────┤
-│ 1. Pending Connection Requests (2)          │
-│ 2. Active Conversations (3)                 │
-│ 3. New Match Suggestions                    │
-│ 4. Connection Statistics                    │
-└─────────────────────────────────────────────┘
-
-*/

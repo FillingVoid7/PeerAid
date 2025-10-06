@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectDB from "@/lib/db";
-import { ConnectionService } from "@/lib/Services/connectionService";
 import { Types } from "mongoose";
+import ConnectionRequest from "@/models/connectionRequest";
+import { returnGuideProfile } from "@/lib/utilities/profileValidationService";
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,19 +12,22 @@ export async function GET(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-
-    const { searchParams } = new URL(req.url);
-    const roleParam = (searchParams.get("role") as 'seeker' | 'guide') || 'guide';
-
     await connectDB();
-    const userId = new Types.ObjectId(session.user.id as string);
-    const service = new ConnectionService();
-    const items = await service.getPendingRequests(userId, roleParam);
+    const guideId = new Types.ObjectId(session.user.id as string);
+    await returnGuideProfile(guideId);
+    const pendingRequests = await ConnectionRequest.find({
+      toUser: guideId, 
+      status: 'pending'
+    })
+    .populate('fromUser')  
+    .populate('toUser')    
+    .sort({ createdAt: -1 });  
 
-    return NextResponse.json({ requests: items }, { status: 200 });
-  } catch (error) {
+    return NextResponse.json({ requests: pendingRequests }, { status: 200 });
+  } catch (error: any) {
     console.error("GET /api/connections/pending error", error);
-    return NextResponse.json({ message: "Failed to load requests" }, { status: 500 });
+    const message = error?.message || "Failed to load pending requests";
+    return NextResponse.json({ message }, { status: 500 });
   }
 }
 

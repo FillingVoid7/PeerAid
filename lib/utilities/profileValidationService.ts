@@ -28,4 +28,15 @@ export async function getValidatedGuide(guideId: Types.ObjectId) {
   return guide;
 }
 
+export async function returnGuideProfile(guideId: Types.ObjectId) {
+  const guideProfile = await HealthProfile.findOne({
+    userId: guideId,
+    role: 'guide'
+  }).populate('userId');
 
+  if (!guideProfile) {
+    throw new Error(`No guide profile found for user: ${guideId}`);
+  }
+
+  return guideProfile;
+}

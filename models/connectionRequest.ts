@@ -1,18 +1,13 @@
 import {Schema,Document,model, Model, Types} from 'mongoose';
 
 export interface IConnectionRequest extends Document {
-    fromUser: Types.ObjectId; // Seeker
-    toUser: Types.ObjectId;   // Guide
+    fromUser: Types.ObjectId; 
+    toUser: Types.ObjectId;   
     status: 'pending' | 'accepted' | 'rejected'|'cancelled';
-
     message?: string;
-    sharedSymptoms?: string[];  //auto-populated from matching algorithm
-    matchScore: number;       //calculated match percentage 
-
     createdAt: Date;
     updatedAt: Date;
-    expiresAt: Date; //  auto-reject after 7 days 
-
+    expiresAt: Date; 
 }
 
 const ConnectionRequestSchema: Schema = new Schema({
@@ -20,11 +15,9 @@ const ConnectionRequestSchema: Schema = new Schema({
     toUser: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     status: { type: String, enum: ['pending', 'accepted', 'rejected','cancelled'], default: 'pending' },
     message: { type: String, maxlengh:500 },
-    sharedSymptoms: [{ type: String }],
-    matchScore: { type: Number, min:0, max:1},
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
-    expiresAt: { type: Date, default: () => new Date(Date.now() + 7*24*60*60*1000) } // 7 days from creation
+    expiresAt: { type: Date, default: () => new Date(Date.now() + 7*24*60*60*1000) }     //7 days  
 },{
     timestamps: true
 });

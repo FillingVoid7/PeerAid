@@ -4,6 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectDB from "@/lib/db";
 import { ConnectionService } from "@/lib/Services/connectionService";
 import { Types } from "mongoose";
+import { getValidatedSeeker } from "@/lib/utilities/profileValidationService";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,18 +12,17 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-
-    const { guideId } = await req.json();
+    const { guideId, requesterMessage } = await req.json();
     if (!guideId) {
       return NextResponse.json({ error: 'guideId is required' }, { status: 400 });
     }
-
     await connectDB();
-    const service = new ConnectionService();
+    
     const requesterId = new Types.ObjectId(session.user.id as string);
+    await getValidatedSeeker(requesterId);
+    const service = new ConnectionService();
     const guideObjectId = new Types.ObjectId(guideId as string);
-
-    const created = await service.sendConnectionRequest(requesterId, guideObjectId);
+    const created = await service.sendConnectionRequest(requesterId, guideObjectId, requesterMessage);
     return NextResponse.json({ request: created }, { status: 201 });
   } catch (error: any) {
     console.error("POST /api/connections/send error", error);
