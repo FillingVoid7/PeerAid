@@ -16,7 +16,7 @@ export async function getValidatedSeeker(seekerId: Types.ObjectId) {
 
 
 export async function getValidatedGuide(guideId: Types.ObjectId) {
-  const guide = await HealthProfile.findOne({ 
+  const guide = await HealthProfile.find({ 
     userId: guideId, 
     role: 'guide' 
   }).populate('userId');
@@ -29,11 +29,3 @@ export async function getValidatedGuide(guideId: Types.ObjectId) {
 }
 
 
-export async function findPotentialGuides(seeker: any) {
-  return await HealthProfile.find({
-    role: 'guide',
-    conditionCategory: seeker.conditionCategory
-    // Removed isVerified: true to allow matching with unverified guides
-    // Verification status is still considered in the scoring algorithm
-  }).populate('userId');
-}

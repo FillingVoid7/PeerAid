@@ -1,244 +1,273 @@
 import { Types } from 'mongoose';
-import HealthProfile from '@/models/healthProfile';
-import { ISymptom } from '../../models/types/symptom';
-import { getValidatedSeeker, findPotentialGuides } from './profileValidationService';
+import { getValidatedGuide, getValidatedSeeker } from '../utilities/profileValidationService';
 
 export interface MatchResult {
   guideProfile: any;
-  matchScore: number;
+  matchScore: number; // 0-100 scale
+  breakdown: {
+    conditionMatch: number;
+    symptomMatch: number;
+    demographicMatch: number;
+    treatmentMatch: number;
+    verificationBonus: number;
+  };
   sharedSymptoms: string[];
   effectiveTreatments: string[];
+  connectionStrength: 'high' | 'medium' | 'low'; 
 }
-
-export interface ScoreBreakdown {
-  condition: number;
-  symptoms: number;
-  demographics: number;
-  treatments: number;
-  verification: number;
-}
-
-const MATCH_WEIGHTS = {
-  condition: 0.35,
-  symptoms: 0.25,
-  demographics: 0.15,
-  treatments: 0.15,
-  verification: 0.10
-};
 
 export class MatchingService {
-  
-  //Find matching guides for a seeker
+  private readonly MATCHING_WEIGHTS = {
+    condition: 0.40,    
+    symptoms: 0.30,     
+    demographics: 0.15,  
+    treatments: 0.10,    
+    verification: 0.05   
+  };
 
-  async findMatches(seekerId: Types.ObjectId, limit: number = 20): Promise<MatchResult[]> {
-    // Validate seeker exists and has correct role
-    const seeker = await getValidatedSeeker(seekerId);
+  // Find ALL guides ranked by match score 
+  
+  async findMatches(seekerId: Types.ObjectId, guideId: Types.ObjectId, limit: number = 50 ): Promise<MatchResult[]> {
+    const seekerProfile = await getValidatedSeeker(seekerId);
+    const allGuides = await getValidatedGuide(guideId);
     
-    // Find potential guides
-    const guides = await findPotentialGuides(seeker);
-    
-    // Calculate matches and sort by score
-    const matches = await Promise.all(
-      guides.map(guide => this.calculateMatch(seeker, guide))
+    // Calculate match scores for EVERY guide
+    const allMatches: MatchResult[] = await Promise.all(
+      allGuides.map(guide => this.calculateMatchScore(seekerProfile, guide))
     );
-    
-    return matches
-      .filter(match => match.matchScore > 0.2) // Lowered minimum threshold to be more inclusive
+
+    return allMatches
       .sort((a, b) => b.matchScore - a.matchScore)
       .slice(0, limit);
   }
 
-  // Calculate match between seeker and guide
+     
+  private async calculateMatchScore(seeker: any, guide: any): Promise<MatchResult> {
+    const conditionMatch = this.calculateConditionMatch(seeker, guide);
+    const symptomMatch = this.calculateSymptomMatch(seeker.symptoms, guide.symptoms);
+    const demographicMatch = this.calculateDemographicMatch(seeker, guide);
+    const treatmentMatch = this.calculateTreatmentMatch(guide.treatments);
+    const verificationBonus = this.calculateVerificationBonus(guide);
 
-  private async calculateMatch(seeker: any, guide: any): Promise<MatchResult> {
-    const scores = await this.calculateAllScores(seeker, guide);
-    const matchScore = this.combineScores(scores);
-    
+    const sharedSymptoms = this.findSharedSymptoms(seeker.symptoms, guide.symptoms);
+    const effectiveTreatments = this.findEffectiveTreatments(guide.treatments);
+
+    // Calculate weighted total score (0-100)
+    const weightedScore = 
+      conditionMatch * this.MATCHING_WEIGHTS.condition * 100 +
+      symptomMatch * this.MATCHING_WEIGHTS.symptoms * 100 +
+      demographicMatch * this.MATCHING_WEIGHTS.demographics * 100 +
+      treatmentMatch * this.MATCHING_WEIGHTS.treatments * 100 +
+      verificationBonus * this.MATCHING_WEIGHTS.verification * 100;
+
+    const matchScore = Math.min(100, Math.round(weightedScore));
+
     return {
       guideProfile: guide,
-      matchScore: this.roundScore(matchScore),
-      sharedSymptoms: this.findSharedSymptoms(seeker.symptoms, guide.symptoms),
-      effectiveTreatments: this.findEffectiveTreatments(guide.treatments)
+      matchScore,
+      breakdown: {
+        conditionMatch: Math.round(conditionMatch * 100),
+        symptomMatch: Math.round(symptomMatch * 100),
+        demographicMatch: Math.round(demographicMatch * 100),
+        treatmentMatch: Math.round(treatmentMatch * 100),
+        verificationBonus: Math.round(verificationBonus * 100),
+      },
+      sharedSymptoms,
+      effectiveTreatments,
+      connectionStrength: this.getConnectionStrength(matchScore)
     };
   }
 
-  // Calculate all individual scores
-
-  private async calculateAllScores(seeker: any, guide: any): Promise<ScoreBreakdown> {
-    return {
-      condition: this.calculateConditionScore(seeker.conditionName, guide.conditionName),
-      symptoms: this.calculateSymptomScore(seeker.symptoms, guide.symptoms),
-      demographics: this.calculateDemographicScore(seeker, guide),
-      treatments: this.calculateTreatmentScore(guide.treatments),
-      verification: this.calculateVerificationScore(guide)
-    };
-  }
-
-  // Combine scores using weights
-
-  private combineScores(scores: ScoreBreakdown): number {
-    return (
-      scores.condition * MATCH_WEIGHTS.condition +
-      scores.symptoms * MATCH_WEIGHTS.symptoms +
-      scores.demographics * MATCH_WEIGHTS.demographics +
-      scores.treatments * MATCH_WEIGHTS.treatments +
-      scores.verification * MATCH_WEIGHTS.verification
-    );
-  }
-
-  // Calculate condition similarity score
-
-  private calculateConditionScore(seekerCondition: string, guideCondition: string): number {
-    // Exact match
-    if (seekerCondition.toLowerCase() === guideCondition.toLowerCase()) {
+ 
+  private calculateConditionMatch(seeker: any, guide: any): number {
+    if (seeker.conditionName?.toLowerCase() === guide.conditionName?.toLowerCase()) {
       return 1.0;
     }
 
-    // Partial match using word overlap
-    const seekerWords = new Set(seekerCondition.toLowerCase().split(/\s+/));
-    const guideWords = new Set(guideCondition.toLowerCase().split(/\s+/));
+    if (seeker.conditionCategory === guide.conditionCategory) {
+      return 0.8;
+    }
+
+    const seekerWords = new Set<String>(seeker.conditionName?.toLowerCase().split(/\W+/) || []);
+    const guideWords = new Set<String>(guide.conditionName?.toLowerCase().split(/\W+/) || []);
     
-    const commonWords = [...seekerWords].filter(word => guideWords.has(word));
-    const allWords = new Set([...seekerWords, ...guideWords]);
+    const intersection = [...seekerWords].filter(word => 
+      word.length > 3 && guideWords.has(word)
+    ).length;
     
-    return commonWords.length / allWords.size;
+    const union = new Set([...seekerWords, ...guideWords]).size;
+    if (union === 0) return 0.1; 
+    const jaccardSimilarity = intersection / union;
+    return Math.min(0.7, jaccardSimilarity * 2); 
   }
 
-  // Calculate symptom similarity score
+  private calculateSymptomMatch(seekerSymptoms: any[], guideSymptoms: any[]): number {
+    if (!seekerSymptoms?.length || !guideSymptoms?.length) {
+      return 0.1;
+    }
 
-  private calculateSymptomScore(seekerSymptoms: ISymptom[], guideSymptoms: ISymptom[]): number {
-    if (!seekerSymptoms.length || !guideSymptoms.length) return 0;
+    const seekerSymptomNames = seekerSymptoms.map(s => s.name_of_symptoms?.toLowerCase() || s.name?.toLowerCase() || '');
+    const guideSymptomNames = guideSymptoms.map(s => s.name_of_symptoms?.toLowerCase() || s.name?.toLowerCase() || '');
 
-    const nameScore = this.calculateSymptomNameScore(seekerSymptoms, guideSymptoms);
-    const severityScore = this.calculateSymptomSeverityScore(seekerSymptoms, guideSymptoms);
+    const intersection = seekerSymptomNames.filter(name => 
+      guideSymptomNames.includes(name)
+    ).length;
     
-    return (nameScore * 0.7) + (severityScore * 0.3);
-  }
-
-  // Calculate symptom name similarity
-
-  private calculateSymptomNameScore(seekerSymptoms: ISymptom[], guideSymptoms: ISymptom[]): number {
-    const seekerNames = new Set(seekerSymptoms.map(s => s.name_of_symptoms.toLowerCase()));
-    const guideNames = new Set(guideSymptoms.map(s => s.name_of_symptoms.toLowerCase()));
+    const union = new Set([...seekerSymptomNames, ...guideSymptomNames]).size;
     
-    const commonSymptoms = [...seekerNames].filter(name => guideNames.has(name));
-    const allSymptoms = new Set([...seekerNames, ...guideNames]);
-    
-    return commonSymptoms.length / allSymptoms.size;
-  }
+    const baseSimilarity = union > 0 ? intersection / union : 0;
 
-  // Calculate symptom severity similarity
+    let severityBonus = 0;
+    const sharedSymptoms = seekerSymptoms.filter(seekerSymptom =>
+      guideSymptoms.some(guideSymptom => 
+        (guideSymptom.name_of_symptoms?.toLowerCase() || guideSymptom.name?.toLowerCase()) === 
+        (seekerSymptom.name_of_symptoms?.toLowerCase() || seekerSymptom.name?.toLowerCase())
+      )
+    );
 
-  private calculateSymptomSeverityScore(seekerSymptoms: ISymptom[], guideSymptoms: ISymptom[]): number {
-    const severityValues = { mild: 1, moderate: 2, severe: 3 };
-    
-    let totalScore = 0;
-    let matchedSymptoms = 0;
-
-    seekerSymptoms.forEach(seekerSymptom => {
-      const guideSymptom = guideSymptoms.find(g => 
-        g.name_of_symptoms.toLowerCase() === seekerSymptom.name_of_symptoms.toLowerCase()
-      );
-      
-      if (guideSymptom) {
-        const seekerSeverity = severityValues[seekerSymptom.severity as keyof typeof severityValues] || 1;
-        const guideSeverity = severityValues[guideSymptom.severity as keyof typeof severityValues] || 1;
+    if (sharedSymptoms.length > 0) {
+      severityBonus = sharedSymptoms.reduce((acc, seekerSymptom) => {
+        const guideSymptom = guideSymptoms.find(g => 
+          (g.name_of_symptoms?.toLowerCase() || g.name?.toLowerCase()) === 
+          (seekerSymptom.name_of_symptoms?.toLowerCase() || seekerSymptom.name?.toLowerCase())
+        )!;
         
-        // Score based on how close the severities are
-        const severityMatch = 1 - Math.abs(seekerSeverity - guideSeverity) / 3;
-        totalScore += severityMatch;
-        matchedSymptoms++;
-      }
-    });
-
-    return matchedSymptoms > 0 ? totalScore / matchedSymptoms : 0;
-  }
-
-  // Calculate demographic similarity score  
-
-  private calculateDemographicScore(seeker: any, guide: any): number {
-    const scores: number[] = [];
-
-    // Age similarity
-    if (seeker.age && guide.age) {
-      const ageDiff = Math.abs(seeker.age - guide.age);
-      const ageScore = Math.max(0, 1 - ageDiff / 20);
-      scores.push(ageScore);
+        if (seekerSymptom.severity === guideSymptom.severity) {
+          return acc + 0.3;
+        }
+        return acc + 0.1; 
+      }, 0) / sharedSymptoms.length;
     }
 
-    // Gender similarity (more important for reproductive conditions)
-    if (seeker.gender && guide.gender) {
-      const genderScore = seeker.gender === guide.gender ? 
-        (seeker.conditionCategory === 'reproductive' ? 0.8 : 0.3) : 0;
-      scores.push(genderScore);
-    }
-
-    // Location similarity
-    if (seeker.location && guide.location) {
-      const locationScore = seeker.location.toLowerCase() === guide.location.toLowerCase() ? 0.8 : 0.2;
-      scores.push(locationScore);
-    }
-
-    return scores.length > 0 ? scores.reduce((a, b) => a + b) / scores.length : 0.5;
+    return Math.min(1, baseSimilarity + severityBonus * 0.5);
   }
 
   
-   // Calculate treatment effectiveness score
-   
-  private calculateTreatmentScore(treatments: any[]): number {
-    if (!treatments || treatments.length === 0) return 0.2;
+  private calculateDemographicMatch(seeker: any, guide: any): number {
+    let score = 0;
+    let factors = 0;
 
-    const effectiveCount = treatments.filter(t => 
-      t.effectiveness === 'effective' || t.effectiveness === 'very effective'
-    ).length;
+    if (seeker.age && guide.age) {
+      const ageDiff = Math.abs(seeker.age - guide.age);
+      const ageScore = Math.max(0, 1 - ageDiff / 30); 
+      score += ageScore;
+      factors++;
+    }
 
-    return Math.min(1.0, (effectiveCount / treatments.length) * 1.2);
+    if (seeker.gender && guide.gender) {
+      const isGenderRelevant = this.isGenderRelevantCondition(seeker.conditionCategory);
+      if (isGenderRelevant && seeker.gender === guide.gender) {
+        score += 0.8;
+        factors += 1;
+      } else if (seeker.gender === guide.gender) {
+        score += 0.3;
+        factors += 0.5;
+      }
+    }
+
+    if (seeker.location && guide.location && 
+        seeker.location.toLowerCase() === guide.location.toLowerCase()) {
+      score += 0.4;
+      factors++;
+    }
+
+    return factors > 0 ? score / factors : 0.5; 
   }
 
-  // Calculate verification score
 
-  private calculateVerificationScore(guide: any): number {
-    if (!guide.isVerified) return 0.1; // Give small score to unverified guides instead of 0
+  private calculateTreatmentMatch(treatments: any[]): number {
+    if (!treatments?.length) return 0.2; 
 
+    const effectiveTreatments = treatments.filter(treatment => 
+      treatment.effectiveness === 'effective' || 
+      treatment.effectiveness === 'very effective'
+    );
+
+    const effectivenessRatio = effectiveTreatments.length / treatments.length;
+    
+    const volumeBonus = Math.min(0.3, treatments.length * 0.05);
+    
+    return Math.min(1, effectivenessRatio + volumeBonus);
+  }
+
+  private calculateVerificationBonus(guide: any): number {
+    if (!guide.isVerified) return 0;
+    
     const verificationScores = {
       'medical_document': 1.0,
       'community-validated': 0.7,
       'self-declared': 0.3
     };
-
+    
     return verificationScores[guide.verificationMethod as keyof typeof verificationScores] || 0.5;
   }
 
-  // Find symptoms shared between seeker and guide
+ 
+  private getConnectionStrength(score: number): 'high' | 'medium' | 'low' {
+    if (score >= 70) return 'high';
+    if (score >= 40) return 'medium';
+    return 'low';
+  }
 
-  private findSharedSymptoms(seekerSymptoms: ISymptom[], guideSymptoms: ISymptom[]): string[] {
-    const seekerNames = seekerSymptoms.map(s => s.name_of_symptoms.toLowerCase());
-    const guideNames = guideSymptoms.map(s => s.name_of_symptoms.toLowerCase());
+  private isGenderRelevantCondition(conditionCategory: string): boolean {
+    const genderSpecificConditions = ['reproductive', 'internal'];
+    return genderSpecificConditions.includes(conditionCategory);
+  }
+
+  private findSharedSymptoms(seekerSymptoms: any[], guideSymptoms: any[]): string[] {
+    if (!seekerSymptoms?.length || !guideSymptoms?.length) return [];
+    
+    const seekerNames = seekerSymptoms.map(s => s.name_of_symptoms?.toLowerCase() || s.name?.toLowerCase() || '');
+    const guideNames = guideSymptoms.map(s => s.name_of_symptoms?.toLowerCase() || s.name?.toLowerCase() || '');
     
     return [...new Set(seekerNames.filter(name => guideNames.includes(name)))];
   }
 
-  // Find effective treatments from guide
-
   private findEffectiveTreatments(treatments: any[]): string[] {
+    if (!treatments?.length) return [];
+    
     return treatments
-      .filter(t => t.effectiveness === 'effective' || t.effectiveness === 'very effective')
-      .map(t => t.name);
-  }
-  
-  // Helper to round scores to 2 decimal places
-
-  private roundScore(score: number): number {
-    return Math.round(score * 100) / 100;
+      .filter(treatment => 
+        treatment.effectiveness === 'effective' || 
+        treatment.effectiveness === 'very effective'
+      )
+      .map(treatment => treatment.name)
+      .slice(0, 5); // Limit to top 5
   }
 
-   // Calculate match score between two profiles (public method for SearchService)
+  getMatchExplanation(match: MatchResult): string {
+    const { breakdown, sharedSymptoms } = match;
+    
+    const explanations: string[] = [];
+    
+    if (breakdown.conditionMatch > 80) {
+      explanations.push("Same health condition");
+    } else if (breakdown.conditionMatch > 50) {
+      explanations.push("Similar health condition");
+    }
+    
+    if (breakdown.symptomMatch > 70) {
+      explanations.push(`Shares ${sharedSymptoms.length} symptoms`);
+    }
+    
+    if (breakdown.demographicMatch > 60) {
+      explanations.push("Similar background");
+    }
+    
+    if (breakdown.treatmentMatch > 50) {
+      explanations.push("Effective treatments documented");
+    }
+    
+    if (breakdown.verificationBonus > 50) {
+      explanations.push("Verified experience");
+    }
+    
+    return explanations.length > 0 
+      ? explanations.join(" • ")
+      : "Potential match based on health experience";
+  }
 
-  async calculateMatchScore(profile1: any, profile2: any): Promise<MatchResult> {
-    return await this.calculateMatch(profile1, profile2);
+  async calculateMatchScorePublic(profile1: any, profile2: any): Promise<MatchResult> {
+    return await this.calculateMatchScore(profile1, profile2);
   }
 }
-
-  
-
-

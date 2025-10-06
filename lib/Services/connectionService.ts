@@ -3,7 +3,7 @@ import HealthProfile from '@/models/healthProfile';
 import ConnectionRequest, { IConnectionRequest } from '@/models/connectionRequest';
 import { MatchingService } from './matchingService';
 import { NotificationService } from './notificationService';
-import { getValidatedSeeker, getValidatedGuide, findPotentialGuides } from './profileValidationService';
+import { getValidatedSeeker, getValidatedGuide, findPotentialGuides } from '../utilities/profileValidationService';
 
 export class ConnectionService {
   private notificationService: NotificationService;
