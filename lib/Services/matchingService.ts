@@ -13,7 +13,8 @@ export interface MatchResult {
   };
   sharedSymptoms: string[];
   effectiveTreatments: string[];
-  connectionStrength: 'high' | 'medium' | 'low'; 
+  connectionStrength: 'high' | 'medium' | 'low';
+  explanation?: string; 
 }
 
 export class MatchingService {
@@ -62,8 +63,14 @@ export class MatchingService {
 
     const matchScore = Math.min(100, Math.round(weightedScore));
 
+    // Extract alias from populated userId and include it in guideProfile
+    const guideProfileWithAlias = {
+      ...guide.toObject(),
+      alias: guide.userId?.alias || null
+    };
+
     return {
-      guideProfile: guide,
+      guideProfile: guideProfileWithAlias,
       matchScore,
       breakdown: {
         conditionMatch: Math.round(conditionMatch * 100),

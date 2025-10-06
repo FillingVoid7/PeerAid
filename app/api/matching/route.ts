@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     const guideProfiles = await HealthProfile.find({
       role: 'guide',
       userId: { $ne: userId }
-    }).populate('userId');
+    }).populate('userId', 'alias email');
 
     if (!guideProfiles || guideProfiles.length === 0) {
       return NextResponse.json({

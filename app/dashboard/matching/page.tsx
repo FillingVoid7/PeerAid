@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog } from "@/components/ui/dialog";
 import { 
   Heart, 
   MapPin, 
@@ -20,31 +21,21 @@ import {
   Shield,
   Clock,
   Target,
-  Sparkles} from "lucide-react";
+  Sparkles,
+  Droplets,
+  Stethoscope,
+  Phone,
+  Mail} from "lucide-react";
 import { generateAvatar, getAvatarProps } from "@/lib/utilities/avatarGenerator";
-
-type MatchItem = {
-  guideProfile: any;
-  matchScore: number;
-  breakdown: {
-    conditionMatch: number;
-    symptomMatch: number;
-    demographicMatch: number;
-    treatmentMatch: number;
-    verificationBonus: number;
-  };
-  sharedSymptoms?: string[];
-  effectiveTreatments?: string[];
-  connectionStrength: 'high' | 'medium' | 'low';
-  explanation: string;
-};
+import { MatchResult } from "@/lib/Services/matchingService";
+import { Toaster, toast } from "sonner";
 
 type SearchResult = any;
 
 export default function MatchingPage() {
   const [loadingMatches, setLoadingMatches] = useState(false);
-  const [matches, setMatches] = useState<MatchItem[]>([]);
-  const [selectedGuide, setSelectedGuide] = useState<MatchItem | null>(null);
+  const [matches, setMatches] = useState<MatchResult[]>([]);
+  const [selectedGuide, setSelectedGuide] = useState<MatchResult | null>(null);
   const [loadingGuideDetails, setLoadingGuideDetails] = useState(false);
 
   const [conditionName, setConditionName] = useState("");
@@ -55,6 +46,9 @@ export default function MatchingPage() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
+  const [selectedGuideForConnection, setSelectedGuideForConnection] = useState<{ id: string; name: string } | null>(null);
+  const [connectionMessage, setConnectionMessage] = useState("");
 
   useEffect(() => {
     const loadMatches = async () => {
@@ -116,22 +110,55 @@ export default function MatchingPage() {
     }
   };
 
-  const sendConnection = async (guideUserId: string) => {
+  const sendConnection = async (guideUserId: string, message: string = "") => {
     if (!guideUserId || sentIds.has(guideUserId)) return;
     setSendingId(guideUserId);
+    
     try {
       const res = await fetch("/api/connections/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guideId: guideUserId }),
+        body: JSON.stringify({ 
+          guideId: guideUserId,
+          requesterMessage: message 
+        }),
       });
+      
+      const data = await res.json();
+      
       if (res.ok) {
         setSentIds(prev => new Set(prev).add(guideUserId));
+        toast.success("Connection request sent successfully!", {
+          description: "Your request has been sent to the guide."
+        });
+      } else {
+        toast.error("Failed to send connection request", {
+          description: data.message || "Please try again later."
+        });
       }
     } catch (e) {
       console.error(e);
+      toast.error("Connection failed", {
+        description: "Unable to send request. Please check your connection."
+      });
     } finally {
       setSendingId(null);
+    }
+  };
+
+  const handleConnectionClick = (guideUserId: string, guideName: string) => {
+    if (!guideUserId || sentIds.has(guideUserId)) return;
+    setSelectedGuideForConnection({ id: guideUserId, name: guideName });
+    setConnectionMessage("");
+    setConnectionDialogOpen(true);
+  };
+
+  const handleSendConnection = async () => {
+    if (selectedGuideForConnection) {
+      await sendConnection(selectedGuideForConnection.id, connectionMessage);
+      setConnectionDialogOpen(false);
+      setSelectedGuideForConnection(null);
+      setConnectionMessage("");
     }
   };
 
@@ -197,9 +224,9 @@ export default function MatchingPage() {
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {matches.map((match, idx) => {
-                  const guideName = match.guideProfile?.userId?.displayName || match.guideProfile?.userId?.randomUsername || "Guide";
-                  const guideId = match.guideProfile?._id;
-                  const guideUserId = match.guideProfile?.userId?._id || match.guideProfile?.userId?.id || "";
+                  const guideName = match.guideProfile.userId?.alias || match.guideProfile.alias || "Guide";
+                  const guideId = match.guideProfile._id;
+                  const guideUserId = match.guideProfile.userId?._id;
                   const isConnected = sentIds.has(String(guideUserId));
                   const isConnecting = sendingId === String(guideUserId);
                   
@@ -265,6 +292,24 @@ export default function MatchingPage() {
                               <span>{match.guideProfile.location}</span>
                             </div>
                           )}
+                          {match.guideProfile?.age && (
+                            <div className="flex items-center space-x-2 text-gray-600">
+                              <Calendar className="w-4 h-4 text-green-500" />
+                              <span>{match.guideProfile.age} years old</span>
+                            </div>
+                          )}
+                          {match.guideProfile?.bloodType && (
+                            <div className="flex items-center space-x-2 text-gray-600">
+                              <Droplets className="w-4 h-4 text-red-600" />
+                              <span>Blood Type: {match.guideProfile.bloodType}</span>
+                            </div>
+                          )}
+                          {match.guideProfile?.verificationMethod && (
+                            <div className="flex items-center space-x-2 text-gray-600">
+                              <Shield className="w-4 h-4 text-purple-500" />
+                              <span className="capitalize">{match.guideProfile.verificationMethod}</span>
+                            </div>
+                          )}
                           {match.sharedSymptoms && match.sharedSymptoms.length > 0 && (
                             <div className="flex items-start space-x-2 text-gray-600">
                               <TrendingUp className="w-4 h-4 text-green-500 mt-0.5" />
@@ -280,9 +325,11 @@ export default function MatchingPage() {
                         </div>
 
                         {/* Match Explanation */}
-                        <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-3 rounded-lg">
-                          <p className="text-sm text-gray-700 font-medium">{match.explanation}</p>
-                        </div>
+                        {match.explanation && (
+                          <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-3 rounded-lg">
+                            <p className="text-sm text-gray-700 font-medium">{match.explanation}</p>
+                          </div>
+                        )}
 
                         {/* Action Buttons */}
                         <div className="flex space-x-2 pt-2">
@@ -297,7 +344,7 @@ export default function MatchingPage() {
                           </Button>
                           <Button
                             disabled={!guideUserId || isConnecting || isConnected}
-                            onClick={() => sendConnection(String(guideUserId))}
+                            onClick={() => handleConnectionClick(String(guideUserId), guideName)}
                             size="sm"
                             className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                           >
@@ -441,7 +488,7 @@ export default function MatchingPage() {
                               </div>
                               <Button
                                 disabled={!profileUserId || isConnecting || isConnected}
-                                onClick={() => sendConnection(String(profileUserId))}
+                                onClick={() => handleConnectionClick(String(profileUserId), profileName)}
                                 className="w-full mt-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                               >
                                 {isConnected ? (
@@ -481,14 +528,14 @@ export default function MatchingPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar className="w-16 h-16">
-                      <AvatarImage src={getAvatarProps(selectedGuide.guideProfile?.userId?.displayName || selectedGuide.guideProfile?.userId?.randomUsername || "Guide", 64).src} />
+                      <AvatarImage src={getAvatarProps(selectedGuide.guideProfile.userId?.alias || selectedGuide.guideProfile.alias || "Guide", 64).src} />
                       <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-white text-xl">
-                        {(selectedGuide.guideProfile?.userId?.displayName || selectedGuide.guideProfile?.userId?.randomUsername || "Guide").charAt(0).toUpperCase()}
+                        {(selectedGuide.guideProfile.userId?.alias || selectedGuide.guideProfile.alias || "Guide").charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <CardTitle className="text-xl">
-                        {selectedGuide.guideProfile?.userId?.displayName || selectedGuide.guideProfile?.userId?.randomUsername || "Guide"}
+                        {selectedGuide.guideProfile.userId?.alias || selectedGuide.guideProfile.alias || "Guide"}
                       </CardTitle>
                       <div className="flex items-center space-x-2 mt-1">
                         <Badge className={`${getConnectionStrengthColor(selectedGuide.connectionStrength)} text-sm font-medium`}>
@@ -577,17 +624,116 @@ export default function MatchingPage() {
                         </div>
                       </div>
                     )}
-                    {selectedGuide.guideProfile?.isVerified && (
+                    {selectedGuide.guideProfile?.bloodType && (
+                      <div className="flex items-center space-x-2 p-3 bg-red-50 rounded-lg">
+                        <Droplets className="w-5 h-5 text-red-600" />
+                        <div>
+                          <div className="font-medium text-gray-800">Blood Type</div>
+                          <div className="text-sm text-gray-600">{selectedGuide.guideProfile.bloodType}</div>
+                        </div>
+                      </div>
+                    )}
+                    {selectedGuide.guideProfile?.gender && (
+                      <div className="flex items-center space-x-2 p-3 bg-indigo-50 rounded-lg">
+                        <Users className="w-5 h-5 text-indigo-500" />
+                        <div>
+                          <div className="font-medium text-gray-800">Gender</div>
+                          <div className="text-sm text-gray-600 capitalize">{selectedGuide.guideProfile.gender}</div>
+                        </div>
+                      </div>
+                    )}
+                    {selectedGuide.guideProfile?.verificationMethod && (
                       <div className="flex items-center space-x-2 p-3 bg-purple-50 rounded-lg">
                         <Shield className="w-5 h-5 text-purple-500" />
                         <div>
-                          <div className="font-medium text-gray-800">Verification</div>
-                          <div className="text-sm text-gray-600">Verified Guide</div>
+                          <div className="font-medium text-gray-800">Verification Method</div>
+                          <div className="text-sm text-gray-600 capitalize">{selectedGuide.guideProfile.verificationMethod}</div>
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
+
+                {/* Symptoms */}
+                {selectedGuide.guideProfile?.symptoms && selectedGuide.guideProfile.symptoms.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-gray-800">Symptoms</h3>
+                    <div className="grid grid-cols-1 gap-3">
+                      {selectedGuide.guideProfile.symptoms.map((symptom: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                          <div className="flex items-center space-x-2">
+                            <Stethoscope className="w-4 h-4 text-orange-500" />
+                            <span className="font-medium text-gray-800">{symptom.name_of_symptoms}</span>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Badge variant="outline" className="text-xs">
+                              {symptom.severity}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {symptom.frequency}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Diagnosis Information */}
+                {selectedGuide.guideProfile?.diagnosis && (
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-gray-800">Diagnosis</h3>
+                    <div className="p-4 bg-teal-50 rounded-lg">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <div className="font-medium text-gray-800">Diagnosed</div>
+                          <div className="text-sm text-gray-600">
+                            {selectedGuide.guideProfile.diagnosis.diagnosed ? 'Yes' : 'No'}
+                          </div>
+                        </div>
+                        {selectedGuide.guideProfile.diagnosis.diagnosedBy && (
+                          <div>
+                            <div className="font-medium text-gray-800">Diagnosed By</div>
+                            <div className="text-sm text-gray-600">{selectedGuide.guideProfile.diagnosis.diagnosedBy}</div>
+                          </div>
+                        )}
+                        {selectedGuide.guideProfile.diagnosis.certainty && (
+                          <div>
+                            <div className="font-medium text-gray-800">Certainty</div>
+                            <div className="text-sm text-gray-600 capitalize">{selectedGuide.guideProfile.diagnosis.certainty}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Contact Information */}
+                {selectedGuide.guideProfile?.contactInfo && (selectedGuide.guideProfile.contactInfo.contact_email || selectedGuide.guideProfile.contactInfo.contact_phone) && (
+                  <div className="space-y-3">
+                    <h3 className="text-lg font-semibold text-gray-800">Contact Information</h3>
+                    <div className="grid grid-cols-1 gap-3">
+                      {selectedGuide.guideProfile.contactInfo.contact_email && (
+                        <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg">
+                          <Mail className="w-5 h-5 text-blue-500" />
+                          <div>
+                            <div className="font-medium text-gray-800">Email</div>
+                            <div className="text-sm text-gray-600">{selectedGuide.guideProfile.contactInfo.contact_email}</div>
+                          </div>
+                        </div>
+                      )}
+                      {selectedGuide.guideProfile.contactInfo.contact_phone && (
+                        <div className="flex items-center space-x-2 p-3 bg-green-50 rounded-lg">
+                          <Phone className="w-5 h-5 text-green-500" />
+                          <div>
+                            <div className="font-medium text-gray-800">Phone</div>
+                            <div className="text-sm text-gray-600">{selectedGuide.guideProfile.contactInfo.contact_phone}</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Shared Symptoms */}
                 {selectedGuide.sharedSymptoms && selectedGuide.sharedSymptoms.length > 0 && (
@@ -618,10 +764,12 @@ export default function MatchingPage() {
                 )}
 
                 {/* Match Explanation */}
-                <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Why This Match?</h3>
-                  <p className="text-gray-700">{selectedGuide.explanation}</p>
-                </div>
+                {selectedGuide.explanation && (
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Why This Match?</h3>
+                    <p className="text-gray-700">{selectedGuide.explanation}</p>
+                  </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex space-x-3 pt-4 border-t">
@@ -634,9 +782,10 @@ export default function MatchingPage() {
                   </Button>
                   <Button
                     onClick={() => {
-                      const guideUserId = selectedGuide.guideProfile?.userId?._id || selectedGuide.guideProfile?.userId?.id || "";
+                      const guideUserId = selectedGuide.guideProfile.userId?._id;
+                      const guideName = selectedGuide.guideProfile.userId?.alias || selectedGuide.guideProfile.alias || "Guide";
                       if (guideUserId) {
-                        sendConnection(String(guideUserId));
+                        handleConnectionClick(String(guideUserId), guideName);
                         setSelectedGuide(null);
                       }
                     }}
@@ -650,6 +799,65 @@ export default function MatchingPage() {
             </Card>
           </div>
         )}
+
+        {/* Connection Message Dialog */}
+        <Dialog
+          isOpen={connectionDialogOpen}
+          onClose={() => setConnectionDialogOpen(false)}
+          title={`Connect with ${selectedGuideForConnection?.name || 'Guide'}`}
+        >
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Send a personalized message to introduce yourself and explain why you'd like to connect.
+            </p>
+            <div className="space-y-2">
+              <label htmlFor="connectionMessage" className="text-sm font-medium text-gray-700">
+                Your Message (Optional)
+              </label>
+              <textarea
+                id="connectionMessage"
+                value={connectionMessage}
+                onChange={(e) => setConnectionMessage(e.target.value)}
+                placeholder="Hi! I noticed we have similar experiences with [condition]. I'd love to connect and learn from your journey..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                rows={4}
+                maxLength={500}
+              />
+              <div className="text-right text-xs text-gray-500">
+                {connectionMessage.length}/500 characters
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setConnectionDialogOpen(false)}
+                disabled={sendingId === selectedGuideForConnection?.id}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSendConnection}
+                disabled={sendingId === selectedGuideForConnection?.id}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+              >
+                {sendingId === selectedGuideForConnection?.id ? (
+                  <>
+                    <Clock className="w-4 h-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Heart className="w-4 h-4 mr-2" />
+                    Send Request
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </Dialog>
+
+        {/* Toast Notifications */}
+        <Toaster position="top-right" richColors />
       </div>
     </div>
   );

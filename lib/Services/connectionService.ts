@@ -52,7 +52,7 @@ export class ConnectionService {
     }
     connectionRequest.status = 'accepted';
     await connectionRequest.save();
-    await this.notificationService.notifySeekerOfAcceptedRequest(connectionRequest.fromUser, connectionRequest.toUser);
+    await this.notificationService.notifySeekerOfAcceptedRequest(seekerProfile, guideProfile);
     return { connectionRequest };
   }
 
@@ -69,7 +69,7 @@ export class ConnectionService {
     }
     connectionRequest.status = 'rejected';
     await connectionRequest.save();
-    await this.notificationService.notifySeekerOfRejectedRequest(connectionRequest.fromUser, connectionRequest.toUser);
+    await this.notificationService.notifySeekerOfRejectedRequest(seekerProfile, guideProfile);
     return { connectionRequest };
   }
 }

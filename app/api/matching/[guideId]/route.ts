@@ -47,7 +47,7 @@ export async function GET(
     const guideProfile = await HealthProfile.findOne({
       _id: new Types.ObjectId(guideId),
       role: 'guide'
-    }).populate('userId');
+    }).populate('userId', 'alias email');
 
     if (!guideProfile) {
       return NextResponse.json(
@@ -57,21 +57,30 @@ export async function GET(
     }
 
     const match = await matchingService.calculateMatchScorePublic(seekerProfile, guideProfile);
+    
+    if (!match) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to calculate match score' },
+        { status: 500 }
+      );
+    }
+
     const explanation = matchingService.getMatchExplanation(match);
 
     return NextResponse.json({
       success: true,
       data: {
         ...match,
-        explanation,
-        guideProfile: {
-          ...match.guideProfile.toObject(),
-        }
+        explanation
       }
     });
 
   } catch (error) {
     console.error('Match details error:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return NextResponse.json(
       { success: false, error: 'Failed to get match details' },
       { status: 500 }

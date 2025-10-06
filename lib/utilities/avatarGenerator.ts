@@ -1,6 +1,7 @@
 export function generateAvatar(alias: string, size: number = 40): string {
-  // Get the first letter of the alias
-  const firstLetter = alias?.charAt(0)?.toUpperCase() || 'U';
+  // Ensure alias is a string and get the first letter
+  const aliasString = typeof alias === 'string' ? alias : String(alias || 'User');
+  const firstLetter = aliasString?.charAt(0)?.toUpperCase() || 'U';
   
   // Generate a consistent color based on the alias
   const colors = [
@@ -9,7 +10,7 @@ export function generateAvatar(alias: string, size: number = 40): string {
     '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2'
   ];
   
-  const colorIndex = alias.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+  const colorIndex = aliasString.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
   const backgroundColor = colors[colorIndex];
   
   // Create SVG avatar
@@ -24,9 +25,11 @@ export function generateAvatar(alias: string, size: number = 40): string {
 }
 
 export function getAvatarProps(alias: string, size: number = 40) {
+  // Ensure alias is a string
+  const aliasString = typeof alias === 'string' ? alias : String(alias || 'User');
   return {
-    src: generateAvatar(alias, size),
-    alt: `${alias}'s avatar`,
+    src: generateAvatar(aliasString, size),
+    alt: `${aliasString}'s avatar`,
     className: "rounded-full border-2 border-white shadow-sm"
   };
 }
