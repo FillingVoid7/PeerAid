@@ -2,7 +2,8 @@ import { Types } from 'mongoose';
 import { getValidatedGuide, getValidatedSeeker } from '../utilities/profileValidationService';
 
 export interface MatchResult {
-  guideProfile: any;
+  guideProfile?: any;
+  seekerProfile?: any;
   matchScore: number; // 0-100 scale
   breakdown: {
     conditionMatch: number;

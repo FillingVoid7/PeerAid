@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +26,10 @@ import {
   Droplets,
   Stethoscope,
   Phone,
-  Mail} from "lucide-react";
+  Mail,
+  CheckCircle,
+  XCircle,
+  Send} from "lucide-react";
 import { generateAvatar, getAvatarProps } from "@/lib/utilities/avatarGenerator";
 import { MatchResult } from "@/lib/Services/matchingService";
 import { Toaster, toast } from "sonner";
@@ -33,10 +37,14 @@ import { Toaster, toast } from "sonner";
 type SearchResult = any;
 
 export default function MatchingPage() {
+  const { data: session } = useSession();
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [matches, setMatches] = useState<MatchResult[]>([]);
   const [selectedGuide, setSelectedGuide] = useState<MatchResult | null>(null);
   const [loadingGuideDetails, setLoadingGuideDetails] = useState(false);
+  const [userRole, setUserRole] = useState<'seeker' | 'guide' | null>(null);
+  const [seekerMatches, setSeekerMatches] = useState<MatchResult[]>([]);
+  const [guideMatches, setGuideMatches] = useState<any[]>([]);
 
   const [conditionName, setConditionName] = useState("");
   const [symptoms, setSymptoms] = useState("");
@@ -45,10 +53,53 @@ export default function MatchingPage() {
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [sendingId, setSendingId] = useState<string | null>(null);
-  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [sentRequestIds, setSentRequestIds] = useState<Set<string>>(new Set());
+  const [loadingStatuses, setLoadingStatuses] = useState(false);
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
   const [selectedGuideForConnection, setSelectedGuideForConnection] = useState<{ id: string; name: string } | null>(null);
   const [connectionMessage, setConnectionMessage] = useState("");
+
+  const checkSentRequests = async (userIds: string[]) => {
+    if (userIds.length === 0) return;
+    console.log('Checking sent requests for:', userIds);
+    setLoadingStatuses(true);
+    try {
+      const res = await fetch("/api/connections/pending", { cache: "no-store" });
+      const data = await res.json();
+      
+      console.log('Pending API response:', data);
+      
+      if (res.ok && data.requests) {
+        const sentRequestUserIds = new Set<string>();
+        
+        data.requests.forEach((req: any) => {
+          console.log('Processing request:', {
+            fromUser: req.fromUser?._id,
+            toUser: req.toUser?._id,
+            status: req.status
+          });
+          
+          // Check if current user sent the request (fromUser matches session user)
+          const toUserId = req.toUser?._id || req.toUser?.id;
+          console.log('Checking toUserId:', toUserId, 'against userIds:', userIds);
+          
+          if (toUserId && userIds.includes(toUserId)) {
+            sentRequestUserIds.add(toUserId);
+            console.log('Added to sentRequestUserIds:', toUserId);
+          }
+        });
+        
+        setSentRequestIds(sentRequestUserIds);
+        console.log('Final sentRequestIds:', Array.from(sentRequestUserIds));
+      } else {
+        console.log('No pending requests found or API error:', data);
+      }
+    } catch (e) {
+      console.error('Error checking sent requests:', e);
+    } finally {
+      setLoadingStatuses(false);
+    }
+  };
 
   useEffect(() => {
     const loadMatches = async () => {
@@ -57,7 +108,26 @@ export default function MatchingPage() {
         const res = await fetch("/api/matching", { cache: "no-store" });
         const data = await res.json();
         if (data.success) {
-          setMatches(data.data.matches || []);
+          setUserRole(data.data.userRole || null);
+          if (data.data.userRole === 'seeker') {
+            setSeekerMatches(data.data.matches || []);
+            setMatches(data.data.matches || []);
+          } else if (data.data.userRole === 'guide') {
+            setGuideMatches(data.data.matches || []);
+            setMatches(data.data.matches || []);
+          }
+          
+          const userIds = data.data.matches?.map((match: any) => {
+            return data.data.userRole === 'seeker' 
+              ? match.guideProfile?.userId?._id 
+              : match.seekerProfile?.userId?._id;
+          }).filter(Boolean) || [];
+          
+          console.log('User IDs to check status for:', userIds);
+          
+          if (userIds.length > 0) {
+            await checkSentRequests(userIds);
+          }
         } else {
           console.error('Failed to load matches:', data.error);
         }
@@ -76,16 +146,26 @@ export default function MatchingPage() {
     if (symptoms) params.set("symptoms", symptoms);
     if (location) params.set("location", location);
     if (gender) params.set("gender", gender);
-    params.set("forRole", "seeker");
+    params.set("forRole", userRole === 'seeker' ? "seeker" : "guide");
     return params.toString();
-  }, [conditionName, symptoms, location, gender]);
+  }, [conditionName, symptoms, location, gender, userRole]);
 
   const runSearch = async () => {
     setSearching(true);
     try {
       const res = await fetch(`/api/search?${searchParams}`, { cache: "no-store" });
       const data = await res.json();
-      setResults(data.results || []);
+      const searchResults = data.results || [];
+      setResults(searchResults);
+      
+      // Check connection statuses for search results
+      const userIds = searchResults.map((profile: any) => 
+        profile.userId?._id || profile.userId?.id
+      ).filter(Boolean);
+      
+      if (userIds.length > 0) {
+        await checkSentRequests(userIds);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -111,7 +191,14 @@ export default function MatchingPage() {
   };
 
   const sendConnection = async (guideUserId: string, message: string = "") => {
-    if (!guideUserId || sentIds.has(guideUserId)) return;
+    if (!guideUserId) return;
+    
+    // Check if already sent request
+    if (sentRequestIds.has(guideUserId)) {
+      toast.error("Request already sent to this user");
+      return;
+    }
+    
     setSendingId(guideUserId);
     
     try {
@@ -127,27 +214,34 @@ export default function MatchingPage() {
       const data = await res.json();
       
       if (res.ok) {
-        setSentIds(prev => new Set(prev).add(guideUserId));
-        toast.success("Connection request sent successfully!", {
-          description: "Your request has been sent to the guide."
-        });
+        // Add to sent requests
+        setSentRequestIds(prev => new Set(prev).add(guideUserId));
+        toast.success("Connection request sent successfully!");
       } else {
-        toast.error("Failed to send connection request", {
-          description: data.message || "Please try again later."
-        });
+        // Handle specific error message for existing connections
+        if (data.message === "A pending connection request already exists between these users") {
+          setSentRequestIds(prev => new Set(prev).add(guideUserId));
+          toast.error("Request already sent to this user");
+        } else {
+          toast.error(data.message || "Failed to send connection request");
+        }
       }
     } catch (e) {
       console.error(e);
-      toast.error("Connection failed", {
-        description: "Unable to send request. Please check your connection."
-      });
+      toast.error("Connection failed");
     } finally {
       setSendingId(null);
     }
   };
 
   const handleConnectionClick = (guideUserId: string, guideName: string) => {
-    if (!guideUserId || sentIds.has(guideUserId)) return;
+    if (!guideUserId) return;
+    
+    if (sentRequestIds.has(guideUserId)) {
+      toast.error("Request already sent to this user");
+      return;
+    }
+    
     setSelectedGuideForConnection({ id: guideUserId, name: guideName });
     setConnectionMessage("");
     setConnectionDialogOpen(true);
@@ -188,11 +282,15 @@ export default function MatchingPage() {
           <div className="flex items-center justify-center space-x-2">
             <Sparkles className="w-8 h-8 text-purple-600" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Find Your Perfect Guide
+              {userRole === 'seeker' ? 'Find Your Perfect Guide' : 
+               userRole === 'guide' ? 'Find Seekers to Help' : 
+               'Find Your Perfect Match'}
             </h1>
           </div>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Connect with experienced guides who understand your journey and can provide meaningful support
+            {userRole === 'seeker' ? 'Connect with experienced guides who understand your journey and can provide meaningful support' :
+             userRole === 'guide' ? 'Connect with seekers who could benefit from your experience and guidance' :
+             'Connect with others who share similar experiences and can provide mutual support'}
           </p>
         </div>
 
@@ -200,7 +298,7 @@ export default function MatchingPage() {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="matches" className="flex items-center space-x-2">
               <Heart className="w-4 h-4" />
-              <span>Smart Matches</span>
+              <span>{userRole === 'seeker' ? 'Smart Matches' : userRole === 'guide' ? 'Seeker Matches' : 'Smart Matches'}</span>
             </TabsTrigger>
             <TabsTrigger value="search" className="flex items-center space-x-2">
               <Target className="w-4 h-4" />
@@ -218,17 +316,25 @@ export default function MatchingPage() {
                 <CardContent>
                   <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-600 mb-2">No matches found</h3>
-                  <p className="text-gray-500">Try adjusting your profile or check back later for new guides.</p>
+                  <p className="text-gray-500">
+                    {userRole === 'seeker' ? 'Try adjusting your profile or check back later for new guides.' :
+                     userRole === 'guide' ? 'Try adjusting your profile or check back later for new seekers.' :
+                     'Try adjusting your profile or check back later for new matches.'}
+                  </p>
                 </CardContent>
               </Card>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {matches.map((match, idx) => {
-                  const guideName = match.guideProfile.userId?.alias || match.guideProfile.alias || "Guide";
-                  const guideId = match.guideProfile._id;
-                  const guideUserId = match.guideProfile.userId?._id;
-                  const isConnected = sentIds.has(String(guideUserId));
-                  const isConnecting = sendingId === String(guideUserId);
+                  const profileName = userRole === 'seeker' 
+                    ? (match.guideProfile?.userId?.alias || match.guideProfile?.alias || "Guide")
+                    : ((match as any).seekerProfile?.userId?.alias || (match as any).seekerProfile?.alias || "Seeker");
+                  const profileId = userRole === 'seeker' ? match.guideProfile?._id : (match as any).seekerProfile?._id;
+                  const profileUserId = userRole === 'seeker' 
+                    ? match.guideProfile?.userId?._id 
+                    : (match as any).seekerProfile?.userId?._id;
+                  const hasRequestSent = sentRequestIds.has(String(profileUserId));
+                  const isConnecting = sendingId === String(profileUserId);
                   
                   return (
                     <Card key={idx} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
@@ -236,14 +342,14 @@ export default function MatchingPage() {
                         <div className="flex items-start justify-between">
                           <div className="flex items-center space-x-3">
                             <Avatar className="w-12 h-12 ring-2 ring-white shadow-md">
-                              <AvatarImage src={getAvatarProps(guideName, 48).src} />
+                              <AvatarImage src={getAvatarProps(profileName, 48).src} />
                               <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-white font-semibold">
-                                {guideName.charAt(0).toUpperCase()}
+                                {profileName.charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div>
                               <CardTitle className="text-lg font-semibold text-gray-800">
-                                {guideName}
+                                {profileName}
                               </CardTitle>
                               <div className="flex items-center space-x-2 mt-1">
                                 <Badge className={`${getConnectionStrengthColor(match.connectionStrength)} text-xs font-medium`}>
@@ -280,35 +386,66 @@ export default function MatchingPage() {
 
                         {/* Key Information */}
                         <div className="space-y-2 text-sm">
-                          {match.guideProfile?.conditionName && (
-                            <div className="flex items-center space-x-2 text-gray-600">
-                              <Heart className="w-4 h-4 text-red-500" />
-                              <span>{match.guideProfile.conditionName}</span>
-                            </div>
-                          )}
-                          {match.guideProfile?.location && (
-                            <div className="flex items-center space-x-2 text-gray-600">
-                              <MapPin className="w-4 h-4 text-blue-500" />
-                              <span>{match.guideProfile.location}</span>
-                            </div>
-                          )}
-                          {match.guideProfile?.age && (
-                            <div className="flex items-center space-x-2 text-gray-600">
-                              <Calendar className="w-4 h-4 text-green-500" />
-                              <span>{match.guideProfile.age} years old</span>
-                            </div>
-                          )}
-                          {match.guideProfile?.bloodType && (
-                            <div className="flex items-center space-x-2 text-gray-600">
-                              <Droplets className="w-4 h-4 text-red-600" />
-                              <span>Blood Type: {match.guideProfile.bloodType}</span>
-                            </div>
-                          )}
-                          {match.guideProfile?.verificationMethod && (
-                            <div className="flex items-center space-x-2 text-gray-600">
-                              <Shield className="w-4 h-4 text-purple-500" />
-                              <span className="capitalize">{match.guideProfile.verificationMethod}</span>
-                            </div>
+                          {userRole === 'seeker' ? (
+                            <>
+                              {match.guideProfile?.conditionName && (
+                                <div className="flex items-center space-x-2 text-gray-600">
+                                  <Heart className="w-4 h-4 text-red-500" />
+                                  <span>{match.guideProfile.conditionName}</span>
+                                </div>
+                              )}
+                              {match.guideProfile?.location && (
+                                <div className="flex items-center space-x-2 text-gray-600">
+                                  <MapPin className="w-4 h-4 text-blue-500" />
+                                  <span>{match.guideProfile.location}</span>
+                                </div>
+                              )}
+                              {match.guideProfile?.age && (
+                                <div className="flex items-center space-x-2 text-gray-600">
+                                  <Calendar className="w-4 h-4 text-green-500" />
+                                  <span>{match.guideProfile.age} years old</span>
+                                </div>
+                              )}
+                              {match.guideProfile?.bloodType && (
+                                <div className="flex items-center space-x-2 text-gray-600">
+                                  <Droplets className="w-4 h-4 text-red-600" />
+                                  <span>Blood Type: {match.guideProfile.bloodType}</span>
+                                </div>
+                              )}
+                              {match.guideProfile?.verificationMethod && (
+                                <div className="flex items-center space-x-2 text-gray-600">
+                                  <Shield className="w-4 h-4 text-purple-500" />
+                                  <span className="capitalize">{match.guideProfile.verificationMethod}</span>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {(match as any).seekerProfile?.conditionName && (
+                                <div className="flex items-center space-x-2 text-gray-600">
+                                  <Heart className="w-4 h-4 text-red-500" />
+                                  <span>{(match as any).seekerProfile.conditionName}</span>
+                                </div>
+                              )}
+                              {(match as any).seekerProfile?.location && (
+                                <div className="flex items-center space-x-2 text-gray-600">
+                                  <MapPin className="w-4 h-4 text-blue-500" />
+                                  <span>{(match as any).seekerProfile.location}</span>
+                                </div>
+                              )}
+                              {(match as any).seekerProfile?.age && (
+                                <div className="flex items-center space-x-2 text-gray-600">
+                                  <Calendar className="w-4 h-4 text-green-500" />
+                                  <span>{(match as any).seekerProfile.age} years old</span>
+                                </div>
+                              )}
+                              {(match as any).seekerProfile?.bloodType && (
+                                <div className="flex items-center space-x-2 text-gray-600">
+                                  <Droplets className="w-4 h-4 text-red-600" />
+                                  <span>Blood Type: {(match as any).seekerProfile.bloodType}</span>
+                                </div>
+                              )}
+                            </>
                           )}
                           {match.sharedSymptoms && match.sharedSymptoms.length > 0 && (
                             <div className="flex items-start space-x-2 text-gray-600">
@@ -334,7 +471,7 @@ export default function MatchingPage() {
                         {/* Action Buttons */}
                         <div className="flex space-x-2 pt-2">
                           <Button
-                            onClick={() => loadGuideDetails(guideId)}
+                            onClick={() => loadGuideDetails(profileId)}
                             variant="outline"
                             size="sm"
                             className="flex-1 hover:bg-purple-50 hover:border-purple-300"
@@ -343,15 +480,24 @@ export default function MatchingPage() {
                             View Details
                           </Button>
                           <Button
-                            disabled={!guideUserId || isConnecting || isConnected}
-                            onClick={() => handleConnectionClick(String(guideUserId), guideName)}
+                            disabled={!profileUserId || isConnecting || hasRequestSent || loadingStatuses}
+                            onClick={() => handleConnectionClick(String(profileUserId), profileName)}
                             size="sm"
-                            className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                            className={`flex-1 ${
+                              hasRequestSent 
+                                ? "bg-yellow-100 text-yellow-800 border-yellow-200 cursor-not-allowed opacity-75 hover:bg-yellow-100 hover:text-yellow-800"
+                                : "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                            }`}
                           >
-                            {isConnected ? (
+                            {loadingStatuses ? (
                               <>
-                                <UserCheck className="w-4 h-4 mr-2" />
-                                Connected
+                                <Clock className="w-4 h-4 mr-2 animate-spin" />
+                                Loading...
+                              </>
+                            ) : hasRequestSent ? (
+                              <>
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Request Sent
                               </>
                             ) : isConnecting ? (
                               <>
@@ -435,7 +581,7 @@ export default function MatchingPage() {
                   ) : (
                     <>
                       <Target className="w-4 h-4 mr-2" />
-                      Search Guides
+                      {userRole === 'seeker' ? 'Search Guides' : userRole === 'guide' ? 'Search Seekers' : 'Search'}
                     </>
                   )}
                 </Button>
@@ -445,10 +591,11 @@ export default function MatchingPage() {
                     <h3 className="text-lg font-semibold text-gray-800">Search Results</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {results.map((profile: any) => {
-                        const profileName = profile.userId?.displayName || profile.userId?.randomUsername || "Profile";
+                        const profileName = profile.userId?.displayName || profile.userId?.randomUsername || profile.userId?.alias || "Profile";
                         const profileUserId = profile.userId?._id || profile.userId?.id || "";
-                        const isConnected = sentIds.has(String(profileUserId));
+                        const hasRequestSent = sentRequestIds.has(String(profileUserId));
                         const isConnecting = sendingId === String(profileUserId);
+                        const profileRole = profile.role || (userRole === 'seeker' ? 'guide' : 'seeker');
                         
                         return (
                           <Card key={profile._id} className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
@@ -462,12 +609,17 @@ export default function MatchingPage() {
                                 </Avatar>
                                 <div>
                                   <CardTitle className="text-base">{profileName}</CardTitle>
-                                  {profile.helpfulCount && (
-                                    <div className="flex items-center space-x-1 text-sm text-gray-600">
-                                      <Star className="w-4 h-4 text-yellow-500" />
-                                      <span>{profile.helpfulCount} helpful</span>
-                                    </div>
-                                  )}
+                                  <div className="flex items-center space-x-2 mt-1">
+                                    <Badge variant="outline" className="text-xs">
+                                      {profileRole === 'seeker' ? 'Seeker' : 'Guide'}
+                                    </Badge>
+                                    {profile.helpfulCount && (
+                                      <div className="flex items-center space-x-1 text-sm text-gray-600">
+                                        <Star className="w-4 h-4 text-yellow-500" />
+                                        <span>{profile.helpfulCount} helpful</span>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </CardHeader>
@@ -485,16 +637,26 @@ export default function MatchingPage() {
                                     <span>{profile.location}</span>
                                   </div>
                                 )}
+                                {profile.age && (
+                                  <div className="flex items-center space-x-2">
+                                    <Calendar className="w-4 h-4 text-green-500" />
+                                    <span>{profile.age} years old</span>
+                                  </div>
+                                )}
                               </div>
                               <Button
-                                disabled={!profileUserId || isConnecting || isConnected}
+                                disabled={!profileUserId || isConnecting || hasRequestSent}
                                 onClick={() => handleConnectionClick(String(profileUserId), profileName)}
-                                className="w-full mt-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                                className={`w-full mt-4 ${
+                                  hasRequestSent 
+                                    ? "bg-yellow-100 text-yellow-800 border-yellow-200 cursor-not-allowed opacity-75 hover:bg-yellow-100 hover:text-yellow-800"
+                                    : "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                                }`}
                               >
-                                {isConnected ? (
+                                {hasRequestSent ? (
                                   <>
-                                    <UserCheck className="w-4 h-4 mr-2" />
-                                    Connected
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Request Sent
                                   </>
                                 ) : isConnecting ? (
                                   <>
@@ -781,6 +943,11 @@ export default function MatchingPage() {
                     Close
                   </Button>
                   <Button
+                    disabled={(() => {
+                      const guideUserId = selectedGuide.guideProfile.userId?._id;
+                      const hasRequestSent = sentRequestIds.has(String(guideUserId));
+                      return !guideUserId || sendingId === String(guideUserId) || hasRequestSent;
+                    })()}
                     onClick={() => {
                       const guideUserId = selectedGuide.guideProfile.userId?._id;
                       const guideName = selectedGuide.guideProfile.userId?.alias || selectedGuide.guideProfile.alias || "Guide";
@@ -789,10 +956,46 @@ export default function MatchingPage() {
                         setSelectedGuide(null);
                       }
                     }}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    className={`flex-1 ${
+                      (() => {
+                        const guideUserId = selectedGuide.guideProfile.userId?._id;
+                        const hasRequestSent = sentRequestIds.has(String(guideUserId));
+                        
+                        if (hasRequestSent) {
+                          return "bg-yellow-100 text-yellow-800 border-yellow-200 cursor-not-allowed opacity-75 hover:bg-yellow-100 hover:text-yellow-800";
+                        }
+                        return "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700";
+                      })()
+                    }`}
                   >
-                    <Heart className="w-4 h-4 mr-2" />
-                    Connect Now
+                    {(() => {
+                      const guideUserId = selectedGuide.guideProfile.userId?._id;
+                      const hasRequestSent = sentRequestIds.has(String(guideUserId));
+                      const isConnecting = sendingId === String(guideUserId);
+                      
+                      if (hasRequestSent) {
+                        return (
+                          <>
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Request Sent
+                          </>
+                        );
+                      } else if (isConnecting) {
+                        return (
+                          <>
+                            <Clock className="w-4 h-4 mr-2 animate-spin" />
+                            Connecting...
+                          </>
+                        );
+                      } else {
+                        return (
+                          <>
+                            <Heart className="w-4 h-4 mr-2" />
+                            Connect Now
+                          </>
+                        );
+                      }
+                    })()}
                   </Button>
                 </div>
               </CardContent>

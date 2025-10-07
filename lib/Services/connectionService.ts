@@ -26,50 +26,99 @@ export class ConnectionService {
    // Send connection request from seeker to guide
   async sendConnectionRequest(requestId: Types.ObjectId, guideId: Types.ObjectId, message?: string) {
     const { seekerProfile, guideProfile } = await getProfilesByIds(requestId, guideId);
+    const existingRequest = await ConnectionRequest.findOne({
+      $or: [
+        { fromUser: seekerProfile.userId, toUser: guideProfile.userId, status: 'pending' },
+        { fromUser: guideProfile.userId, toUser: seekerProfile.userId, status: 'pending' }
+      ]
+    });
+    
+    console.log('ConnectionService - existing request check:', existingRequest ? 'found' : 'not found');
+    
+    if (existingRequest) {
+      throw new Error('A pending connection request already exists between these users');
+    }
+    
     const connectionRequest = new ConnectionRequest({
-      fromUser: seekerProfile._id,
-      toUser: guideProfile._id,
+      fromUser: seekerProfile.userId,  
+      toUser: guideProfile.userId,     
       message: message || "I'd like to connect and learn from your experience",
+      status: 'pending'
     });
 
-    await connectionRequest.save();
-    await this.notificationService.notifyGuideOfConnectionRequest(seekerProfile, guideProfile, connectionRequest);
-    return connectionRequest;
+    console.log('ConnectionService - creating request with:');
+    console.log('  fromUser (User ID):', seekerProfile.userId);
+    console.log('  toUser (User ID):', guideProfile.userId);
+
+    try {
+      await connectionRequest.save();
+      console.log('ConnectionService - request saved successfully:', connectionRequest._id);
+      await this.notificationService.notifyGuideOfConnectionRequest(seekerProfile, guideProfile, connectionRequest);
+      return connectionRequest;
+    } catch (error: any) {
+      console.error('ConnectionService - save error:', error);
+      if (error.code === 11000) {
+        throw new Error('A pending connection request already exists between these users');
+      }
+      throw error;
+    }
   }
   
-   // Guide accepts connection request 
-  async acceptConnectionRequest(seekerId: Types.ObjectId, guideId: Types.ObjectId) {
-    const { seekerProfile, guideProfile } = await getProfilesByIds(seekerId, guideId);
-
-    const connectionRequest = await ConnectionRequest.findOne({
-      fromUser: seekerProfile._id,  
-      toUser: guideProfile._id,     
-      status: 'pending',
-    });
+   // Accept connection request by requestId
+  async acceptConnectionRequest(requestId: string, userId: Types.ObjectId) {
+    const connectionRequest = await ConnectionRequest.findById(requestId)
+      .populate('fromUser')
+      .populate('toUser');
 
     if (!connectionRequest) {
-      throw new Error('Connection request not found or already processed');
+      throw new Error('Connection request not found');
     }
+
+    if (connectionRequest.toUser._id.toString() !== userId.toString()) {
+      throw new Error('Unauthorized to accept this request');
+    }
+
+    if (connectionRequest.status !== 'pending') {
+      throw new Error('Connection request already processed');
+    }
+
     connectionRequest.status = 'accepted';
     await connectionRequest.save();
-    await this.notificationService.notifySeekerOfAcceptedRequest(seekerProfile, guideProfile);
+    
+    await this.notificationService.notifySeekerOfAcceptedRequest(
+      connectionRequest.fromUser, 
+      connectionRequest.toUser
+    );
+    
     return { connectionRequest };
   }
 
   
-  async rejectConnectionRequest(seekerId: Types.ObjectId, guideId: Types.ObjectId) {
-    const { seekerProfile, guideProfile } = await getProfilesByIds(seekerId, guideId);
-    const connectionRequest = await ConnectionRequest.findOne({
-      fromUser: seekerProfile._id,  
-      toUser: guideProfile._id,     
-      status: 'pending'
-    });
+  async rejectConnectionRequest(requestId: string, userId: Types.ObjectId) {
+    const connectionRequest = await ConnectionRequest.findById(requestId)
+      .populate('fromUser')
+      .populate('toUser');
+
     if (!connectionRequest) {
-      throw new Error('Connection request not found or already processed');
+      throw new Error('Connection request not found');
     }
+
+    if (connectionRequest.toUser._id.toString() !== userId.toString()) {
+      throw new Error('Unauthorized to reject this request');
+    }
+
+    if (connectionRequest.status !== 'pending') {
+      throw new Error('Connection request already processed');
+    }
+
     connectionRequest.status = 'rejected';
     await connectionRequest.save();
-    await this.notificationService.notifySeekerOfRejectedRequest(seekerProfile, guideProfile);
+    
+    await this.notificationService.notifySeekerOfRejectedRequest(
+      connectionRequest.fromUser, 
+      connectionRequest.toUser
+    );
+    
     return { connectionRequest };
   }
 }
