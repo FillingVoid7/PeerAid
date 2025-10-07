@@ -15,25 +15,28 @@ export async function GET(req: NextRequest) {
     
     await connectDB();
     const userId = new Types.ObjectId(session.user.id as string);
-    const pendingRequests = await ConnectionRequest.find({
+    
+    console.log('Accepted endpoint - userId:', userId);
+
+    const acceptedRequests = await ConnectionRequest.find({
       $or: [
-        { fromUser: userId, status: 'pending' },
-        { toUser: userId, status: 'pending' }
+        { fromUser: userId, status: 'accepted' },
+        { toUser: userId, status: 'accepted' }
       ]
     })
     .populate('fromUser', 'alias email')
     .populate('toUser', 'alias email')
-    .sort({ createdAt: -1 });
+    .sort({ updatedAt: -1 });
+
+    console.log('Accepted endpoint - found requests:', acceptedRequests.length);
 
     return NextResponse.json({ 
-      requests: pendingRequests,
-      count: pendingRequests.length
+      requests: acceptedRequests,
+      count: acceptedRequests.length
     }, { status: 200 });
   } catch (error: any) {
-    console.error("GET /api/connections/pending error", error);
-    const message = error?.message || "Failed to load pending requests";
+    console.error("GET /api/connections/accepted error", error);
+    const message = error?.message || "Failed to load accepted connections";
     return NextResponse.json({ message }, { status: 500 });
   }
 }
-
-

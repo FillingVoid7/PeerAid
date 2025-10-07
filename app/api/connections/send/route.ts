@@ -17,11 +17,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'guideId is required' }, { status: 400 });
     }
     await connectDB();
-    
     const requesterId = new Types.ObjectId(session.user.id as string);
     await getValidatedSeeker(requesterId);
     const service = new ConnectionService();
-    const guideObjectId = new Types.ObjectId(guideId as string);
+    const guideObjectId = new Types.ObjectId(guideId as string);    
     const created = await service.sendConnectionRequest(requesterId, guideObjectId, requesterMessage);
     return NextResponse.json({ request: created }, { status: 201 });
   } catch (error: any) {

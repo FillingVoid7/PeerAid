@@ -15,25 +15,29 @@ export async function GET(req: NextRequest) {
     
     await connectDB();
     const userId = new Types.ObjectId(session.user.id as string);
-    const pendingRequests = await ConnectionRequest.find({
+    
+    console.log('Rejected endpoint - userId:', userId);
+
+    // Get rejected connections for the user using User IDs
+    const rejectedRequests = await ConnectionRequest.find({
       $or: [
-        { fromUser: userId, status: 'pending' },
-        { toUser: userId, status: 'pending' }
+        { fromUser: userId, status: 'rejected' },
+        { toUser: userId, status: 'rejected' }
       ]
     })
     .populate('fromUser', 'alias email')
     .populate('toUser', 'alias email')
-    .sort({ createdAt: -1 });
+    .sort({ updatedAt: -1 });
+
+    console.log('Rejected endpoint - found requests:', rejectedRequests.length);
 
     return NextResponse.json({ 
-      requests: pendingRequests,
-      count: pendingRequests.length
+      requests: rejectedRequests,
+      count: rejectedRequests.length
     }, { status: 200 });
   } catch (error: any) {
-    console.error("GET /api/connections/pending error", error);
-    const message = error?.message || "Failed to load pending requests";
+    console.error("GET /api/connections/rejected error", error);
+    const message = error?.message || "Failed to load rejected connections";
     return NextResponse.json({ message }, { status: 500 });
   }
 }
-
-

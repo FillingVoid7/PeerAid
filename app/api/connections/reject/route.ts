@@ -12,16 +12,14 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-    const { seekerId } = await req.json();
-    if (!seekerId) {
-      return NextResponse.json({ message: "seekerId is required" }, { status: 400 });
+    const { requestId } = await req.json();
+    if (!requestId) {
+      return NextResponse.json({ message: "requestId is required" }, { status: 400 });
     }
     await connectDB();
-    const guideId = new Types.ObjectId(session.user.id as string);
-    await returnGuideProfile(guideId);
+    const userId = new Types.ObjectId(session.user.id as string);
     const service = new ConnectionService();
-    const seekerObjectId = new Types.ObjectId(seekerId as string);
-    const result = await service.rejectConnectionRequest(seekerObjectId, guideId);
+    const result = await service.rejectConnectionRequest(requestId, userId);
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {
     console.error("POST /api/connections/reject error", error);
