@@ -1,4 +1,4 @@
-import {Schema, Model, model, Types} from 'mongoose';
+import {Schema, Model, model, Types, Document} from 'mongoose';
 
 export type CallStatus = 'initiated' | 'ringing' | 'ongoing' | 'completed' | 'rejected' | 'missed' | 'failed' ; 
 

@@ -1,4 +1,4 @@
-import {Schema, Model , model, Types} from 'mongoose';
+import {Schema, Model , model, Types, Document} from 'mongoose';
 
 export interface IConversation extends Document {
     participants: {
