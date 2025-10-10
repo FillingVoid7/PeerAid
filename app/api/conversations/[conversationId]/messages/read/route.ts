@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Message } from "@/models/message";
 import connectDB from "@/lib/db";
-import { notifyMessageRead } from "@/lib/websocket-client";
 
 export async function PUT(
   req: NextRequest,
@@ -31,9 +30,6 @@ export async function PUT(
         status: 'read'
       }
     );
-    
-    // Notify WebSocket server about message read status
-    await notifyMessageRead(conversationId, userId, messageIds);
     
     return NextResponse.json({ 
       success: true,

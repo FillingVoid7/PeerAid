@@ -7,32 +7,20 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
-
-// Fix for __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load environment variables from root .env or local .env
-dotenv.config({ path: path.join(__dirname, '../../../.env') });
-
-// Import models from main application
 import { Message, IMessage } from '../../../models/message';
 import { Conversation, IConversation } from '../../../models/chatConversation';
 import { AudioCall, IAudioCall } from '../../../models/audioCall';
 import User from '../../../models/User';
 
-const app = express();
-const server = http.createServer(app);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../../../.env') });
 
-// Add JSON middleware
+const app = express();
+const server = http.createServer(app);                                    // raw http server to attach with socket.io for the websocket connection
 app.use(express.json());
 
-// Get frontend URL from environment or use default for local development
 const frontendUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
-console.log('🌐 Allowing CORS for:', frontendUrl);
-
-// CORS configuration
 app.use(cors({
   origin: [frontendUrl, 'http://localhost:3000', 'https://peer-aid.vercel.app'],
   credentials: true,
@@ -40,8 +28,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Socket.IO configuration
-const io = new SocketIOServer(server, {
+// Socket.IO configuration 
+const io = new SocketIOServer(server, {                                // both http server and socket.io server share the same port
   cors: {
     origin: [frontendUrl, 'http://localhost:3000', 'https://peer-aid.vercel.app'],
     methods: ['GET', 'POST'],
@@ -55,14 +43,12 @@ const io = new SocketIOServer(server, {
 // Connect to MongoDB
 const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
-  console.error('❌ MONGODB_URI is not defined in environment variables');
   process.exit(1);
 }
-
 mongoose.connect(MONGODB_URI)
-  .then(() => console.log('✅ Connected to MongoDB'))
+  .then(() => console.log('Connected to MongoDB'))
   .catch(err => {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('MongoDB connection error:', err);
     process.exit(1);
   });
 
@@ -239,7 +225,7 @@ io.on('connection', (socket) => {
         fileUrl,
         duration,
         audioCallId,
-        status: 'sent'
+        status: 'sent'  
       });
 
       await newMessage.save();
@@ -461,133 +447,6 @@ io.on('connection', (socket) => {
 
 // REST API Endpoints for integration with main app
 
-// Get conversation messages
-app.get('/api/conversations/:conversationId/messages', async (req, res) => {
-  try {
-    const { conversationId } = req.params;
-    const { page = 1, limit = 50 } = req.query;
-    
-    const messages = await Message.find({ conversationId })
-      .populate('sender', 'alias email')
-      .sort({ createdAt: -1 })
-      .limit(Number(limit))
-      .skip((Number(page) - 1) * Number(limit));
-    
-    res.json({ 
-      messages: messages.reverse(), // Return in chronological order
-      page: Number(page),
-      hasMore: messages.length === Number(limit)
-    });
-  } catch (error) {
-    console.error('Error fetching messages:', error);
-    res.status(500).json({ error: 'Failed to fetch messages' });
-  }
-});
-
-// Get user's conversations
-app.get('/api/users/:userId/conversations', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    
-    const conversations = await Conversation.find({
-      $or: [
-        { 'participants.seeker': userId },
-        { 'participants.guide': userId }
-      ]
-    })
-    .populate('participants.seeker', 'alias email')
-    .populate('participants.guide', 'alias email')
-    .populate('lastMessage')
-    .sort({ updatedAt: -1 });
-    
-    res.json({ conversations });
-  } catch (error) {
-    console.error('Error fetching conversations:', error);
-    res.status(500).json({ error: 'Failed to fetch conversations' });
-  }
-});
-
-// Create or get conversation between two users
-app.post('/api/conversations', async (req, res) => {
-  try {
-    const { seekerId, guideId } = req.body;
-    
-    if (!seekerId || !guideId) {
-      return res.status(400).json({ error: 'Both seekerId and guideId are required' });
-    }
-    
-    // Check if conversation already exists
-    let conversation = await Conversation.findOne({
-      'participants.seeker': seekerId,
-      'participants.guide': guideId
-    });
-    
-    if (!conversation) {
-      // Create new conversation
-      conversation = new Conversation({
-        participants: {
-          seeker: seekerId,
-          guide: guideId
-        },
-        status: 'active'
-      });
-      await conversation.save();
-    }
-    
-    // Populate participant details
-    await conversation.populate('participants.seeker', 'alias email');
-    await conversation.populate('participants.guide', 'alias email');
-    
-    return res.json({ conversation });
-  } catch (error) {
-    console.error('Error creating/getting conversation:', error);
-    return res.status(500).json({ error: 'Failed to create conversation' });
-  }
-});
-
-// Mark messages as read
-app.put('/api/conversations/:conversationId/messages/read', async (req, res) => {
-  try {
-    const { conversationId } = req.params;
-    const { userId, messageIds } = req.body;
-    
-    await Message.updateMany(
-      { 
-        _id: { $in: messageIds },
-        conversationId,
-        sender: { $ne: userId }
-      },
-      {
-        $addToSet: { readBy: userId },
-        status: 'read'
-      }
-    );
-    
-    // Notify via socket if user is online
-    const userSocketId = userSocketMap.get(userId);
-    if (userSocketId) {
-      io.to(conversationId).emit('messages_read', {
-        userId,
-        conversationId,
-        messageIds
-      });
-    }
-    
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error marking messages as read:', error);
-    res.status(500).json({ error: 'Failed to mark messages as read' });
-  }
-});
-
-// Get online users in a conversation
-app.get('/api/conversations/:conversationId/online-users', (req, res) => {
-  const { conversationId } = req.params;
-  const room = conversationRooms.get(conversationId);
-  const onlineUsers = room ? Array.from(room) : [];
-  
-  res.json({ onlineUsers });
-});
 
 // Get server statistics
 app.get('/api/stats', (_req, res) => {
@@ -596,6 +455,22 @@ app.get('/api/stats', (_req, res) => {
     activeConversations: conversationRooms.size,
     totalUsers: Array.from(conversationRooms.values()).reduce((acc, room) => acc + room.size, 0),
     uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Get online users in a specific conversation
+app.get('/api/conversations/:conversationId/online-users', (_req, res) => {
+  const { conversationId } = _req.params;
+  
+  const room = conversationRooms.get(conversationId);
+  const onlineUsers = room ? Array.from(room) : [];
+  
+  res.json({
+    success: true,
+    conversationId,
+    onlineUsers,
+    count: onlineUsers.length,
     timestamp: new Date().toISOString()
   });
 });
@@ -617,11 +492,155 @@ app.get('/', (_req, res) => {
     message: 'PeerAid WebSocket Server',
     version: '1.0.0',
     status: 'running',
+    description: 'Real-time WebSocket server for peer-to-peer conversations, messaging, and audio calls',
+    features: [
+      'Real-time messaging',
+      'Audio call support with WebRTC',
+      'User presence tracking',
+      'Message delivery status',
+      'Typing indicators',
+      'JWT authentication'
+    ],
     endpoints: {
-      health: '/health',
-      stats: '/api/stats',
-      conversations: '/api/conversations',
-      messages: '/api/conversations/:conversationId/messages'
+      root: {
+        method: 'GET',
+        path: '/',
+        description: 'Server information and API documentation'
+      },
+      health: {
+        method: 'GET',
+        path: '/health',
+        description: 'Health check endpoint with connection stats'
+      },
+      stats: {
+        method: 'GET',
+        path: '/api/stats',
+        description: 'Real-time server statistics (connected users, active conversations)'
+      }
+    },
+    socketEvents: {
+      clientToServer: {
+        join_conversation: {
+          description: 'Join a specific conversation room',
+          data: { conversationId: 'string' }
+        },
+        leave_conversation: {
+          description: 'Leave a conversation room',
+          data: { conversationId: 'string' }
+        },
+        send_message: {
+          description: 'Send real-time messages',
+          data: {
+            conversationId: 'string',
+            content: 'string',
+            type: 'text|image|audio|system|audio_invite|audio_accept|audio_reject',
+            fileUrl: 'string (optional)',
+            duration: 'number (optional)',
+            audioCallId: 'string (optional)'
+          }
+        },
+        mark_messages_read: {
+          description: 'Mark messages as read',
+          data: { conversationId: 'string', messageIds: 'string[]' }
+        },
+        typing: {
+          description: 'Send typing indicators',
+          data: { conversationId: 'string', isTyping: 'boolean' }
+        },
+        audio_call_initiate: {
+          description: 'Start an audio call',
+          data: { conversationId: 'string', callId: 'string', offer: 'RTCSessionDescriptionInit' }
+        },
+        audio_call_answer: {
+          description: 'Answer incoming call',
+          data: { conversationId: 'string', callId: 'string', answer: 'RTCSessionDescriptionInit' }
+        },
+        audio_call_reject: {
+          description: 'Reject incoming call',
+          data: { conversationId: 'string', callId: 'string' }
+        },
+        audio_call_end: {
+          description: 'End active call',
+          data: { conversationId: 'string', callId: 'string' }
+        },
+        ice_candidate: {
+          description: 'WebRTC ICE candidate exchange',
+          data: { conversationId: 'string', callId: 'string', iceCandidate: 'RTCIceCandidate' }
+        }
+      },
+      serverToClient: {
+        user_joined: {
+          description: 'User joined conversation',
+          data: { userId: 'string', conversationId: 'string', timestamp: 'Date' }
+        },
+        user_left: {
+          description: 'User left conversation',
+          data: { userId: 'string', conversationId: 'string', timestamp: 'Date' }
+        },
+        new_message: {
+          description: 'New message broadcast to all participants',
+          data: { _id: 'string', conversationId: 'string', sender: 'UserObject', content: 'string', type: 'string', status: 'sent|delivered|read', createdAt: 'Date' }
+        },
+        message_delivered: {
+          description: 'Message delivery confirmation',
+          data: { messageId: 'string', conversationId: 'string' }
+        },
+        messages_read: {
+          description: 'Messages marked as read by user',
+          data: { userId: 'string', conversationId: 'string', messageIds: 'string[]' }
+        },
+        user_typing: {
+          description: 'User typing indicator',
+          data: { userId: 'string', conversationId: 'string', isTyping: 'boolean' }
+        },
+        audio_call_incoming: {
+          description: 'Incoming audio call notification',
+          data: { callId: 'string', conversationId: 'string', caller: 'string', offer: 'RTCSessionDescriptionInit', messageId: 'string' }
+        },
+        audio_call_answered: {
+          description: 'Call answered notification',
+          data: { callId: 'string', conversationId: 'string', answerer: 'string', answer: 'RTCSessionDescriptionInit' }
+        },
+        audio_call_rejected: {
+          description: 'Call rejected notification',
+          data: { callId: 'string', conversationId: 'string', rejector: 'string' }
+        },
+        audio_call_ended: {
+          description: 'Call ended notification',
+          data: { callId: 'string', conversationId: 'string', ender: 'string' }
+        },
+        conversation_joined: {
+          description: 'Confirmation of successful room join',
+          data: { conversationId: 'string' }
+        },
+        error: {
+          description: 'Error notifications',
+          data: { message: 'string' }
+        }
+      }
+    },
+    connection: {
+      authentication: 'JWT token required in socket.handshake.auth.token',
+      cors: ['http://localhost:3000', 'https://peer-aid.vercel.app'],
+      transports: ['websocket', 'polling'],
+      pingTimeout: '60000ms',
+      pingInterval: '25000ms'
+    },
+    usage: {
+      connect: 'const socket = io("ws://localhost:3001", { auth: { token: "your-jwt-token" } })',
+      workflow: [
+        '1. Connect with valid JWT token',
+        '2. socket.emit("join_conversation", { conversationId })',
+        '3. Listen for real-time events (new_message, user_joined, etc.)',
+        '4. Send messages via socket.emit("send_message", { ... })',
+        '5. Handle audio calls with WebRTC events'
+      ],
+      note: 'For persistent data operations (create conversations, get message history), use the main Next.js app REST API endpoints'
+    },
+    statistics: {
+      currentConnections: `${Array.from(userSocketMap || new Map()).length} users`,
+      activeRooms: `${Array.from(conversationRooms || new Map()).length} conversations`,
+      uptime: `${Math.floor(process.uptime())} seconds`
     }
   });
 });
