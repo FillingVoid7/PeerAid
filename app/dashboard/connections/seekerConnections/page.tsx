@@ -165,10 +165,32 @@ export default function SeekerConnectionsPage() {
     }
   }, [session?.user?.id]);
 
-  const startConversation = (guideId: string, guideName: string) => {
-    // TODO: Implement chat functionality
-    toast.info(`Starting conversation with ${guideName}...`);
-    // This would typically navigate to a chat page or open a chat modal
+  const startConversation = async (guideId: string, guideName: string) => {
+    try {
+      // Create or get conversation via API
+      const response = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          seekerId: session?.user?.id,
+          guideId: guideId
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Navigate to chat with the conversation
+        window.location.href = `/dashboard/chat?conversationId=${data.conversation._id}`;
+      } else {
+        toast.error('Failed to start conversation');
+      }
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      toast.error('Failed to start conversation');
+    }
   };
 
   const getStatusColor = (status: string) => {

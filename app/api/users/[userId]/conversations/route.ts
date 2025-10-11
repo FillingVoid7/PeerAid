@@ -4,11 +4,11 @@ import connectDB from "@/lib/db";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { userId: string } }
+    {params} : {params: Promise<{userId:string}>}
 ) {
   try {
     await connectDB();
-    const { userId } = params;
+    const { userId } = await params;
     
     if (!userId) {
       return NextResponse.json(

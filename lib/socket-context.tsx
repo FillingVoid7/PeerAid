@@ -19,18 +19,17 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+    const socketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_SERVER_URL || 'http://localhost:3001';
     
     if (!socketUrl) {
-      console.error('NEXT_PUBLIC_SOCKET_URL is not defined');
+      console.error('NEXT_PUBLIC_WEBSOCKET_SERVER_URL is not defined');
       return;
     }
 
-    // Get token from your auth system (adjust based on your auth)
-    const token = localStorage.getItem('token') || 'dev-token';
+    const userId = localStorage.getItem('userId') || 'dev-user';
 
     const socketInstance = io(socketUrl, {
-      auth: { token },
+      auth: { userId },
       transports: ['websocket', 'polling']
     });
 

@@ -73,15 +73,14 @@ interface OnlineUsersResponse {
   timestamp: string;
 }
 
-class WebSocketClient {
+export class WebSocketClient {
   private socket: Socket | null = null;
   private isConnected = false;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private eventListeners: Map<string, Function[]> = new Map();
 
-  // Connect to WebSocket server
-  connect(token: string): Promise<Socket> {
+  connect(userId: string): Promise<Socket> {
     return new Promise((resolve, reject) => {
       if (this.socket?.connected) {
         resolve(this.socket);
@@ -89,7 +88,7 @@ class WebSocketClient {
       }
 
       this.socket = io(WEBSOCKET_SERVER_URL, {
-        auth: { token },
+        auth: { userId },
         transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionAttempts: this.maxReconnectAttempts,
@@ -119,19 +118,18 @@ class WebSocketClient {
       });
 
       this.socket.on('error', (error: any) => {
-        console.error('❌ WebSocket error:', error);
+        console.error('WebSocket error:', error);
       });
 
       this.setupEventForwarding();
     });
   }
 
-  // Setup automatic event forwarding to registered listeners
   private setupEventForwarding() {
     if (!this.socket) return;
 
     const events = [
-      'user_joined', 'user_left', 'new_message', 'message_delivered', 
+      'connect', 'disconnect', 'user_joined', 'user_left', 'new_message', 'message_delivered', 
       'messages_read', 'user_typing', 'audio_call_incoming', 
       'audio_call_answered', 'audio_call_rejected', 'audio_call_ended',
       'conversation_joined', 'error'
@@ -139,7 +137,7 @@ class WebSocketClient {
 
     events.forEach(event => {
       this.socket!.on(event, (data: any) => {
-        const listeners = this.eventListeners.get(event);     // Find all components listening for 'new_message'
+        const listeners = this.eventListeners.get(event);     // Find all components listening for 'event'
         if (listeners) {
           listeners.forEach(listener => listener(data));          // Call each listener with the message data
         }
@@ -447,14 +445,14 @@ export async function checkWebSocketHealth(): Promise<{
 export async function setupConversation(
   seekerId: string, 
   guideId: string, 
-  token: string
+  userId: string
 ): Promise<{ conversation: ConversationResponse['conversation']; socket: Socket }> {
   try {
     // 1. Create or get conversation via REST API
     const { conversation } = await createOrGetConversation(seekerId, guideId);
     
     // 2. Connect to WebSocket
-    const socket = await wsClient.connect(token);
+    const socket = await wsClient.connect(userId);
     
     // 3. Join conversation room
     await wsClient.joinConversation(conversation._id);

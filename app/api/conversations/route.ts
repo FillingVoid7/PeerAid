@@ -15,14 +15,12 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // Check if conversation already exists
     let conversation = await Conversation.findOne({
       'participants.seeker': seekerId,
       'participants.guide': guideId
     });
     
     if (!conversation) {
-      // Create new conversation
       conversation = new Conversation({
         participants: {
           seeker: seekerId,
@@ -33,7 +31,6 @@ export async function POST(req: NextRequest) {
       await conversation.save();
     }
     
-    // Populate participant details
     await conversation.populate('participants.seeker', 'alias email');
     await conversation.populate('participants.guide', 'alias email');
     

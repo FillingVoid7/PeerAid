@@ -4,11 +4,11 @@ import connectDB from "@/lib/db";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { conversationId: string } }
+  { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
     await connectDB();
-    const { conversationId } = params;
+    const { conversationId } = await params;
     
     const messages = await Message.find({ conversationId })
       .populate('sender', 'alias email')

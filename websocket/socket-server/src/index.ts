@@ -6,11 +6,10 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import jwt from 'jsonwebtoken';
-import { Message, IMessage } from '../../../models/message';
-import { Conversation, IConversation } from '../../../models/chatConversation';
-import { AudioCall, IAudioCall } from '../../../models/audioCall';
-import User from '../../../models/User';
+import { Message, IMessage } from './models/message.js';
+import { Conversation, IConversation } from './models/chatConversation.js';
+import { AudioCall, IAudioCall } from './models/audioCall.js';
+import User from './models/User.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,7 +39,6 @@ const io = new SocketIOServer(server, {                                // both h
   pingInterval: 25000
 });
 
-// Connect to MongoDB
 const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
   process.exit(1);
@@ -56,7 +54,6 @@ mongoose.connect(MONGODB_URI)
 const userSocketMap = new Map<string, string>();
 const conversationRooms = new Map<string, Set<string>>();
 
-// Interfaces for socket events
 interface JoinConversationData {
   conversationId: string;
 }
@@ -84,39 +81,28 @@ interface TypingData {
   isTyping: boolean;
 }
 
-// Authentication middleware
 io.use(async (socket, next) => {
   try {
-    const token = socket.handshake.auth.token;
+    const userId = socket.handshake.auth.userId;
     
-    if (!token) {
-      return next(new Error('Authentication error: No token provided'));
+    if (!userId) {
+      return next(new Error('Authentication error: No userId provided'));
     }
 
-    // Verify JWT token
-    const JWT_SECRET = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET;
+    socket.data.userId = userId;
     
-    if (!JWT_SECRET) {
-      return next(new Error('JWT secret not configured'));
-    }
-
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-    
-    socket.data.userId = decoded.userId || decoded.id || decoded.sub;
-    socket.data.user = decoded;
-    
-    console.log(`🔐 Authenticated user: ${socket.data.userId}`);
+    console.log(` User connected: ${userId}`);
     next();
   } catch (error) {
-    console.error('🔒 Socket authentication error:', error);
-    next(new Error('Authentication error: Invalid token'));
+    console.error('Socket authentication error:', error);
+    next(new Error('Authentication error: Invalid userId'));
   }
 });
 
 // Socket event handlers
 io.on('connection', (socket) => {
   const userId = socket.data.userId;
-  console.log(`🟢 User connected: ${userId} (Socket: ${socket.id})`);
+  console.log(`User connected: ${userId} (Socket: ${socket.id})`);
   
   // Store user-socket mapping
   userSocketMap.set(userId, socket.id);
@@ -153,7 +139,7 @@ io.on('connection', (socket) => {
       }
       conversationRooms.get(conversationId)!.add(userId);
 
-      console.log(`💬 User ${userId} joined conversation ${conversationId}`);
+      console.log(` User ${userId} joined conversation ${conversationId}`);
       
       // Notify other participants that user is online
       socket.to(conversationId).emit('user_joined', {
@@ -266,7 +252,7 @@ io.on('connection', (socket) => {
         });
       }
 
-      console.log(`📨 Message sent in conversation ${conversationId} by user ${userId}`);
+      console.log(` Message sent in conversation ${conversationId} by user ${userId}`);
 
     } catch (error) {
       console.error('Error sending message:', error);
@@ -320,7 +306,7 @@ io.on('connection', (socket) => {
     try {
       const { conversationId, callId, offer } = data;
       
-      console.log(`📞 Audio call initiated by ${userId} in conversation ${conversationId}`);
+      console.log(` Audio call initiated by ${userId} in conversation ${conversationId}`);
       
       // Create system message for call initiation
       const callMessage = new Message({
@@ -352,7 +338,7 @@ io.on('connection', (socket) => {
   socket.on('audio_call_answer', (data: AudioCallData) => {
     const { conversationId, callId, answer } = data;
     
-    console.log(`📞 Audio call answered by ${userId}`);
+    console.log(` Audio call answered by ${userId}`);
     
     socket.to(conversationId).emit('audio_call_answered', {
       callId,
@@ -366,7 +352,7 @@ io.on('connection', (socket) => {
     try {
       const { conversationId, callId } = data;
       
-      console.log(`📞 Audio call rejected by ${userId}`);
+      console.log(` Audio call rejected by ${userId}`);
       
       // Create system message for call rejection
       const rejectMessage = new Message({
@@ -394,7 +380,7 @@ io.on('connection', (socket) => {
   socket.on('audio_call_end', (data: AudioCallData) => {
     const { conversationId, callId } = data;
     
-    console.log(`📞 Audio call ended by ${userId}`);
+    console.log(`Audio call ended by ${userId}`);
     
     socket.to(conversationId).emit('audio_call_ended', {
       callId,
@@ -415,7 +401,7 @@ io.on('connection', (socket) => {
 
   // Handle disconnection
   socket.on('disconnect', () => {
-    console.log(`🔴 User disconnected: ${userId}`);
+    console.log(`User disconnected: ${userId}`);
     
     // Remove from user mapping
     userSocketMap.delete(userId);
@@ -445,7 +431,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// REST API Endpoints for integration with main app
 
 
 // Get server statistics
@@ -645,7 +630,6 @@ app.get('/', (_req, res) => {
   });
 });
 
-// Error handling middleware
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Express error:', err);
   res.status(500).json({ error: 'Internal server error' });
@@ -661,9 +645,8 @@ server.listen(PORT, () => {
   console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM received, shutting down gracefully');
+  console.log('SIGTERM received, shutting down gracefully');
   server.close(() => {
     mongoose.connection.close();
     process.exit(0);
@@ -671,7 +654,7 @@ process.on('SIGTERM', () => {
 });
 
 process.on('SIGINT', () => {
-  console.log('🛑 SIGINT received, shutting down gracefully');
+  console.log('SIGINT received, shutting down gracefully');
   server.close(() => {
     mongoose.connection.close();
     process.exit(0);

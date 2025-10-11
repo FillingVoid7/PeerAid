@@ -191,10 +191,32 @@ export default function GuideConnectionsPage() {
     }
   };
 
-  const startConversation = (seekerId: string, seekerName: string) => {
-    // TODO: Implement chat functionality
-    toast.info(`Starting conversation with ${seekerName}...`);
-    // This would typically navigate to a chat page or open a chat modal
+  const startConversation = async (seekerId: string, seekerName: string) => {
+    try {
+      // Create or get conversation
+      const response = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          seekerId: seekerId,
+          guideId: session?.user?.id,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Navigate to chat page with conversation context
+        window.location.href = `/dashboard/chat?conversation=${data.conversation._id}`;
+      } else {
+        toast.error(`Failed to start conversation with ${seekerName}`);
+      }
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      toast.error(`Failed to start conversation with ${seekerName}`);
+    }
   };
 
   useEffect(() => {
