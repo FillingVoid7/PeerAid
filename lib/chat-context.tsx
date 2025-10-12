@@ -367,8 +367,19 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   // Join/leave conversation when current conversation changes
   useEffect(() => {
     if (currentConversation && webSocketClient && isConnected) {
-      webSocketClient.joinConversation(currentConversation._id);
-      loadMessages(currentConversation._id);
+      console.log(`Attempting to join conversation: ${currentConversation._id}`);
+      
+      const attemptJoin = async () => {
+        try {
+          await webSocketClient.joinConversation(currentConversation!._id);
+          console.log(`Successfully joined conversation: ${currentConversation._id}`);
+          loadMessages(currentConversation._id);
+        } catch (error) {
+          console.error(`Failed to join conversation: ${currentConversation._id}`, error);
+        }
+      };
+      
+      attemptJoin();
 
       return () => {
         webSocketClient.leaveConversation(currentConversation._id);

@@ -23,6 +23,9 @@ const ChatPageContent = () => {
       if (conversation) {
         setCurrentConversation(conversation);
         setIsMobileViewOpen(true); // Show chat on mobile when coming from connection
+      } else {
+        // Conversation not found in loaded conversations - might not exist yet
+        console.log(`Conversation ${conversationId} not found in loaded conversations`);
       }
     }
   }, [conversationId, conversations, setCurrentConversation]);

@@ -6,10 +6,10 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Message, IMessage } from './models/message.js';
-import { Conversation, IConversation } from './models/chatConversation.js';
-import { AudioCall, IAudioCall } from './models/audioCall.js';
-import User from './models/User.js';
+import { Message } from '@/models/message';
+import { Conversation } from '@/models/chatConversation';
+import { AudioCall } from '@/models/audioCall';
+import User from '@/models/User';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,7 +43,16 @@ const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
   process.exit(1);
 }
-mongoose.connect(MONGODB_URI)
+const mongooseOptions = {
+  bufferCommands: false,
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 10000, 
+  socketTimeoutMS: 45000, 
+  connectTimeoutMS: 10000, 
+  family: 4
+};
+
+mongoose.connect(MONGODB_URI, mongooseOptions)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => {
     console.error('MongoDB connection error:', err);
@@ -115,15 +124,25 @@ io.on('connection', (socket) => {
     try {
       const { conversationId } = data;
       
-      // Verify user is part of this conversation
-      const conversation = await Conversation.findById(conversationId);
+      // Set a timeout for the MongoDB operation
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Database query timeout')), 8000); // 8 second timeout
+      });
+
+      // Verify user is part of this conversation with timeout
+      const conversationPromise = Conversation.findById(conversationId)
+        .populate('participants.seeker', 'alias email')
+        .populate('participants.guide', 'alias email');
+      
+      const conversation = await Promise.race([conversationPromise, timeoutPromise]) as any;
+      
       if (!conversation) {
         socket.emit('error', { message: 'Conversation not found' });
         return;
       }
 
-      const isParticipant = conversation.participants.seeker.toString() === userId || 
-                           conversation.participants.guide.toString() === userId;
+      const isParticipant = conversation.participants.seeker._id.toString() === userId || 
+                           conversation.participants.guide._id.toString() === userId;
       
       if (!isParticipant) {
         socket.emit('error', { message: 'Unauthorized to join this conversation' });
@@ -153,7 +172,11 @@ io.on('connection', (socket) => {
 
     } catch (error) {
       console.error('Error joining conversation:', error);
-      socket.emit('error', { message: 'Failed to join conversation' });
+      if (error instanceof Error && error.message === 'Database query timeout') {
+        socket.emit('error', { message: 'Database connection timeout. Please try again.' });
+      } else {
+        socket.emit('error', { message: 'Failed to join conversation' });
+      }
     }
   });
 

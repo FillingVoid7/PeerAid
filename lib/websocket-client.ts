@@ -173,24 +173,42 @@ export class WebSocketClient {
       throw new Error('WebSocket not connected');
     }
 
+    console.log(`Attempting to join conversation: ${conversationId}`);
+
     return new Promise((resolve, reject) => {
+      // Clean up any existing listeners for this conversation
+      this.socket!.removeAllListeners('conversation_joined');
+      this.socket!.removeAllListeners('error');
+      
       this.socket!.emit('join_conversation', { conversationId });
       
       const timeout = setTimeout(() => {
+        console.log(`Join conversation timeout for ${conversationId}`);
         reject(new Error('Join conversation timeout'));
-      }, 10000);
+      }, 15000); // Increased timeout to 15 seconds
 
-      this.socket!.once('conversation_joined', (data: { conversationId: string }) => {
+      const onSuccess = (data: { conversationId: string }) => {
+        console.log(`Successfully joined conversation: ${data.conversationId}`);
         clearTimeout(timeout);
+        this.socket!.off('conversation_joined', onSuccess);
+        this.socket!.off('error', onError);
         if (data.conversationId === conversationId) {
           resolve(true);
+        } else {
+          reject(new Error('Conversation ID mismatch'));
         }
-      });
+      };
 
-      this.socket!.once('error', (error: { message: string }) => {
+      const onError = (error: { message: string }) => {
+        console.log(`Error joining conversation: ${error.message}`);
         clearTimeout(timeout);
+        this.socket!.off('conversation_joined', onSuccess);
+        this.socket!.off('error', onError);
         reject(new Error(error.message));
-      });
+      };
+
+      this.socket!.once('conversation_joined', onSuccess);
+      this.socket!.once('error', onError);
     });
   }
 
