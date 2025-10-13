@@ -6,10 +6,9 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Message } from '@/models/message';
-import { Conversation } from '@/models/chatConversation';
-import { AudioCall } from '@/models/audioCall';
-import User from '@/models/User';
+import { Conversation } from '../../../models/chatConversation.js';
+import { Message } from '../../../models/message.js';
+import User from '../../../models/User.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
