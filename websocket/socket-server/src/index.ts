@@ -6,9 +6,9 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Conversation } from '../../../models/chatConversation.js';
-import { Message } from '../../../models/message.js';
-import User from '../../../models/User.js';
+import {User} from '../models/User.js';
+import { Conversation } from '../models/chatConversation.js';
+import { Message } from '../models/message.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,7 +52,11 @@ const mongooseOptions = {
 };
 
 mongoose.connect(MONGODB_URI, mongooseOptions)
-  .then(() => console.log('Connected to MongoDB'))
+  .then(() => {
+    console.log('Connected to MongoDB');
+    // Ensure User model is registered
+    console.log('User model registered:', User.modelName);
+  })
   .catch(err => {
     console.error('MongoDB connection error:', err);
     process.exit(1);
