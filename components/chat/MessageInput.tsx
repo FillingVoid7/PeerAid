@@ -3,7 +3,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Send, Mic, MicOff, Phone, Paperclip, Smile } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 interface MessageInputProps {
@@ -28,19 +27,27 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const [message, setMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleInputClick = () => {
     console.log('Input clicked - this should work!');
-    if (inputRef.current) {
-      inputRef.current.focus();
+    if (textareaRef.current) {
+      textareaRef.current.focus();
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setMessage(value);
+    adjustTextareaHeight();
 
     // Handle typing indicators
     if (value.length > 0) {
@@ -70,6 +77,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     try {
       await onSendMessage(trimmedMessage, 'text');
       setMessage('');
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
     } finally {
@@ -77,10 +87,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') {
+      if (e.shiftKey) {
+        // Shift+Enter: Allow new line (default behavior)
+        return;
+      } else {
+        // Enter: Send message
+        e.preventDefault();
+        handleSendMessage();
+      }
     }
   };
 
@@ -109,8 +125,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   // Focus input when component mounts
   useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
+    if (textareaRef.current) {
+      textareaRef.current.focus();
     }
   }, []);
 
@@ -135,23 +151,24 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       {/* Message input area */}
       <div className="flex-1 flex items-end gap-2 relative z-10">
         <div className="flex-1 relative">
-          <Input
-            ref={inputRef}
+          <textarea
+            ref={textareaRef}
             value={message}
             onChange={handleInputChange}
             onClick={handleInputClick}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder={placeholder}
             disabled={disabled || isSending}
-            className="min-h-[44px] py-3 pr-12 resize-none border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 relative z-10 pointer-events-auto"
+            className="w-full min-h-[44px] max-h-[120px] py-3 pr-12 px-3 resize-none border border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 relative z-10 pointer-events-auto focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 overflow-y-auto"
             maxLength={1000}
+            rows={1}
           />
           
           {/* Emoji button */}
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 z-20 pointer-events-auto"
+            className="absolute right-2 top-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 z-20 pointer-events-auto"
             disabled={disabled}
           >
             <Smile className="w-4 h-4" />
@@ -200,6 +217,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           <Phone className="w-5 h-5" />
         </Button>
       )}
+      
+  
     </div>
   );
 };

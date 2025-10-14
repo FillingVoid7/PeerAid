@@ -73,7 +73,11 @@ const ConversationItem: React.FC<{
           </div>
 
           <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-            {conversation.lastMessage && conversation.lastMessage.trim() ? conversation.lastMessage : ''}
+            {conversation.lastMessage 
+              ? (typeof conversation.lastMessage === 'string' 
+                  ? conversation.lastMessage.trim() 
+                  : (conversation.lastMessage as any)?.content?.trim() || 'New message')
+              : 'No messages yet'}
           </p>
 
           <div className="flex items-center justify-between mt-2">

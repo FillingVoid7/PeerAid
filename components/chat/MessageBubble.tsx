@@ -19,8 +19,25 @@ interface MessageProps {
   onCallAction?: (action: 'answer' | 'reject', callId?: string) => void;
 }
 
+// Custom time formatting function
+const formatTimeAgo = (date: Date) => {
+  const now = new Date();
+  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+  
+  if (diffInMinutes < 1) return 'now';
+  if (diffInMinutes < 60) return `${diffInMinutes}min`;
+  
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}hr`;
+  
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) return `${diffInDays}d`;
+  
+  return formatDistanceToNow(date, { addSuffix: false }).replace(/about |over |almost /, '');
+};
+
 const MessageStatusIcon = ({ status, readBy }: { status: ChatMessage['status']; readBy: string[] }) => {
-  if (status === 'read' || readBy.length > 0) {
+  if (status === 'read' || (readBy && readBy.length > 0)) {
     return <CheckCheck className="w-3 h-3 text-blue-500" />;
   }
   if (status === 'delivered') {
@@ -32,43 +49,47 @@ const MessageStatusIcon = ({ status, readBy }: { status: ChatMessage['status']; 
 const TextMessage: React.FC<MessageProps> = ({ message, isOwnMessage, showAvatar }) => {
   return (
     <div className={cn(
-      "flex gap-3 max-w-[70%]",
+      "flex gap-3 max-w-[85%] mb-2",
       isOwnMessage ? "ml-auto flex-row-reverse" : ""
     )}>
-      {showAvatar && !isOwnMessage && (
-        <Avatar className="w-8 h-8 flex-shrink-0">
-          <div className="bg-gradient-to-br from-blue-500 to-purple-600 w-full h-full flex items-center justify-center text-white text-sm font-medium">
-            {message.sender.alias.charAt(0).toUpperCase()}
-          </div>
-        </Avatar>
+      {/* Avatar or spacer for alignment */}
+      {!isOwnMessage && (
+        <div className="w-8 h-8 flex-shrink-0 self-end">
+          {showAvatar ? (
+            <Avatar className="w-8 h-8">
+              <div className="bg-gradient-to-br from-blue-500 to-purple-600 w-full h-full flex items-center justify-center text-white text-sm font-medium">
+                {message.sender.alias.charAt(0).toUpperCase()}
+              </div>
+            </Avatar>
+          ) : (
+            // Empty spacer to maintain alignment
+            <div className="w-8 h-8"></div>
+          )}
+        </div>
       )}
       
       <div className={cn(
-        "flex flex-col gap-1",
+        "flex flex-col gap-1 min-w-0 flex-1",
         isOwnMessage ? "items-end" : "items-start"
-      )}>
-        {!isOwnMessage && showAvatar && (
-          <span className="text-xs text-gray-500 px-2">{message.sender.alias}</span>
-        )}
-        
+      )}>        
         <Card className={cn(
-          "px-4 py-2 max-w-full break-words",
+          "px-3 py-2 max-w-full break-words inline-block",
           isOwnMessage 
             ? "bg-blue-600 text-white border-blue-600" 
             : "bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700"
         )}>
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
         </Card>
         
         <div className={cn(
-          "flex items-center gap-1 px-2",
+          "flex items-center gap-1 px-1",
           isOwnMessage ? "flex-row-reverse" : ""
         )}>
           <span className="text-xs text-gray-500">
-            {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+            {formatTimeAgo(new Date(message.createdAt))}
           </span>
           {isOwnMessage && (
-            <MessageStatusIcon status={message.status} readBy={message.readBy} />
+            <MessageStatusIcon status={message.status} readBy={message.readBy || []} />
           )}
         </div>
       </div>
@@ -97,15 +118,23 @@ const AudioMessage: React.FC<MessageProps & { onAudioPlay?: (messageId: string) 
 
   return (
     <div className={cn(
-      "flex gap-3 max-w-[70%]",
+      "flex gap-3 max-w-[70%] mb-2",
       isOwnMessage ? "ml-auto flex-row-reverse" : ""
     )}>
-      {showAvatar && !isOwnMessage && (
-        <Avatar className="w-8 h-8 flex-shrink-0">
-          <div className="bg-gradient-to-br from-green-500 to-teal-600 w-full h-full flex items-center justify-center text-white text-sm font-medium">
-            {message.sender.alias.charAt(0).toUpperCase()}
-          </div>
-        </Avatar>
+      {/* Avatar or spacer for alignment */}
+      {!isOwnMessage && (
+        <div className="w-8 h-8 flex-shrink-0 self-end">
+          {showAvatar ? (
+            <Avatar className="w-8 h-8">
+              <div className="bg-gradient-to-br from-green-500 to-teal-600 w-full h-full flex items-center justify-center text-white text-sm font-medium">
+                {message.sender.alias.charAt(0).toUpperCase()}
+              </div>
+            </Avatar>
+          ) : (
+            // Empty spacer to maintain alignment
+            <div className="w-8 h-8"></div>
+          )}
+        </div>
       )}
       
       <div className={cn(
@@ -154,7 +183,7 @@ const AudioMessage: React.FC<MessageProps & { onAudioPlay?: (messageId: string) 
             {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
           </span>
           {isOwnMessage && (
-            <MessageStatusIcon status={message.status} readBy={message.readBy} />
+            <MessageStatusIcon status={message.status} readBy={message.readBy || []} />
           )}
         </div>
       </div>
@@ -208,15 +237,23 @@ const AudioCallMessage: React.FC<MessageProps & { onCallAction?: (action: 'answe
 
   return (
     <div className={cn(
-      "flex gap-3 max-w-[70%]",
+      "flex gap-3 max-w-[70%] mb-2",
       isOwnMessage ? "ml-auto flex-row-reverse" : ""
     )}>
-      {showAvatar && !isOwnMessage && (
-        <Avatar className="w-8 h-8 flex-shrink-0">
-          <div className="bg-gradient-to-br from-orange-500 to-red-600 w-full h-full flex items-center justify-center text-white text-sm font-medium">
-            {message.sender.alias.charAt(0).toUpperCase()}
-          </div>
-        </Avatar>
+      {/* Avatar or spacer for alignment */}
+      {!isOwnMessage && (
+        <div className="w-8 h-8 flex-shrink-0 self-end">
+          {showAvatar ? (
+            <Avatar className="w-8 h-8">
+              <div className="bg-gradient-to-br from-orange-500 to-red-600 w-full h-full flex items-center justify-center text-white text-sm font-medium">
+                {message.sender.alias.charAt(0).toUpperCase()}
+              </div>
+            </Avatar>
+          ) : (
+            // Empty spacer to maintain alignment
+            <div className="w-8 h-8"></div>
+          )}
+        </div>
       )}
       
       <div className={cn(
@@ -270,7 +307,7 @@ const AudioCallMessage: React.FC<MessageProps & { onCallAction?: (action: 'answe
             {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
           </span>
           {isOwnMessage && (
-            <MessageStatusIcon status={message.status} readBy={message.readBy} />
+            <MessageStatusIcon status={message.status} readBy={message.readBy || []} />
           )}
         </div>
       </div>

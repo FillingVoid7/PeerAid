@@ -65,17 +65,48 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (isNearBottom && scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    if (scrollAreaRef.current && messages.length > 0) {
+      const scrollElement = scrollAreaRef.current;
+      
+      // Always scroll to bottom for new messages
+      const scrollToBottom = () => {
+        if (scrollElement) {
+          scrollElement.scrollTop = scrollElement.scrollHeight;
+        }
+      };
+      
+      // Use setTimeout to ensure DOM has updated
+      setTimeout(scrollToBottom, 10);
+      
+      // Also use requestAnimationFrame as backup
+      requestAnimationFrame(scrollToBottom);
     }
-  }, [messages, isNearBottom]);
+  }, [messages.length]); // Trigger on message count change
+
+  // Scroll to bottom when conversation changes
+  useEffect(() => {
+    if (scrollAreaRef.current && currentConversation) {
+      const scrollElement = scrollAreaRef.current;
+      
+      // Force scroll to bottom when switching conversations
+      const scrollToBottom = () => {
+        if (scrollElement) {
+          scrollElement.scrollTop = scrollElement.scrollHeight;
+          setIsNearBottom(true);
+        }
+      };
+      
+      setTimeout(scrollToBottom, 100);
+      requestAnimationFrame(scrollToBottom);
+    }
+  }, [currentConversation?._id]);
 
   // Mark messages as read when they come into view
   useEffect(() => {
     if (currentConversation && messages.length > 0 && session?.user?.id) {
       const unreadMessages = messages.filter(
         msg => msg.sender._id !== session.user.id && 
-               !msg.readBy.includes(session.user.id) &&
+               !(msg.readBy && msg.readBy.includes(session.user.id)) &&
                !unreadMessageIds.includes(msg._id)
       );
 
@@ -206,11 +237,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
 
       {/* Messages Area */}
       <ScrollArea 
-        className="flex-1 p-4 overflow-auto"
+        className="flex-1 px-4 py-2 overflow-auto"
         onScrollCapture={handleScroll}
         ref={scrollAreaRef}
       >
-        <div className="space-y-4 max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto min-h-full flex flex-col justify-end">
           {isLoadingMessages && messages.length === 0 && (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -225,26 +256,28 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
             </div>
           )}
 
-          {messages.map((message, index) => {
-            const isOwnMessage = message.sender._id === session?.user?.id;
-            const isFirstInGroup = index === messages.length - 1 || 
-              messages[index + 1].sender._id !== message.sender._id;
-            
-            return (
-              <MessageBubble
-                key={message._id}
-                message={message}
-                isOwnMessage={isOwnMessage}
-                showAvatar={isFirstInGroup}
-                currentUser={session?.user ? {
-                  _id: session.user.id,
-                  alias: session.user.alias,
-                  email: session.user.email || ''
-                } : undefined}
-                onCallAction={handleCallAction}
-              />
-            );
-          })}
+          <div className="space-y-1">
+            {messages.map((message, index) => {
+              const isOwnMessage = message.sender._id === session?.user?.id;
+              const isLastInGroup = index === messages.length - 1 || 
+                messages[index + 1].sender._id !== message.sender._id;
+              
+              return (
+                <MessageBubble
+                  key={message._id}
+                  message={message}
+                  isOwnMessage={isOwnMessage}
+                  showAvatar={isLastInGroup}
+                  currentUser={session?.user ? {
+                    _id: session.user.id,
+                    alias: session.user.alias,
+                    email: session.user.email || ''
+                  } : undefined}
+                  onCallAction={handleCallAction}
+                />
+              );
+            })}
+          </div>
 
           {/* Typing Indicator */}
           {currentTypingUsers.length > 0 && (

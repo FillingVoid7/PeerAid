@@ -12,7 +12,7 @@ export async function GET(
     
     const messages = await Message.find({ conversationId })
       .populate('sender', 'alias email')
-      .sort({ updatedAt: -1 });
+      .sort({ createdAt: 1 }); // Sort by createdAt ascending (oldest first)
     
     return NextResponse.json({
       success: true,

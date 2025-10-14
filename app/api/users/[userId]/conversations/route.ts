@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Conversation } from "@/models/chatConversation";
+import User from "@/models/User";
 import connectDB from "@/lib/db";
 
 export async function GET(
@@ -25,7 +26,6 @@ export async function GET(
     })
     .populate('participants.seeker', 'alias email')
     .populate('participants.guide', 'alias email')
-    .populate('lastMessage')
     .sort({ updatedAt: -1 });
     
     return NextResponse.json({

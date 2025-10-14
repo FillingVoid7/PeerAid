@@ -160,7 +160,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       setMessages(prev => {
         const exists = prev.find(m => m._id === message._id);
         if (exists) return prev;
-        return [message, ...prev];
+        
+        // Simply append new message to the end (chronological order)
+        return [...prev, message];
       });
 
       // Update conversation's last message
@@ -196,7 +198,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       setMessages(prev => 
         prev.map(msg => 
           messageIds.includes(msg._id) && msg.conversationId === conversationId
-            ? { ...msg, status: 'read', readBy: [...msg.readBy, userId] }
+            ? { ...msg, status: 'read', readBy: [...(msg.readBy || []), userId] }
             : msg
         )
       );
@@ -287,10 +289,18 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       const response = await fetch(`/api/conversations/${conversationId}/messages`);
       const data = await response.json();
       if (data.success) {
+        // Messages are already sorted by createdAt ascending from the API
         if (page === 1) {
           setMessages(data.messages);
         } else {
-          setMessages(prev => [...prev, ...data.messages]);
+          setMessages(prev => {
+            const combined = [...prev, ...data.messages];
+            // Remove duplicates while maintaining order
+            const unique = combined.filter((msg, index, arr) => 
+              arr.findIndex(m => m._id === msg._id) === index
+            );
+            return unique;
+          });
         }
         setHasMoreMessages(data.hasMore);
       }
@@ -368,6 +378,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   useEffect(() => {
     if (currentConversation && webSocketClient && isConnected) {
       console.log(`Attempting to join conversation: ${currentConversation._id}`);
+      
+      // Clear messages when switching conversations
+      setMessages([]);
       
       const attemptJoin = async () => {
         try {
