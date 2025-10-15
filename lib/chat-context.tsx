@@ -34,7 +34,7 @@ export interface ChatConversation {
     guide: ChatUser;
   };
   status: 'active' | 'inactive';
-  lastMessage?: string;
+  lastMessage?: string | { content: string; createdAt: string };
   unreadCount?: number;
   createdAt: string;
   updatedAt: string;
@@ -53,35 +53,28 @@ export interface OnlineUser {
 }
 
 interface ChatContextType {                  // Define the shape of the context for the components
-  // Connection state
   isConnected: boolean;
   isConnecting: boolean;
   
-  // Current conversation
   currentConversation: ChatConversation | null;
   setCurrentConversation: (conversation: ChatConversation | null) => void;
   
-  // Messages
   messages: ChatMessage[];
   isLoadingMessages: boolean;
   hasMoreMessages: boolean;
   
-  // Conversations
   conversations: ChatConversation[];
   isLoadingConversations: boolean;
   
-  // Real-time features
   typingUsers: TypingStatus[];
   onlineUsers: OnlineUser[];
   
-  // Actions
   sendMessage: (content: string, type?: ChatMessage['type'], fileUrl?: string, duration?: number) => Promise<void>;
   loadMessages: (conversationId: string, page?: number) => Promise<void>;
   loadConversations: () => Promise<void>;
   markAsRead: (conversationId: string, messageIds: string[]) => Promise<void>;
   setTyping: (conversationId: string, isTyping: boolean) => void;
   
-  // Audio calls
   initiateAudioCall: (conversationId: string) => Promise<string>;
   answerAudioCall: (callId: string) => Promise<void>;
   rejectAudioCall: (callId: string) => Promise<void>;
@@ -98,27 +91,21 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const { data: session } = useSession();
   const [webSocketClient] = useState(new WebSocketClient());
   
-  // Connection state
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   
-  // Current conversation
   const [currentConversation, setCurrentConversation] = useState<ChatConversation | null>(null);
   
-  // Messages
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   
-  // Conversations
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   
-  // Real-time features
   const [typingUsers, setTypingUsers] = useState<TypingStatus[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
 
-  // Initialize WebSocket connection
   useEffect(() => {
     if (session?.user?.id && !isConnected && !isConnecting) {
       connectWebSocket();
@@ -140,14 +127,9 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     console.log(' Attempting to connect with userId:', session.user.id);
     setIsConnecting(true);
     try {
-      // Set up event listeners before connecting
       setupEventListeners();
-      
-      // Connect to WebSocket
       await webSocketClient.connect(session.user.id);
-      
-      // Connection status will be updated via the 'connect' event listener
-    } catch (error) {
+      } catch (error) {
       console.error('Failed to connect to WebSocket:', error);
       setIsConnected(false);
       setIsConnecting(false);
@@ -160,9 +142,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       setMessages(prev => {
         const exists = prev.find(m => m._id === message._id);
         if (exists) return prev;
-        
-        // Simply append new message to the end (chronological order)
-        return [...prev, message];
+          return [...prev, message];
       });
 
       // Update conversation's last message
@@ -195,13 +175,27 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       conversationId: string;
       messageIds: string[];
     }) => {
-      setMessages(prev => 
-        prev.map(msg => 
-          messageIds.includes(msg._id) && msg.conversationId === conversationId
-            ? { ...msg, status: 'read', readBy: [...(msg.readBy || []), userId] }
-            : msg
-        )
-      );
+      const idSet = new Set((messageIds || []).map(id => String(id)));
+      console.log('[READ][CLIENT] messages_read received', { userId, conversationId, count: idSet.size, sample: Array.from(idSet).slice(0,5) });
+      setMessages(prev => {
+        let mutated = false;
+        const next: ChatMessage[] = prev.map((msg: ChatMessage) => {
+          const sameConversation = msg.conversationId === conversationId;
+          const isTarget = idSet.has(String(msg._id));
+          if (sameConversation && isTarget) {
+            const existingReadBy = msg.readBy || [];
+            const nextReadBy = existingReadBy.includes(userId) ? existingReadBy : [...existingReadBy, userId];
+            console.log('[READ][CLIENT] updating message to read', { messageId: msg._id });
+            mutated = true;
+            return { ...msg, status: 'read' as const, readBy: nextReadBy };
+          }
+          return msg;
+        });
+        if (!mutated) {
+          console.warn('[READ][CLIENT] messages_read received but no local messages updated');
+        }
+        return next;
+      });
     });
 
     // Typing indicators
@@ -236,6 +230,19 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       });
     });
 
+    // Online users snapshot on join (ensures both sides see each other as online)
+    webSocketClient.on('online_users', ({ conversationId, onlineUsers: userIds }: { 
+      conversationId: string; 
+      onlineUsers: string[]; 
+    }) => {
+      setOnlineUsers(prev => {
+        // Remove existing records for this conversation, then add snapshot
+        const remaining = prev.filter(u => u.conversationId !== conversationId);
+        const snapshot: OnlineUser[] = userIds.map(id => ({ userId: id, conversationId, isOnline: true }));
+        return [...remaining, ...snapshot];
+      });
+    });
+
     webSocketClient.on('user_left', ({ userId, conversationId, timestamp }: { 
       userId: string;
       conversationId: string;
@@ -246,7 +253,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       );
     });
 
-    // Connection events
     webSocketClient.on('connect', () => {
       console.log('WebSocket connected successfully');
       setIsConnected(true);
@@ -289,13 +295,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       const response = await fetch(`/api/conversations/${conversationId}/messages`);
       const data = await response.json();
       if (data.success) {
-        // Messages are already sorted by createdAt ascending from the API
         if (page === 1) {
           setMessages(data.messages);
         } else {
           setMessages(prev => {
             const combined = [...prev, ...data.messages];
-            // Remove duplicates while maintaining order
             const unique = combined.filter((msg, index, arr) => 
               arr.findIndex(m => m._id === msg._id) === index
             );
@@ -378,8 +382,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   useEffect(() => {
     if (currentConversation && webSocketClient && isConnected) {
       console.log(`Attempting to join conversation: ${currentConversation._id}`);
-      
-      // Clear messages when switching conversations
       setMessages([]);
       
       const attemptJoin = async () => {
@@ -401,35 +403,29 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   }, [currentConversation, webSocketClient, isConnected, loadMessages]);
 
   const value: ChatContextType = {
-    // Connection state
     isConnected,
     isConnecting,
     
-    // Current conversation
     currentConversation,
     setCurrentConversation,
     
-    // Messages
     messages,
     isLoadingMessages,
     hasMoreMessages,
     
-    // Conversations
     conversations,
     isLoadingConversations,
     
-    // Real-time features
+    // // Real-time features
     typingUsers,
     onlineUsers,
     
-    // Actions
     sendMessage,
     loadMessages,
     loadConversations,
     markAsRead,
     setTyping,
     
-    // Audio calls
     initiateAudioCall,
     answerAudioCall,
     rejectAudioCall,

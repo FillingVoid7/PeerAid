@@ -16,7 +16,7 @@ const ChatLayoutContent: React.FC<ChatLayoutProps> = ({ className }) => {
 
   const handleSelectConversation = (conversation: ChatConversation) => {
     setCurrentConversation(conversation);
-    setIsMobileViewOpen(true); // Show chat on mobile
+    setIsMobileViewOpen(true); 
   };
 
   const handleBackToList = () => {

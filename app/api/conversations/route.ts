@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Conversation } from "@/models/chatConversation";
+import { Message } from "@/models/message";
 import connectDB from "@/lib/db";
+import mongoose from "mongoose";
 
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
+    
+    if (!mongoose.models.Message) {
+      require('@/models/message');
+    }
+    
     const body = await req.json();
     const { seekerId, guideId } = body;
     
@@ -33,6 +40,7 @@ export async function POST(req: NextRequest) {
     
     await conversation.populate('participants.seeker', 'alias email');
     await conversation.populate('participants.guide', 'alias email');
+    await conversation.populate('lastMessage', 'content createdAt');
     
     return NextResponse.json({ 
       success: true,

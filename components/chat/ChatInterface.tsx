@@ -68,27 +68,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
     if (scrollAreaRef.current && messages.length > 0) {
       const scrollElement = scrollAreaRef.current;
       
-      // Always scroll to bottom for new messages
       const scrollToBottom = () => {
         if (scrollElement) {
           scrollElement.scrollTop = scrollElement.scrollHeight;
         }
       };
       
-      // Use setTimeout to ensure DOM has updated
       setTimeout(scrollToBottom, 10);
       
-      // Also use requestAnimationFrame as backup
       requestAnimationFrame(scrollToBottom);
     }
-  }, [messages.length]); // Trigger on message count change
+  }, [messages.length]); 
 
   // Scroll to bottom when conversation changes
   useEffect(() => {
     if (scrollAreaRef.current && currentConversation) {
       const scrollElement = scrollAreaRef.current;
       
-      // Force scroll to bottom when switching conversations
       const scrollToBottom = () => {
         if (scrollElement) {
           scrollElement.scrollTop = scrollElement.scrollHeight;
@@ -101,22 +97,29 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
     }
   }, [currentConversation?._id]);
 
-  // Mark messages as read when they come into view
   useEffect(() => {
-    if (currentConversation && messages.length > 0 && session?.user?.id) {
-      const unreadMessages = messages.filter(
-        msg => msg.sender._id !== session.user.id && 
-               !(msg.readBy && msg.readBy.includes(session.user.id)) &&
-               !unreadMessageIds.includes(msg._id)
-      );
+    if (!currentConversation || messages.length === 0 || !session?.user?.id) return;
 
-      if (unreadMessages.length > 0) {
-        const messageIds = unreadMessages.map(msg => msg._id);
-        setUnreadMessageIds(prev => [...prev, ...messageIds]);
-        markAsRead(currentConversation._id, messageIds);
-      }
+    const isTabVisible = typeof document !== 'undefined' ? document.visibilityState === 'visible' : true;
+    if (!isNearBottom || !isTabVisible) return;
+
+    const unreadMessages = messages.filter(
+      msg => msg.sender._id !== session.user.id &&
+             !(msg.readBy && msg.readBy.includes(session.user.id)) &&
+             !unreadMessageIds.includes(msg._id)
+    );
+
+    if (unreadMessages.length > 0) {
+      const messageIds = unreadMessages.map(msg => msg._id);
+      setUnreadMessageIds(prev => [...prev, ...messageIds]);
+      console.log('[READ] UI marking as read', {
+        conversationId: currentConversation._id,
+        count: messageIds.length,
+        sample: messageIds.slice(0, 5)
+      });
+      markAsRead(currentConversation._id, messageIds);
     }
-  }, [messages, currentConversation, session?.user?.id, markAsRead, unreadMessageIds]);
+  }, [messages, currentConversation, session?.user?.id, markAsRead, unreadMessageIds, isNearBottom]);
 
   // Handle scroll position tracking
   const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
@@ -124,7 +127,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
     const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 10;
     setIsNearBottom(isAtBottom);
 
-    // Load more messages when scrolling to top
     if (scrollTop === 0 && hasMoreMessages && !isLoadingMessages && currentConversation) {
       const currentPage = Math.ceil(messages.length / 20) + 1;
       loadMessages(currentConversation._id, currentPage);
@@ -165,6 +167,26 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
     console.log(`${action} call:`, callId);
     // TODO: Implement actual call handling
   }, []);
+
+  // Handle input area click to mark all unread messages as read
+  const handleInputClick = useCallback(() => {
+    if (!currentConversation || !session?.user?.id) return;
+    
+    // Find all unread messages from others
+    const unreadMessages = messages.filter(
+      msg => msg.sender._id !== session.user.id && 
+             !(msg.readBy && msg.readBy.includes(session.user.id))
+    );
+    
+    if (unreadMessages.length > 0) {
+      const messageIds = unreadMessages.map(msg => msg._id);
+      console.log('[READ] Input clicked - marking all unread as read', { 
+        conversationId: currentConversation._id, 
+        count: messageIds.length 
+      });
+      markAsRead(currentConversation._id, messageIds);
+    }
+  }, [currentConversation, session?.user?.id, messages, markAsRead]);
 
   if (!currentConversation) {
     return (
@@ -293,6 +315,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
           onStartTyping={handleStartTyping}
           onStopTyping={handleStopTyping}
           onInitiateCall={handleInitiateCall}
+          onInputClick={handleInputClick}
           disabled={!isConnected}
           placeholder={
             !isConnected 

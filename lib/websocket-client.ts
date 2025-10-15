@@ -132,7 +132,7 @@ export class WebSocketClient {
       'connect', 'disconnect', 'user_joined', 'user_left', 'new_message', 'message_delivered', 
       'messages_read', 'user_typing', 'audio_call_incoming', 
       'audio_call_answered', 'audio_call_rejected', 'audio_call_ended',
-      'conversation_joined', 'error'
+      'conversation_joined', 'online_users', 'error'
     ];
 
     events.forEach(event => {
@@ -185,7 +185,7 @@ export class WebSocketClient {
       const timeout = setTimeout(() => {
         console.log(`Join conversation timeout for ${conversationId}`);
         reject(new Error('Join conversation timeout'));
-      }, 15000); // Increased timeout to 15 seconds
+      }, 15000); 
 
       const onSuccess = (data: { conversationId: string }) => {
         console.log(`Successfully joined conversation: ${data.conversationId}`);
@@ -228,16 +228,17 @@ export class WebSocketClient {
 
   markMessagesAsRead(conversationId: string, messageIds: string[]) {
     if (this.socket?.connected) {
+      console.log('[READ] WS emit mark_messages_read', { conversationId, messageIdsCount: messageIds.length, sample: messageIds.slice(0,5) });
       this.socket.emit('mark_messages_read', { conversationId, messageIds });
     }
   }
 
-  // Typing indicators
-  sendTyping(conversationId: string, isTyping: boolean) {
-    if (this.socket?.connected) {
-      this.socket.emit('typing', { conversationId, isTyping });
-    }
-  }
+  // // Typing indicators
+  // sendTyping(conversationId: string, isTyping: boolean) {
+  //   if (this.socket?.connected) {
+  //     this.socket.emit('typing', { conversationId, isTyping });
+  //   }
+  // }
 
   // Audio call management
   initiateAudioCall(conversationId: string, callId: string, offer: RTCSessionDescriptionInit) {
@@ -353,7 +354,7 @@ export async function markMessagesAsReadAPI(
         body: JSON.stringify({ userId, messageIds }),
       }
     );
-
+    console.log('markMessagesAsReadAPI response status:', response.status);
     if (!response.ok) {
       throw new Error(`Failed to mark messages as read: ${response.statusText}`);
     }
@@ -482,9 +483,9 @@ export async function setupConversation(
   }
 }
 
-/**
- * Send message with automatic fallback and retry
- */
+
+ // Send message with automatic fallback and retry
+ 
 export async function sendMessageWithRetry(
   data: SendMessageData, 
   maxRetries: number = 3
@@ -507,7 +508,6 @@ export async function sendMessageWithRetry(
         throw new Error(`Failed to send message after ${maxRetries} attempts`);
       }
       
-      // Wait before retry
       await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
     }
   }
@@ -515,9 +515,9 @@ export async function sendMessageWithRetry(
   return false;
 }
 
-/**
- * Mark messages as read (WebSocket + API sync)
- */
+
+ // Mark messages as read (WebSocket + API sync)
+ 
 export async function markMessagesAsReadSync(
   conversationId: string, 
   userId: string, 
@@ -539,7 +539,6 @@ export async function markMessagesAsReadSync(
 
 export { wsClient };
 
-// Export types
 export type {
   JoinConversationData,
   SendMessageData,

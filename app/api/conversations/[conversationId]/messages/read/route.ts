@@ -12,16 +12,33 @@ export async function PUT(
     const body = await req.json();
     const { userId, messageIds } = body;
     
-    if (!userId || !messageIds || !Array.isArray(messageIds)) {
+    if (!userId) {
       return NextResponse.json(
-        { error: 'userId and messageIds array are required' },
+        { error: 'userId is required' },
         { status: 400 }
       );
     }
-    
+
+    let targetIds: string[] = [];
+
+    if (Array.isArray(messageIds) && messageIds.length > 0) {
+      targetIds = messageIds;
+    } else {
+      const unread = await Message.find({
+        conversationId,
+        sender: { $ne: userId },
+        status: { $ne: 'read' }
+      }).select('_id');
+      targetIds = unread.map((m: any) => String(m._id));
+    }
+
+    if (targetIds.length === 0) {
+      return NextResponse.json({ success: true, message: 'No messages to update', updatedIds: [] });
+    }
+
     await Message.updateMany(
       { 
-        _id: { $in: messageIds },
+        _id: { $in: targetIds },
         conversationId,
         sender: { $ne: userId }
       },
@@ -33,7 +50,8 @@ export async function PUT(
     
     return NextResponse.json({ 
       success: true,
-      message: 'Messages marked as read'
+      message: 'Messages marked as read',
+      updatedIds: targetIds
     });
   } catch (error) {
     console.error('Error marking messages as read:', error);

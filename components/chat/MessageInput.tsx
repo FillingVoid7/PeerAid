@@ -10,6 +10,7 @@ interface MessageInputProps {
   onStartTyping: () => void;
   onStopTyping: () => void;
   onInitiateCall: () => void;
+  onInputClick?: () => void;
   disabled?: boolean;
   placeholder?: string;
   className?: string;
@@ -20,6 +21,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   onStartTyping,
   onStopTyping,
   onInitiateCall,
+  onInputClick,
   disabled = false,
   placeholder = "Type a message...",
   className
@@ -31,7 +33,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleInputClick = () => {
-    console.log('Input clicked - this should work!');
+    console.log('[READ] Input area clicked - marking messages as read');
+    onInputClick?.();
     if (textareaRef.current) {
       textareaRef.current.focus();
     }
@@ -49,16 +52,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     setMessage(value);
     adjustTextareaHeight();
 
-    // Handle typing indicators
     if (value.length > 0) {
       onStartTyping();
       
-      // Clear existing timeout
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
       
-      // Set new timeout to stop typing indicator
       typingTimeoutRef.current = setTimeout(() => {
         onStopTyping();
       }, 1000);
@@ -90,10 +90,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
       if (e.shiftKey) {
-        // Shift+Enter: Allow new line (default behavior)
         return;
       } else {
-        // Enter: Send message
         e.preventDefault();
         handleSendMessage();
       }
@@ -123,7 +121,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     };
   }, []);
 
-  // Focus input when component mounts
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.focus();

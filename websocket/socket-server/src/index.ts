@@ -170,6 +170,18 @@ io.on('connection', (socket) => {
         timestamp: new Date()
       });
 
+      // Send current online users snapshot to the joining user
+      try {
+        const room = conversationRooms.get(conversationId);
+        const onlineUsers = room ? Array.from(room) : [];
+        socket.emit('online_users', {
+          conversationId,
+          onlineUsers
+        });
+      } catch (e) {
+        // no-op: snapshot is best-effort
+      }
+
       // Send acknowledgment
       socket.emit('conversation_joined', { conversationId });
 
@@ -290,7 +302,8 @@ io.on('connection', (socket) => {
   socket.on('mark_messages_read', async (data: { conversationId: string; messageIds: string[] }) => {
     try {
       const { conversationId, messageIds } = data;
-      
+      console.log('[READ][SERVER] received', { userId, conversationId, messageIdsCount: (messageIds||[]).length, sample: (messageIds||[]).slice(0,5) });
+
       // Update read status for messages
       await Message.updateMany(
         { 
@@ -303,13 +316,13 @@ io.on('connection', (socket) => {
           status: 'read'
         }
       );
-
-      // Notify other participants
-      socket.to(conversationId).emit('messages_read', {
+      console.log('[READ][SERVER] updated messages');
+      io.to(conversationId).emit('messages_read', {
         userId,
         conversationId,
         messageIds
       });
+      console.log('[READ][SERVER] emitted messages_read');
 
     } catch (error) {
       console.error('Error marking messages as read:', error);
@@ -588,6 +601,10 @@ app.get('/', (_req, res) => {
           description: 'User left conversation',
           data: { userId: 'string', conversationId: 'string', timestamp: 'Date' }
         },
+            online_users: {
+              description: 'Snapshot of currently online users in the room, sent to the joiner',
+              data: { conversationId: 'string', onlineUsers: 'string[]' }
+            },
         new_message: {
           description: 'New message broadcast to all participants',
           data: { _id: 'string', conversationId: 'string', sender: 'UserObject', content: 'string', type: 'string', status: 'sent|delivered|read', createdAt: 'Date' }

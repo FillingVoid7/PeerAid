@@ -18,26 +18,36 @@ const ChatPageContent = () => {
 
   useEffect(() => {
     if (conversationId && conversations.length > 0) {
-      // Find and set the specific conversation
       const conversation = conversations.find(conv => conv._id === conversationId);
       if (conversation) {
         setCurrentConversation(conversation);
-        setIsMobileViewOpen(true); // Show chat on mobile when coming from connection
+        setIsMobileViewOpen(true); 
       } else {
-        // Conversation not found in loaded conversations - might not exist yet
         console.log(`Conversation ${conversationId} not found in loaded conversations`);
       }
     }
   }, [conversationId, conversations, setCurrentConversation]);
 
-  // Load conversations when component mounts
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
 
+  useEffect(() => {
+    if (!currentConversation && !conversationId && conversations.length > 0) {
+      const latestConversation = conversations.sort((a, b) => 
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      )[0];
+      
+      if (latestConversation) {
+        setCurrentConversation(latestConversation);
+        setIsMobileViewOpen(true); 
+      }
+    }
+  }, [currentConversation, conversationId, conversations, setCurrentConversation]);
+
   const handleSelectConversation = (conversation: ChatConversation) => {
     setCurrentConversation(conversation);
-    setIsMobileViewOpen(true); // Show chat on mobile
+    setIsMobileViewOpen(true); 
   };
 
   const handleBackToList = () => {

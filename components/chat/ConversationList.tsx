@@ -25,13 +25,25 @@ const ConversationItem: React.FC<{
   onSelect: () => void;
   isOnline?: boolean;
 }> = ({ conversation, isSelected, currentUserId, onSelect, isOnline }) => {
-  // Determine the other participant
   const otherParticipant = conversation.participants.seeker._id === currentUserId
     ? conversation.participants.guide
     : conversation.participants.seeker;
 
-  // Only show unread count if there are unread messages from the other participant
   const unreadCount = conversation.unreadCount && conversation.unreadCount > 0 ? conversation.unreadCount : 0;
+
+  const formatRelativeTime = (dateIso: string) => {
+    const raw = formatDistanceToNow(new Date(dateIso), { addSuffix: true });
+    if (/less than a minute/i.test(raw) || /a minute ago/i.test(raw)) {
+      return '< 1min';
+    }
+    return raw
+      .replace(/about |over |almost /gi, '')
+      .replace(/ minutes? ago/i, 'min')
+      .replace(/ hours? ago/i, 'hr')
+      .replace(/ days? ago/i, 'd')
+      .replace(/ months? ago/i, 'mo')
+      .replace(/ years? ago/i, 'y');
+  };
 
   return (
     <Card
@@ -67,45 +79,24 @@ const ConversationItem: React.FC<{
                 </Badge>
               )}
               <span className="text-xs text-gray-500">
-                {formatDistanceToNow(new Date(conversation.updatedAt), { addSuffix: true })}
+                {formatRelativeTime(conversation.updatedAt)}
               </span>
             </div>
           </div>
 
           <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-            {conversation.lastMessage 
-              ? (typeof conversation.lastMessage === 'string' 
-                  ? conversation.lastMessage.trim() 
-                  : (conversation.lastMessage as any)?.content?.trim() || 'New message')
-              : 'No messages yet'}
+            {(() => {
+              if (!conversation.lastMessage) return '';
+              
+              if (typeof conversation.lastMessage === 'string') {
+                const isObjectId = /^[0-9a-fA-F]{24}$/.test(conversation.lastMessage.trim());
+                return isObjectId ? '' : conversation.lastMessage.trim();
+              } else {
+                return (conversation.lastMessage as any)?.content?.trim() || '';
+              }
+            })()}
           </p>
 
-          <div className="flex items-center justify-between mt-2">
-            {/* Only show Active status if user is online */}
-            {isOnline && (
-              <Badge 
-                variant="secondary"
-                className="text-xs"
-              >
-                Active
-              </Badge>
-            )}
-            {!isOnline && <div></div>} {/* Empty div to maintain layout */}
-            
-            {/* <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-6 h-6 text-gray-400 hover:text-green-600"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Handle call
-                }}
-              >
-                <Phone className="w-3 h-3" />
-              </Button>
-            </div> */}
-          </div>
         </div>
       </div>
     </Card>
@@ -128,12 +119,10 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   
   const [filteredConversations, setFilteredConversations] = useState<ChatConversation[]>([]);
 
-  // Load conversations on mount
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
 
-  // Set conversations directly without filtering
   useEffect(() => {
     setFilteredConversations(conversations);
   }, [conversations]);
@@ -142,7 +131,6 @@ export const ConversationList: React.FC<ConversationListProps> = ({
     onSelectConversation(conversation);
   };
 
-  // Check if a user is online
   const isUserOnline = (userId: string, conversationId: string) => {
     return onlineUsers.some(
       user => user.userId === userId && 

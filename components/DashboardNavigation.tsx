@@ -7,6 +7,7 @@ import { MessageCircle, Users, Search, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useChat } from '@/lib/chat-context';
 
 interface NavigationProps {
   className?: string;
@@ -14,6 +15,9 @@ interface NavigationProps {
 
 export const DashboardNavigation: React.FC<NavigationProps> = ({ className }) => {
   const pathname = usePathname();
+  const { conversations } = useChat();
+
+  const totalUnread = conversations?.reduce((sum, c) => sum + (c.unreadCount || 0), 0) || 0;
 
   const navItems = [
     {
@@ -33,7 +37,7 @@ export const DashboardNavigation: React.FC<NavigationProps> = ({ className }) =>
       label: 'Chat',
       icon: MessageCircle,
       description: 'Messages',
-      badge: '2' // Mock unread count
+      badge: totalUnread > 0 ? String(Math.min(totalUnread, 99)) : undefined
     }
   ];
 

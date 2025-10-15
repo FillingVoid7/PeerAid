@@ -19,7 +19,6 @@ interface MessageProps {
   onCallAction?: (action: 'answer' | 'reject', callId?: string) => void;
 }
 
-// Custom time formatting function
 const formatTimeAgo = (date: Date) => {
   const now = new Date();
   const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
@@ -41,9 +40,9 @@ const MessageStatusIcon = ({ status, readBy }: { status: ChatMessage['status']; 
     return <CheckCheck className="w-3 h-3 text-blue-500" />;
   }
   if (status === 'delivered') {
-    return <CheckCheck className="w-3 h-3 text-gray-400" />;
+    return <Check className="w-3 h-3 text-gray-400" />;
   }
-  return <Check className="w-3 h-3 text-gray-400" />;
+  return <Check className="w-3 h-3 text-gray-300" />;
 };
 
 const TextMessage: React.FC<MessageProps> = ({ message, isOwnMessage, showAvatar }) => {
@@ -62,7 +61,6 @@ const TextMessage: React.FC<MessageProps> = ({ message, isOwnMessage, showAvatar
               </div>
             </Avatar>
           ) : (
-            // Empty spacer to maintain alignment
             <div className="w-8 h-8"></div>
           )}
         </div>
@@ -101,7 +99,7 @@ const AudioMessage: React.FC<MessageProps & { onAudioPlay?: (messageId: string) 
   message, 
   isOwnMessage, 
   showAvatar, 
-  onAudioPlay 
+  onAudioPlay
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -131,7 +129,6 @@ const AudioMessage: React.FC<MessageProps & { onAudioPlay?: (messageId: string) 
               </div>
             </Avatar>
           ) : (
-            // Empty spacer to maintain alignment
             <div className="w-8 h-8"></div>
           )}
         </div>
@@ -205,7 +202,7 @@ const AudioCallMessage: React.FC<MessageProps & { onCallAction?: (action: 'answe
   message, 
   isOwnMessage, 
   showAvatar, 
-  onCallAction 
+  onCallAction
 }) => {
   const getCallMessageContent = () => {
     switch (message.type) {
@@ -250,7 +247,6 @@ const AudioCallMessage: React.FC<MessageProps & { onCallAction?: (action: 'answe
               </div>
             </Avatar>
           ) : (
-            // Empty spacer to maintain alignment
             <div className="w-8 h-8"></div>
           )}
         </div>
