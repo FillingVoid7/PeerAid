@@ -81,7 +81,6 @@ export async function POST(req: NextRequest) {
       console.log('Base64 data length:', base64Data.length);
       
       try {
-        // Try the standard upload first
         result = await cloudinary.uploader.upload(
           `data:application/pdf;base64,${base64Data}`,
           {

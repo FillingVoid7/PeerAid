@@ -10,8 +10,11 @@ interface JoinConversationData {
 interface SendMessageData {
   conversationId: string;
   content: string;
-  type: 'text' | 'image' | 'audio' | 'system' | 'audio_invite' | 'audio_accept' | 'audio_reject';
+  type: 'text' | 'image' | 'audio' | 'system' | 'audio_invite' | 'audio_accept' | 'audio_reject' | 'file';
   fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  fileExtension?: string;
   duration?: number;
   audioCallId?: string;
 }

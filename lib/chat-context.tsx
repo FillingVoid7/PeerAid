@@ -16,9 +16,12 @@ export interface ChatMessage {
   _id: string;
   conversationId: string;
   sender: ChatUser;
-  type: 'text' | 'image' | 'audio' | 'system' | 'audio_invite' | 'audio_accept' | 'audio_reject';
+  type: 'text' | 'image' | 'audio' | 'system' | 'audio_invite' | 'audio_accept' | 'audio_reject' | 'file';
   content: string;
   fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  fileExtension?: string;
   duration?: number;
   status: 'sent' | 'delivered' | 'read';
   readBy: string[];
@@ -79,7 +82,7 @@ interface ChatContextType {                  // Define the shape of the context 
   
   audioCall: AudioCallState;
   
-  sendMessage: (content: string, type?: ChatMessage['type'], fileUrl?: string, duration?: number) => Promise<void>;
+  sendMessage: (content: string, type?: ChatMessage['type'], fileData?: { fileUrl?: string; fileName?: string; fileSize?: number; fileExtension?: string; duration?: number }) => Promise<void>;
   loadMessages: (conversationId: string, page?: number) => Promise<void>;
   loadConversations: () => Promise<void>;
   markAsRead: (conversationId: string, messageIds: string[]) => Promise<void>;
@@ -348,8 +351,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const sendMessage = useCallback(async (
     content: string, 
     type: ChatMessage['type'] = 'text', 
-    fileUrl?: string, 
-    duration?: number
+    fileData?: { fileUrl?: string; fileName?: string; fileSize?: number; fileExtension?: string; duration?: number }
   ) => {
     if (!currentConversation || !webSocketClient) return;
 
@@ -358,8 +360,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
         conversationId: currentConversation._id,
         content,
         type,
-        fileUrl,
-        duration
+        fileUrl: fileData?.fileUrl,
+        fileName: fileData?.fileName,
+        fileSize: fileData?.fileSize,
+        fileExtension: fileData?.fileExtension,
+        duration: fileData?.duration
       });
     } catch (error) {
       console.error('Failed to send message:', error);

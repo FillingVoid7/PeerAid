@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Play, Pause, Phone, PhoneCall, PhoneOff, Volume2, Check, CheckCheck } from 'lucide-react';
+import { Play, Pause, Phone, PhoneCall, PhoneOff, Volume2, Check, CheckCheck, Download, FileText, Image as ImageIcon, Archive } from 'lucide-react';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -311,6 +311,131 @@ const AudioCallMessage: React.FC<MessageProps & { onCallAction?: (action: 'answe
   );
 };
 
+const FileMessage: React.FC<MessageProps> = ({ message, isOwnMessage, showAvatar }) => {
+  const getFileIcon = (fileName: string | undefined, fileExtension: string | undefined) => {
+    if (!fileName && !fileExtension) return <FileText className="w-6 h-6" />;
+    
+    const ext = fileExtension?.toLowerCase() || fileName?.split('.').pop()?.toLowerCase();
+    
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '')) {
+      return <ImageIcon className="w-6 h-6 text-blue-500" />;
+    } else if (['zip', 'rar', '7z'].includes(ext || '')) {
+      return <Archive className="w-6 h-6 text-orange-500" />;
+    }
+    return <FileText className="w-6 h-6 text-gray-500" />;
+  };
+
+  const formatFileSize = (size: number | undefined) => {
+    if (!size) return '';
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleDownload = () => {
+    if (message.fileUrl) {
+      window.open(message.fileUrl, '_blank');
+    }
+  };
+
+  const isImageFile = (fileName: string | undefined, fileExtension: string | undefined) => {
+    const ext = fileExtension?.toLowerCase() || fileName?.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
+  };
+
+  return (
+    <div className={cn(
+      "flex gap-3 max-w-[70%] mb-2",
+      isOwnMessage ? "ml-auto flex-row-reverse" : ""
+    )}>
+      {showAvatar && !isOwnMessage && (
+        <Avatar className="w-8 h-8 shrink-0 mt-1">
+          <div className="w-full h-full bg-blue-500 text-white flex items-center justify-center text-sm font-medium rounded-full">
+            {message.sender.alias.charAt(0).toUpperCase()}
+          </div>
+        </Avatar>
+      )}
+
+      <div className={cn(
+        "flex flex-col",
+        isOwnMessage ? "items-end" : "items-start"
+      )}>
+        <Card className={cn(
+          "p-3 shadow-sm border max-w-full",
+          isOwnMessage 
+            ? "bg-blue-500 text-white border-blue-600" 
+            : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+        )}>
+          {/* File preview for images */}
+          {isImageFile(message.fileName, message.fileExtension) && message.fileUrl && (
+            <div className="mb-2">
+              <img 
+                src={message.fileUrl} 
+                alt={message.fileName || 'Shared image'}
+                className="max-w-[300px] max-h-[200px] object-cover rounded border cursor-pointer"
+                onClick={() => window.open(message.fileUrl, '_blank')}
+              />
+            </div>
+          )}
+
+          {/* File info */}
+          <div className="flex items-center gap-3">
+            <div className="shrink-0">
+              {getFileIcon(message.fileName, message.fileExtension)}
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm truncate">
+                {message.fileName || 'Unknown file'}
+              </div>
+              {message.fileSize && (
+                <div className={cn(
+                  "text-xs mt-1",
+                  isOwnMessage ? "text-blue-100" : "text-gray-500 dark:text-gray-400"
+                )}>
+                  {formatFileSize(message.fileSize)}
+                </div>
+              )}
+            </div>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleDownload}
+              className={cn(
+                "shrink-0 h-8 w-8",
+                isOwnMessage 
+                  ? "text-white hover:bg-blue-600" 
+                  : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+              )}
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {message.content && message.content !== `📎 ${message.fileName}` && (
+            <div className="mt-2 text-sm">
+              {message.content}
+            </div>
+          )}
+        </Card>
+        
+        <div className={cn(
+          "flex items-center gap-1 px-1",
+          isOwnMessage ? "flex-row-reverse" : ""
+        )}>
+          <span className="text-xs text-gray-500">
+            {formatTimeAgo(new Date(message.createdAt))}
+          </span>
+          {isOwnMessage && (
+            <MessageStatusIcon status={message.status} readBy={message.readBy || []} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const MessageBubble: React.FC<MessageProps> = (props) => {
   const { message } = props;
 
@@ -319,6 +444,8 @@ export const MessageBubble: React.FC<MessageProps> = (props) => {
       return <TextMessage {...props} />;
     case 'audio':
       return <AudioMessage {...props} />;
+    case 'file':
+      return <FileMessage {...props} />;
     case 'system':
       return <SystemMessage {...props} />;
     case 'audio_invite':

@@ -138,9 +138,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
   }, [hasMoreMessages, isLoadingMessages, currentConversation, loadMessages, messages.length]);
 
   // Handle sending messages
-  const handleSendMessage = useCallback(async (content: string, type: 'text' | 'audio' = 'text') => {
+  const handleSendMessage = useCallback(async (content: string, type: 'text' | 'audio' | 'file' = 'text', fileData?: any) => {
     if (!currentConversation) return;
-    await sendMessage(content, type);
+    await sendMessage(content, type, fileData);
   }, [currentConversation, sendMessage]);
 
   // Handle typing indicators

@@ -72,8 +72,11 @@ interface JoinConversationData {
 interface SendMessageData {
   conversationId: string;
   content: string;
-  type: 'text' | 'image' | 'audio' | 'system' | 'audio_invite' | 'audio_accept' | 'audio_reject';
+  type: 'text' | 'image' | 'audio' | 'system' | 'audio_invite' | 'audio_accept' | 'audio_reject' | 'file';
   fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  fileExtension?: string;
   duration?: number;
   audioCallId?: string;
 }
@@ -221,7 +224,7 @@ io.on('connection', (socket) => {
   // Handle sending messages
   socket.on('send_message', async (data: SendMessageData) => {
     try {
-      const { conversationId, content, type, fileUrl, duration, audioCallId } = data;
+      const { conversationId, content, type, fileUrl, fileName, fileSize, fileExtension, duration, audioCallId } = data;
       
       // Verify conversation exists and user is a participant
       const conversation = await Conversation.findById(conversationId);
@@ -245,6 +248,9 @@ io.on('connection', (socket) => {
         type,
         content,
         fileUrl,
+        fileName,
+        fileSize,
+        fileExtension,
         duration,
         audioCallId,
         status: 'sent'  
@@ -266,6 +272,9 @@ io.on('connection', (socket) => {
         type,
         content,
         fileUrl,
+        fileName,
+        fileSize,
+        fileExtension,
         duration,
         audioCallId,
         status: 'sent',
