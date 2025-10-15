@@ -54,7 +54,6 @@ const mongooseOptions = {
 mongoose.connect(MONGODB_URI, mongooseOptions)
   .then(() => {
     console.log('Connected to MongoDB');
-    // Ensure User model is registered
     console.log('User model registered:', User.modelName);
   })
   .catch(err => {
@@ -179,7 +178,6 @@ io.on('connection', (socket) => {
           onlineUsers
         });
       } catch (e) {
-        // no-op: snapshot is best-effort
       }
 
       // Send acknowledgment

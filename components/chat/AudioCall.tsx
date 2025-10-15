@@ -7,31 +7,15 @@ import { Card } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useChat } from '@/lib/chat-context';
+import { wsClient } from '@/lib/websocket-client';
 
 interface AudioCallProps {
-  callId: string;
-  isIncoming: boolean;
-  participantName: string;
-  participantAvatar?: string;
-  onAnswer?: () => void;
-  onReject?: () => void;
-  onEnd?: () => void;
   className?: string;
 }
 
-type CallState = 'ringing' | 'connecting' | 'connected' | 'ended';
-
-export const AudioCall: React.FC<AudioCallProps> = ({
-  callId,
-  isIncoming,
-  participantName,
-  participantAvatar,
-  onAnswer,
-  onReject,
-  onEnd,
-  className
-}) => {
-  const [callState, setCallState] = useState<CallState>(isIncoming ? 'ringing' : 'connecting');
+export const AudioCall: React.FC<AudioCallProps> = ({ className }) => {
+  const { audioCall, currentConversation, answerAudioCall, rejectAudioCall, endAudioCall, setAudioCallState } = useChat();
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
@@ -41,6 +25,7 @@ export const AudioCall: React.FC<AudioCallProps> = ({
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const callTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [remoteOffer, setRemoteOffer] = useState<RTCSessionDescriptionInit | null>(null);
 
   // Initialize WebRTC connection
   const initializePeerConnection = useCallback(async () => {
@@ -82,9 +67,8 @@ export const AudioCall: React.FC<AudioCallProps> = ({
 
       // Handle ICE candidates
       peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-          // Send ICE candidate via WebSocket
-          console.log('ICE candidate:', event.candidate);
+        if (event.candidate && audioCall.callId && currentConversation) {
+          wsClient.sendIceCandidate(currentConversation._id, audioCall.callId, event.candidate);
         }
       };
 
@@ -93,13 +77,13 @@ export const AudioCall: React.FC<AudioCallProps> = ({
         console.log('Connection state:', peerConnection.connectionState);
         switch (peerConnection.connectionState) {
           case 'connected':
-            setCallState('connected');
+            setAudioCallState({ status: 'connected' });
             startCallTimer();
             break;
           case 'disconnected':
           case 'failed':
           case 'closed':
-            setCallState('ended');
+            setAudioCallState({ status: 'ended', isActive: false });
             cleanup();
             break;
         }
@@ -108,9 +92,10 @@ export const AudioCall: React.FC<AudioCallProps> = ({
       return peerConnection;
     } catch (error) {
       console.error('Error initializing peer connection:', error);
+      setAudioCallState({ status: 'ended', isActive: false });
       throw error;
     }
-  }, []);
+  }, [audioCall.callId, currentConversation, setAudioCallState]);
 
   // Start call timer
   const startCallTimer = useCallback(() => {
@@ -129,28 +114,36 @@ export const AudioCall: React.FC<AudioCallProps> = ({
   // Handle answer call
   const handleAnswer = useCallback(async () => {
     try {
-      setCallState('connecting');
+      await answerAudioCall(audioCall.callId!);
+      setAudioCallState({ status: 'connecting' });
       await initializePeerConnection();
-      onAnswer?.();
     } catch (error) {
       console.error('Error answering call:', error);
-      setCallState('ended');
+      setAudioCallState({ status: 'ended', isActive: false });
     }
-  }, [initializePeerConnection, onAnswer]);
+  }, [answerAudioCall, audioCall.callId, initializePeerConnection, setAudioCallState]);
 
   // Handle reject call
-  const handleReject = useCallback(() => {
-    setCallState('ended');
-    cleanup();
-    onReject?.();
-  }, [onReject]);
+  const handleReject = useCallback(async () => {
+    try {
+      await rejectAudioCall(audioCall.callId!);
+      cleanup();
+    } catch (error) {
+      console.error('Error rejecting call:', error);
+      setAudioCallState({ status: 'ended', isActive: false });
+    }
+  }, [rejectAudioCall, audioCall.callId]);
 
   // Handle end call
-  const handleEnd = useCallback(() => {
-    setCallState('ended');
-    cleanup();
-    onEnd?.();
-  }, [onEnd]);
+  const handleEnd = useCallback(async () => {
+    try {
+      await endAudioCall(audioCall.callId!);
+      cleanup();
+    } catch (error) {
+      console.error('Error ending call:', error);
+      setAudioCallState({ status: 'ended', isActive: false });
+    }
+  }, [endAudioCall, audioCall.callId]);
 
   // Toggle mute
   const toggleMute = useCallback(() => {
@@ -188,22 +181,110 @@ export const AudioCall: React.FC<AudioCallProps> = ({
     }
   }, []);
 
+  // Handle incoming call offer
+  const handleIncomingOffer = useCallback(async (offer: RTCSessionDescriptionInit) => {
+    if (!peerConnectionRef.current) {
+      await initializePeerConnection();
+    }
+    
+    try {
+      await peerConnectionRef.current!.setRemoteDescription(offer);
+      const answer = await peerConnectionRef.current!.createAnswer();
+      await peerConnectionRef.current!.setLocalDescription(answer);
+      
+      // Send answer via WebSocket
+      if (audioCall.callId && currentConversation) {
+        wsClient.answerAudioCall(currentConversation._id, audioCall.callId, answer);
+      }
+    } catch (error) {
+      console.error('Error handling incoming offer:', error);
+    }
+  }, [initializePeerConnection, audioCall.callId, currentConversation]);
+
+  // Handle incoming answer
+  const handleIncomingAnswer = useCallback(async (answer: RTCSessionDescriptionInit) => {
+    if (peerConnectionRef.current) {
+      try {
+        await peerConnectionRef.current.setRemoteDescription(answer);
+      } catch (error) {
+        console.error('Error handling incoming answer:', error);
+      }
+    }
+  }, []);
+
+  // Handle ICE candidates
+  const handleIceCandidate = useCallback((candidate: RTCIceCandidate) => {
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.addIceCandidate(candidate).catch(console.error);
+    }
+  }, []);
+
+  // Setup WebSocket event listeners
+  useEffect(() => {
+    if (!audioCall.isActive || !audioCall.callId) return;
+
+    const handleAudioCallIncoming = (data: any) => {
+      if (data.callId === audioCall.callId && data.offer) {
+        setRemoteOffer(data.offer);
+      }
+    };
+
+    const handleAudioCallAnswered = (data: any) => {
+      if (data.callId === audioCall.callId && data.answer) {
+        handleIncomingAnswer(data.answer);
+      }
+    };
+
+    const handleIceCandidate = (data: any) => {
+      if (data.callId === audioCall.callId && data.candidate) {
+        handleIceCandidate(data.candidate);
+      }
+    };
+
+    wsClient.on('audio_call_incoming', handleAudioCallIncoming);
+    wsClient.on('audio_call_answered', handleAudioCallAnswered);
+    wsClient.on('ice_candidate', handleIceCandidate);
+
+    return () => {
+      wsClient.off('audio_call_incoming', handleAudioCallIncoming);
+      wsClient.off('audio_call_answered', handleAudioCallAnswered);
+      wsClient.off('ice_candidate', handleIceCandidate);
+    };
+  }, [audioCall.isActive, audioCall.callId, handleIncomingAnswer, handleIceCandidate]);
+
   // Initialize call for outgoing calls
   useEffect(() => {
-    if (!isIncoming && callState === 'connecting') {
-      initializePeerConnection().catch(error => {
+    if (!audioCall.isIncoming && audioCall.status === 'ringing' && currentConversation) {
+      initializePeerConnection().then(async (peerConnection) => {
+        try {
+          const offer = await peerConnection.createOffer();
+          await peerConnection.setLocalDescription(offer);
+          
+          // Send offer via WebSocket
+          wsClient.initiateAudioCall(currentConversation._id, audioCall.callId!, offer);
+        } catch (error) {
+          console.error('Error creating offer:', error);
+        }
+      }).catch(error => {
         console.error('Error initializing outgoing call:', error);
-        setCallState('ended');
+        setAudioCallState({ status: 'ended', isActive: false });
       });
     }
-  }, [isIncoming, callState, initializePeerConnection]);
+  }, [audioCall.isIncoming, audioCall.status, audioCall.callId, currentConversation, initializePeerConnection, setAudioCallState]);
+
+  // Handle incoming offer when available
+  useEffect(() => {
+    if (remoteOffer && audioCall.isIncoming && audioCall.status === 'ringing') {
+      handleIncomingOffer(remoteOffer);
+    }
+  }, [remoteOffer, audioCall.isIncoming, audioCall.status, handleIncomingOffer]);
 
   // Cleanup on unmount
   useEffect(() => {
     return cleanup;
   }, [cleanup]);
 
-  if (callState === 'ended') {
+  if (!audioCall.isActive || audioCall.status === 'ended') {
     return null;
   }
 
@@ -215,25 +296,25 @@ export const AudioCall: React.FC<AudioCallProps> = ({
           <div className="space-y-3">
             <Avatar className="w-24 h-24 mx-auto ring-4 ring-white/20">
               <div className="bg-gradient-to-br from-white/20 to-white/10 w-full h-full flex items-center justify-center text-white text-2xl font-bold">
-                {participantName.charAt(0).toUpperCase()}
+                {audioCall.participant?.alias?.charAt(0).toUpperCase() || 'U'}
               </div>
             </Avatar>
             
             <div>
-              <h2 className="text-xl font-semibold">{participantName}</h2>
+              <h2 className="text-xl font-semibold">{audioCall.participant?.alias || 'Unknown'}</h2>
               <div className="flex items-center justify-center gap-2 mt-2">
                 <Badge 
                   variant="secondary" 
                   className={cn(
                     "text-xs",
-                    callState === 'ringing' && "bg-yellow-500/20 text-yellow-100",
-                    callState === 'connecting' && "bg-blue-500/20 text-blue-100",
-                    callState === 'connected' && "bg-green-500/20 text-green-100"
+                    audioCall.status === 'ringing' && "bg-yellow-500/20 text-yellow-100",
+                    audioCall.status === 'connecting' && "bg-blue-500/20 text-blue-100",
+                    audioCall.status === 'connected' && "bg-green-500/20 text-green-100"
                   )}
                 >
-                  {callState === 'ringing' && (isIncoming ? 'Incoming call...' : 'Calling...')}
-                  {callState === 'connecting' && 'Connecting...'}
-                  {callState === 'connected' && formatDuration(callDuration)}
+                  {audioCall.status === 'ringing' && (audioCall.isIncoming ? 'Incoming call...' : 'Calling...')}
+                  {audioCall.status === 'connecting' && 'Connecting...'}
+                  {audioCall.status === 'connected' && formatDuration(callDuration)}
                 </Badge>
               </div>
             </div>
@@ -241,7 +322,7 @@ export const AudioCall: React.FC<AudioCallProps> = ({
 
           {/* Call Controls */}
           <div className="flex justify-center gap-4">
-            {callState === 'ringing' && isIncoming ? (
+            {audioCall.status === 'ringing' && audioCall.isIncoming ? (
               <>
                 <Button
                   onClick={handleAnswer}
@@ -256,7 +337,7 @@ export const AudioCall: React.FC<AudioCallProps> = ({
                   <PhoneOff className="w-6 h-6" />
                 </Button>
               </>
-            ) : callState === 'connected' ? (
+            ) : audioCall.status === 'connected' ? (
               <>
                 <Button
                   onClick={toggleMute}

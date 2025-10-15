@@ -132,7 +132,7 @@ export class WebSocketClient {
       'connect', 'disconnect', 'user_joined', 'user_left', 'new_message', 'message_delivered', 
       'messages_read', 'user_typing', 'audio_call_incoming', 
       'audio_call_answered', 'audio_call_rejected', 'audio_call_ended',
-      'conversation_joined', 'online_users', 'error'
+      'conversation_joined', 'online_users', 'ice_candidate', 'error'
     ];
 
     events.forEach(event => {
@@ -233,12 +233,12 @@ export class WebSocketClient {
     }
   }
 
-  // // Typing indicators
-  // sendTyping(conversationId: string, isTyping: boolean) {
-  //   if (this.socket?.connected) {
-  //     this.socket.emit('typing', { conversationId, isTyping });
-  //   }
-  // }
+  // Typing indicators
+  sendTyping(conversationId: string, isTyping: boolean) {
+    if (this.socket?.connected) {
+      this.socket.emit('typing', { conversationId, isTyping });
+    }
+  }
 
   // Audio call management
   initiateAudioCall(conversationId: string, callId: string, offer: RTCSessionDescriptionInit) {
@@ -271,12 +271,16 @@ export class WebSocketClient {
     }
   }
 
-  // Connection status
+  // Get conversation ID from call context (helper method)
+  getCurrentConversationId(): string | null {
+    // This would be managed by the chat context
+    return null;
+  }
+
   isSocketConnected(): boolean {
     return this.isConnected && this.socket?.connected === true;
   }
 
-  // Disconnect
   disconnect() {
     if (this.socket) {
       this.socket.disconnect();

@@ -11,7 +11,9 @@ import { Card } from '@/components/ui/card';
 import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
 import { TypingIndicator } from './TypingIndicator';
+import { AudioCall } from './AudioCall';
 import { useChat } from '@/lib/chat-context';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 interface ChatInterfaceProps {
@@ -33,7 +35,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
     loadMessages,
     markAsRead,
     setTyping,
-    initiateAudioCall
+    initiateAudioCall,
+    answerAudioCall,
+    rejectAudioCall
   } = useChat();
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -163,10 +167,30 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
   }, [currentConversation, initiateAudioCall]);
 
   // Handle audio call actions
-  const handleCallAction = useCallback((action: 'answer' | 'reject', callId?: string) => {
-    console.log(`${action} call:`, callId);
-    // TODO: Implement actual call handling
-  }, []);
+  const handleCallAction = useCallback(async (action: 'answer' | 'reject', callId?: string) => {
+    if (!callId) {
+      console.error('No callId provided for call action:', action);
+      return;
+    }
+
+    try {
+      switch (action) {
+        case 'answer':
+          console.log('Answering call:', callId);
+          await answerAudioCall(callId);
+          break;
+        case 'reject':
+          console.log('Rejecting call:', callId);
+          await rejectAudioCall(callId);
+          break;
+        default:
+          console.error('Unknown call action:', action);
+      }
+    } catch (error) {
+      console.error(`Failed to ${action} call:`, error);
+      toast.message('Please try again.');
+    }
+  }, [answerAudioCall, rejectAudioCall]);
 
   // Handle input area click to mark all unread messages as read
   const handleInputClick = useCallback(() => {
@@ -208,6 +232,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
 
   return (
     <div className={cn("flex flex-col h-full bg-white dark:bg-gray-900 relative", className)}>
+      {/* Audio Call Component */}
+      <AudioCall />
+      
       {/* Chat Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex items-center gap-3">

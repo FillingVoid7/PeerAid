@@ -52,6 +52,14 @@ export interface OnlineUser {
   isOnline: boolean;
 }
 
+export interface AudioCallState {
+  callId: string | null;
+  isIncoming: boolean;
+  isActive: boolean;
+  participant: ChatUser | null;
+  status: 'idle' | 'ringing' | 'connecting' | 'connected' | 'ended';
+}
+
 interface ChatContextType {                  // Define the shape of the context for the components
   isConnected: boolean;
   isConnecting: boolean;
@@ -69,6 +77,8 @@ interface ChatContextType {                  // Define the shape of the context 
   typingUsers: TypingStatus[];
   onlineUsers: OnlineUser[];
   
+  audioCall: AudioCallState;
+  
   sendMessage: (content: string, type?: ChatMessage['type'], fileUrl?: string, duration?: number) => Promise<void>;
   loadMessages: (conversationId: string, page?: number) => Promise<void>;
   loadConversations: () => Promise<void>;
@@ -79,6 +89,7 @@ interface ChatContextType {                  // Define the shape of the context 
   answerAudioCall: (callId: string) => Promise<void>;
   rejectAudioCall: (callId: string) => Promise<void>;
   endAudioCall: (callId: string) => Promise<void>;
+  setAudioCallState: (state: Partial<AudioCallState>) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -105,6 +116,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   
   const [typingUsers, setTypingUsers] = useState<TypingStatus[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  
+  const [audioCall, setAudioCall] = useState<AudioCallState>({
+    callId: null,
+    isIncoming: false,
+    isActive: false,
+    participant: null,
+    status: 'idle'
+  });
 
   useEffect(() => {
     if (session?.user?.id && !isConnected && !isConnecting) {
@@ -253,6 +272,66 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
       );
     });
 
+    // Audio call events
+    webSocketClient.on('audio_call_incoming', (data: {
+      callId: string;
+      conversationId: string;
+      caller: string;
+      offer: RTCSessionDescriptionInit;
+      messageId: string;
+    }) => {
+      console.log('Incoming audio call:', data);
+      
+      // Find caller info from current conversation
+      const callerInfo = currentConversation?.participants.seeker._id === data.caller 
+        ? currentConversation.participants.seeker
+        : currentConversation?.participants.guide._id === data.caller 
+          ? currentConversation.participants.guide 
+          : null;
+
+      setAudioCall({
+        callId: data.callId,
+        isIncoming: true,
+        isActive: true,
+        participant: callerInfo,
+        status: 'ringing'
+      });
+    });
+
+    webSocketClient.on('audio_call_answered', (data: {
+      callId: string;
+      conversationId: string;
+      answerer: string;
+      answer: RTCSessionDescriptionInit;
+    }) => {
+      console.log('Audio call answered:', data);
+      if (audioCall.callId === data.callId) {
+        setAudioCall(prev => ({ ...prev, status: 'connected' }));
+      }
+    });
+
+    webSocketClient.on('audio_call_rejected', (data: {
+      callId: string;
+      conversationId: string;
+      rejector: string;
+    }) => {
+      console.log('Audio call rejected:', data);
+      if (audioCall.callId === data.callId) {
+        setAudioCall(prev => ({ ...prev, status: 'ended', isActive: false }));
+      }
+    });
+
+    webSocketClient.on('audio_call_ended', (data: {
+      callId: string;
+      conversationId: string;
+      endedBy: string;
+    }) => {
+      console.log('Audio call ended:', data);
+      if (audioCall.callId === data.callId) {
+        setAudioCall(prev => ({ ...prev, status: 'ended', isActive: false }));
+      }
+    });
+
     webSocketClient.on('connect', () => {
       console.log('WebSocket connected successfully');
       setIsConnected(true);
@@ -351,32 +430,52 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
 
   // Audio call functions
   const initiateAudioCall = useCallback(async (conversationId: string): Promise<string> => {
-    if (!webSocketClient) throw new Error('WebSocket not connected');
+    if (!webSocketClient || !currentConversation) throw new Error('WebSocket not connected or no conversation');
+    
     const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    // We'll need to create the offer first, for now just return the callId
-    // This will be implemented properly in the audio call component
+    
+    // Set outgoing call state
+    const otherParticipant = currentConversation.participants.seeker._id === session?.user?.id 
+      ? currentConversation.participants.guide 
+      : currentConversation.participants.seeker;
+    
+    setAudioCall({
+      callId,
+      isIncoming: false,
+      isActive: true,
+      participant: otherParticipant,
+      status: 'ringing'
+    });
+    
     return callId;
-  }, [webSocketClient]);
+  }, [webSocketClient, currentConversation, session?.user?.id]);
 
   const answerAudioCall = useCallback(async (callId: string) => {
-    if (!webSocketClient) throw new Error('WebSocket not connected');
-    // This will be implemented with proper WebRTC handling
+    if (!webSocketClient || !currentConversation) throw new Error('WebSocket not connected or no conversation');
+    
+    setAudioCall(prev => ({ ...prev, status: 'connecting' }));
+    
     console.log('Answering call:', callId);
-  }, [webSocketClient]);
+  }, [webSocketClient, currentConversation]);
 
   const rejectAudioCall = useCallback(async (callId: string) => {
-    if (!webSocketClient) throw new Error('WebSocket not connected');
-    // Extract conversationId from the call context
-    // webSocketClient.rejectAudioCall(conversationId, callId);
-    console.log('Rejecting call:', callId);
-  }, [webSocketClient]);
+    if (!webSocketClient || !currentConversation) throw new Error('WebSocket not connected or no conversation');
+    
+    webSocketClient.rejectAudioCall(currentConversation._id, callId);
+    setAudioCall(prev => ({ ...prev, status: 'ended', isActive: false }));
+  }, [webSocketClient, currentConversation]);
 
   const endAudioCall = useCallback(async (callId: string) => {
-    if (!webSocketClient) throw new Error('WebSocket not connected');
-    // Extract conversationId from the call context
-    // webSocketClient.endAudioCall(conversationId, callId);
-    console.log('Ending call:', callId);
-  }, [webSocketClient]);
+    if (!webSocketClient || !currentConversation) throw new Error('WebSocket not connected or no conversation');
+    
+    webSocketClient.endAudioCall(currentConversation._id, callId);
+    setAudioCall(prev => ({ ...prev, status: 'ended', isActive: false }));
+  }, [webSocketClient, currentConversation]);
+
+  // Helper function to update audio call state
+  const setAudioCallState = useCallback((state: Partial<AudioCallState>) => {
+    setAudioCall(prev => ({ ...prev, ...state }));
+  }, []);
 
   // Join/leave conversation when current conversation changes
   useEffect(() => {
@@ -416,9 +515,12 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     conversations,
     isLoadingConversations,
     
-    // // Real-time features
+    // Real-time features
     typingUsers,
     onlineUsers,
+    
+    // Audio call state
+    audioCall,
     
     sendMessage,
     loadMessages,
@@ -426,10 +528,12 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     markAsRead,
     setTyping,
     
+    // Audio call functions
     initiateAudioCall,
     answerAudioCall,
     rejectAudioCall,
     endAudioCall,
+    setAudioCallState,
   };
 
   return (
