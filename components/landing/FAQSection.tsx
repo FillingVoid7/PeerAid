@@ -14,15 +14,15 @@ export default function FAQSection() {
       questions: [
         {
           q: "What is Peer-Aid and how does it work?",
-          a: "Peer-Aid is a secure platform that connects people with similar health journeys to provide mutual support. Our smart matching algorithm pairs you with peers who understand your experiences, creating meaningful connections in safe, moderated spaces."
+          a: "Peer-Aid connects people with similar health journeys to provide mutual support. Our smart matching algorithm pairs you with peers who understand your experiences and can offer empathy, advice, and encouragement one-on-one interactions."
         },
         {
           q: "How do I get started on Peer-Aid?",
-          a: "Simply create your Health Profile to personalize your experience. You can choose what information to share, set your privacy preferences, and start connecting with relevant community groups immediately."
+          a: "Simply create your Health Profile based on your role Seeker or Guide. And based on the matching algorithm, you are off to good connections with peers."
         },
         {
           q: "Is Peer-Aid free to use?",
-          a: "Yes! Core features including community access, peer matching, and basic messaging are completely free. We offer premium features for enhanced functionality, but meaningful connections start at no cost."
+          a: "Yes! Peer-Aid is free to use."
         }
       ]
     },
@@ -32,15 +32,7 @@ export default function FAQSection() {
       questions: [
         {
           q: "How is my personal health information protected?",
-          a: "We use military-grade 256-bit encryption, are HIPAA compliant, and follow strict data protection protocols. You have granular control over what you share, and your data is never sold or shared without your explicit consent."
-        },
-        {
-          q: "Can I control what information is visible to others?",
-          a: "Absolutely! You have complete control over your privacy settings. Choose what to share in your profile, which communities to join, and how much detail to include in discussions. Your comfort and privacy come first."
-        },
-        {
-          q: "What happens to my data if I leave the platform?",
-          a: "You can download your data at any time and request complete account deletion. When you delete your account, we permanently remove your personal information while maintaining anonymized community insights to help future members."
+          a: "We have used anonymity measures to ensure your data is never sold or shared without your explicit consent. Also we employ end-to-end encryption for all communications and store data securely using industry best practices."
         }
       ]
     },
@@ -50,16 +42,8 @@ export default function FAQSection() {
       questions: [
         {
           q: "How does the peer matching algorithm work?",
-          a: "Our algorithm considers your health profile, interests, communication preferences, and community activity to suggest meaningful connections. It learns from your interactions to improve recommendations while always respecting your privacy choices."
+          a: "Our algorithm considers your health profile, interests, communication preferences, and community activity to suggest meaningful connections."
         },
-        {
-          q: "Are the communities moderated?",
-          a: "Yes! All communities have trained moderators who ensure conversations remain supportive, respectful, and on-topic. We use both automated tools and human oversight to maintain a safe environment for everyone."
-        },
-        {
-          q: "Can I join multiple communities?",
-          a: "Of course! You can join as many communities as relevant to your interests and health journey. Each community has its own culture and focus, allowing you to find the right support for different aspects of your experience."
-        }
       ]
     },
     {
@@ -68,16 +52,12 @@ export default function FAQSection() {
       questions: [
         {
           q: "What features are available for connecting with peers?",
-          a: "You can engage through community discussions, private messaging, group chats, virtual meetups, and resource sharing. We also offer mood tracking, progress journals, and goal-setting tools to support your journey."
+          a: "You can engage in private messaging, virtual meetups, and resource sharing."
         },
         {
           q: "Is there professional medical support available?",
-          a: "While Peer-Aid focuses on peer support, we partner with healthcare professionals who volunteer their time for educational content and crisis resources. However, peer discussions never replace professional medical advice."
+          a: "This platform is designed for peer support and does not replace professional medical advice. Always consult with a healthcare professional for medical concerns."
         },
-        {
-          q: "How do I report inappropriate behavior?",
-          a: "Every message and post has a report function. Our moderation team reviews reports within 24 hours and takes appropriate action. We have zero tolerance for harassment, spam, or violations of our community guidelines."
-        }
       ]
     }
   ];
@@ -104,8 +84,7 @@ export default function FAQSection() {
           </h2>
           
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Find answers to common questions about Peer-Aid. Can't find what you're looking for? 
-            Reach out to our support team.
+            Find answers to common questions about Peer-Aid.
           </p>
         </div>
 
@@ -171,33 +150,6 @@ export default function FAQSection() {
             })}
           </div>
         </Card>
-
-        {/* Contact Support */}
-        <div className="text-center mt-12">
-          <div className="inline-block p-6 rounded-2xl bg-gradient-to-br from-emerald-500/5 via-cyan-500/5 to-violet-500/5 border border-emerald-200/20 dark:border-emerald-800/20">
-            <h3 className="text-lg font-semibold mb-2">
-              Still have questions?
-            </h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Our support team is here to help you get the most out of Peer-Aid.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <a 
-                href="mailto:support@peer-aid.com" 
-                className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
-              >
-                Contact Support
-              </a>
-              <span className="hidden sm:inline text-muted-foreground">•</span>
-              <a 
-                href="#" 
-                className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
-              >
-                Community Guidelines
-              </a>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );

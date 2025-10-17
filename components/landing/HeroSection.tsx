@@ -188,6 +188,26 @@ export default function HeroSection() {
             </div>
           </div>
 
+          {/* Real Results - Horizontal Section */}
+          <div className="space-y-8">        
+            <div className="grid md:grid-cols-3 gap-8">
+              {stats.map((stat, index) => (
+                <Card key={index} className="border-0 bg-background/60 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 group">
+                  <CardContent className="p-8 text-center space-y-4">
+                    <div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 text-emerald-600 group-hover:scale-110 transition-transform duration-300">
+                      {stat.icon}
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">{stat.value}</div>
+                      <div className="text-xl font-semibold">{stat.label}</div>
+                      <div className="text-muted-foreground">{stat.description}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
           {/* Why Choose PeerAId - Standalone Section */}
           <div className="space-y-12">
             <div className="text-center max-w-3xl mx-auto">
@@ -216,30 +236,6 @@ export default function HeroSection() {
                         </p>
                         <div className="w-0 h-0.5 bg-gradient-to-r from-emerald-500 to-cyan-500 group-hover:w-20 transition-all duration-500" />
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Real Results - Horizontal Section */}
-          <div className="space-y-8">
-            <div className="text-center max-w-3xl mx-auto">
-              <p className="text-xl text-muted-foreground">See the impact PeerAId makes in our community</p>
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-8">
-              {stats.map((stat, index) => (
-                <Card key={index} className="border-0 bg-background/60 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 group">
-                  <CardContent className="p-8 text-center space-y-4">
-                    <div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 text-emerald-600 group-hover:scale-110 transition-transform duration-300">
-                      {stat.icon}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">{stat.value}</div>
-                      <div className="text-xl font-semibold">{stat.label}</div>
-                      <div className="text-muted-foreground">{stat.description}</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -293,33 +289,7 @@ export default function HeroSection() {
                 </div>
               </div>
               
-              {/* Feature highlights */}
-              <div className="grid md:grid-cols-3 gap-6 mt-12">
-                <div className="text-center group">
-                  <div className="inline-flex p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-lg mb-3 group-hover:scale-110 transition-transform duration-300">
-                    <Users className="w-6 h-6" />
-                  </div>
-                  <h4 className="font-semibold mb-1">Smart Matching</h4>
-                  <p className="text-sm text-muted-foreground">Find your perfect health twin</p>
-                </div>
-                
-                <div className="text-center group">
-                  <div className="inline-flex p-3 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg mb-3 group-hover:scale-110 transition-transform duration-300">
-                    <Shield className="w-6 h-6" />
-                  </div>
-                  <h4 className="font-semibold mb-1">Verified Guides</h4>
-                  <p className="text-sm text-muted-foreground">Authentic health experiences</p>
-                </div>
-                
-                <div className="text-center group">
-                  <div className="inline-flex p-3 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-lg mb-3 group-hover:scale-110 transition-transform duration-300">
-                    <Heart className="w-6 h-6" />
-                  </div>
-                  <h4 className="font-semibold mb-1">Safe Community</h4>
-                  <p className="text-sm text-muted-foreground">Supportive & moderated</p>
-                </div>
-              </div>
-            </div>
+             </div>
           </div>
         </div>
       </div>

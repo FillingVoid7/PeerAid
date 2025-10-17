@@ -81,28 +81,9 @@ export default function FeaturesSection() {
     }
   ];
 
-  const trustMetrics = [
-    {
-      icon: <Users className="w-6 h-6" />,
-      value: "92%",
-      label: "Better Matches",
-      description: "More relevant than traditional forums"
-    },
-    {
-      icon: <Award className="w-6 h-6" />,
-      value: "87%",
-      label: "Confidence Boost",
-      description: "Feel more confident in health decisions"
-    },
-    {
-      icon: <Shield className="w-6 h-6" />,
-      value: "94%",
-      description: "Appreciate our verification system"
-    }
-  ];
 
   return (
-    <section id="features" className="py-20 bg-gradient-to-br from-muted/30 via-background to-muted/20">
+    <section id="features" className="py-2 bg-gradient-to-br from-muted/30 via-background to-muted/20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
@@ -151,23 +132,6 @@ export default function FeaturesSection() {
           ))}
         </div>
 
-        {/* Trust Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
-          {trustMetrics.map((metric, index) => (
-            <Card key={index} className="border-0 bg-background/60 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-200 group text-center">
-              <CardContent className="p-6">
-                <div className="flex justify-center mb-3">
-                  <div className="p-3 rounded-full bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 text-emerald-600 group-hover:scale-110 transition-transform">
-                    {metric.icon}
-                  </div>
-                </div>
-                <div className="text-2xl font-bold mb-1">{metric.value}</div>
-                <div className="text-sm font-medium text-emerald-600 mb-1">{metric.label}</div>
-                <div className="text-xs text-muted-foreground">{metric.description}</div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
 
         {/* Additional Features Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -190,28 +154,6 @@ export default function FeaturesSection() {
               </CardContent>
             </Card>
           ))}
-        </div>
-
-        {/* CTA Section */}
-        <div className="text-center mt-16">
-          <div className="inline-block p-8 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-cyan-500/10 to-violet-500/10 border border-emerald-200/20 dark:border-emerald-800/20">
-            <h3 className="text-2xl font-bold mb-4">
-              Ready to experience the difference?
-            </h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Join thousands of members who have found meaningful support and lasting connections.
-            </p>
-            <Button 
-              size="lg"
-              className="bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-              asChild
-            >
-              <a href="#hero">
-                <Heart className="w-5 h-5 mr-2" />
-                Get Started Today
-              </a>
-            </Button>
-          </div>
         </div>
       </div>
     </section>

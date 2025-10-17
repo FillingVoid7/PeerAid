@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/ThemeToggle";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import profileService from "@/lib/Services/profileService";
-import { Menu, X, User, Activity, Shield, LogIn } from "lucide-react";
+import { Menu, X, User, Activity, Shield, LogIn, LogOut } from "lucide-react";
 
 export default function Navigation() {
   const router = useRouter();
@@ -51,6 +51,11 @@ export default function Navigation() {
     setIsMobileMenuOpen(false);
   }, [isAuthed, hasProfile, router]);
 
+  const handleLogout = useCallback(async () => {
+    await signOut({ callbackUrl: "/" });
+    setIsMobileMenuOpen(false);
+  }, []);
+
   const healthProfileCtaLabel = useMemo(() => {
     if (!isAuthed) return "Health Profile";
     if (hasProfile === null) return "Health Profile";
@@ -58,15 +63,14 @@ export default function Navigation() {
   }, [isAuthed, hasProfile]);
 
   const navItems = [
-    { label: "Home", href: "/", icon: null },
+    { label: "Home", href: "/" },
     { 
       label: healthProfileCtaLabel, 
       onClick: handleHealthProfile, 
       icon: <User className="w-4 h-4" />
     },
     { label: "Features", href: "#features", icon: <Activity className="w-4 h-4" /> },
-    { label: "Security", href: "#security", icon: <Shield className="w-4 h-4" /> },
-    { label: "About", href: "#about", icon: null },
+    { label: "About", href: "/about" },
   ];
 
   return (
@@ -126,10 +130,14 @@ export default function Navigation() {
           <div className="hidden md:flex items-center gap-3">
             <ModeToggle />
             {isAuthed ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 text-sm font-medium">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 text-sm font-medium hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors duration-200"
+              >
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                {session?.user?.name || session?.user?.email}
-              </div>
+                {session?.user?.alias || session?.user?.email}
+                <LogOut className="w-3 h-3 ml-1" />
+              </button>
             ) : (
               <Link href="/auth/login">
                 <Button 
@@ -189,12 +197,16 @@ export default function Navigation() {
               
               <div className="pt-4 border-t border-border/50">
                 {isAuthed ? (
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20">
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors w-full text-left"
+                  >
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-emerald-700 dark:text-emerald-300 font-medium">
-                      {session?.user?.name || session?.user?.email}
+                    <span className="text-emerald-700 dark:text-emerald-300 font-medium flex-1">
+                      {session?.user?.alias || session?.user?.email}
                     </span>
-                  </div>
+                    <LogOut className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </button>
                 ) : (
                   <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button 
