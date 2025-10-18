@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/ThemeToggle";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import profileService from "@/lib/Services/profileService";
-import { Menu, X, User, Activity, Shield, LogIn, LogOut } from "lucide-react";
+import { Menu, X, Shield, LogIn, LogOut } from "lucide-react";
 
 export default function Navigation() {
   const router = useRouter();
@@ -66,10 +66,9 @@ export default function Navigation() {
     { label: "Home", href: "/" },
     { 
       label: healthProfileCtaLabel, 
-      onClick: handleHealthProfile, 
-      icon: <User className="w-4 h-4" />
+      onClick: handleHealthProfile
     },
-    { label: "Features", href: "#features", icon: <Activity className="w-4 h-4" /> },
+    { label: "Features", href: "#features" },
     { label: "About", href: "/about" },
   ];
 
@@ -102,9 +101,8 @@ export default function Navigation() {
                 {item.href ? (
                   <Link 
                     href={item.href} 
-                    className="flex items-center gap-2 text-sm font-medium hover:text-emerald-600 transition-colors duration-200 group"
+                    className="text-sm font-medium hover:text-emerald-600 transition-colors duration-200 group"
                   >
-                    {item.icon}
                     <span className="relative">
                       {item.label}
                       <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-500 to-cyan-500 group-hover:w-full transition-all duration-300" />
@@ -113,9 +111,8 @@ export default function Navigation() {
                 ) : (
                   <button 
                     onClick={item.onClick} 
-                    className="flex items-center gap-2 text-sm font-medium hover:text-emerald-600 transition-colors duration-200 group"
+                    className="text-sm font-medium hover:text-emerald-600 transition-colors duration-200 group"
                   >
-                    {item.icon}
                     <span className="relative">
                       {item.label}
                       <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-500 to-cyan-500 group-hover:w-full transition-all duration-300" />
@@ -178,17 +175,15 @@ export default function Navigation() {
                     <Link 
                       href={item.href} 
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                      className="block p-3 rounded-lg hover:bg-muted transition-colors"
                     >
-                      {item.icon}
                       <span className="font-medium">{item.label}</span>
                     </Link>
                   ) : (
                     <button 
                       onClick={item.onClick}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors w-full text-left"
+                      className="block p-3 rounded-lg hover:bg-muted transition-colors w-full text-left"
                     >
-                      {item.icon}
                       <span className="font-medium">{item.label}</span>
                     </button>
                   )}
