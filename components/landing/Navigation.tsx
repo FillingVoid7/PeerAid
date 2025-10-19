@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/ThemeToggle";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import profileService from "@/lib/Services/profileService";
-import { Menu, X, Shield, LogIn, LogOut } from "lucide-react";
+import { Menu, X, Shield, LogIn, LogOut, Heart } from "lucide-react";
 
 export default function Navigation() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
+  const [isSeeker, setIsSeeker] = useState<boolean | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isAuthed = Boolean(session?.user?.id);
 
@@ -36,6 +37,36 @@ export default function Navigation() {
     return () => {
       isMounted = false;
     };
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    const checkUserRole = async () => {
+      if (!session?.user?.id) {
+        setIsSeeker(null);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/user/role', { 
+          cache: 'no-store',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.data?.userRole === 'seeker') {
+          setIsSeeker(true);
+        } else {
+          setIsSeeker(false);
+        }
+      } catch (error) {
+        setIsSeeker(false);
+      }
+    };
+
+    checkUserRole();
   }, [session?.user?.id]);
 
   const handleHealthProfile = useCallback(() => {
@@ -68,6 +99,7 @@ export default function Navigation() {
       label: healthProfileCtaLabel, 
       onClick: handleHealthProfile
     },
+    ...(isSeeker ? [{ label: "Find Guides", href: "/dashboard/matching" }] : []),
     { label: "Features", href: "#features" },
     { label: "About", href: "/about" },
   ];
