@@ -178,7 +178,6 @@ export default function GuideConnectionsPage() {
 
       if (res.ok) {
         toast.success(`Connection request ${action}ed successfully!`);
-        // Refresh connections to update the UI
         await loadAllConnections();
       } else {
         toast.error(data.message || `Failed to ${action} connection request`);
@@ -193,7 +192,6 @@ export default function GuideConnectionsPage() {
 
   const startConversation = async (seekerId: string, seekerName: string) => {
     try {
-      // Create or get conversation
       const response = await fetch('/api/conversations', {
         method: 'POST',
         headers: {
@@ -208,7 +206,6 @@ export default function GuideConnectionsPage() {
       const data = await response.json();
       
       if (data.success) {
-        // Navigate to chat page with conversation context
         window.location.href = `/dashboard/chat?conversation=${data.conversation._id}`;
       } else {
         toast.error(`Failed to start conversation with ${seekerName}`);

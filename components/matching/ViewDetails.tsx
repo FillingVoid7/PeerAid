@@ -12,6 +12,7 @@ import {
   Calendar, 
   Users, 
   CheckCircle,
+  XCircle,
   Clock,
   Shield,
   Droplets,
@@ -32,6 +33,8 @@ interface ViewDetailsProps {
   selectedGuide: any;
   sentRequestIds: Set<string>;
   receivedRequestIds: Set<string>;
+  acceptedConnectionIds: Set<string>;
+  rejectedConnectionIds: Set<string>;
   sendingId: string | null;
   onClose: () => void;
   onConnectionClick: (userId: string, userName: string) => void;
@@ -43,6 +46,8 @@ export function ViewDetails({
   selectedGuide,
   sentRequestIds,
   receivedRequestIds,
+  acceptedConnectionIds,
+  rejectedConnectionIds,
   sendingId,
   onClose,
   onConnectionClick,
@@ -55,15 +60,16 @@ export function ViewDetails({
   const guideUserId = selectedGuide.guideProfile.userId?._id;
   const hasRequestSent = sentRequestIds.has(String(guideUserId));
   const hasRequestReceived = receivedRequestIds.has(String(guideUserId));
+  const isConnectionAccepted = acceptedConnectionIds.has(String(guideUserId));
+  const isConnectionRejected = rejectedConnectionIds.has(String(guideUserId));
   const isConnecting = sendingId === String(guideUserId);
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl border-0 rounded-2xl animate-in zoom-in-95 duration-300">
-        {/* Enhanced Header */}
-        <CardHeader className="relative bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-purple-500/10 dark:from-purple-500/20 dark:via-blue-500/20 dark:to-purple-500/20 border-b border-purple-100 dark:border-purple-800/30">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-100/20 to-blue-100/20 dark:from-purple-900/20 dark:to-blue-900/20" />
-          <div className="relative flex items-center justify-between">
+<div className="fixed -inset-9 z-[9999] bg-black/60 backdrop-blur-md flex items-center justify-center p-0 m-0  w-screen h-screen overflow-hidden">
+      <Card className="w-full max-w-4xl max-h-[90vh]  bg-white/95 dark:bg-gray-900/95 shadow-2xl border-0 rounded-2xl animate-in zoom-in-95 duration-300">
+        {/* Header */}
+        <CardHeader className="relative p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <Avatar className="w-20 h-20 ring-4 ring-white/50 dark:ring-gray-700/50 shadow-xl">
@@ -110,7 +116,7 @@ export function ViewDetails({
         
         <CardContent className="p-0 max-h-[calc(90vh-200px)] overflow-y-auto">
           <div className="p-6 space-y-8">
-            {/* Enhanced Match Analysis */}
+            {/* Match Analysis */}
             <div className="space-y-4">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="p-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg">
@@ -165,7 +171,7 @@ export function ViewDetails({
               </div>
             </div>
 
-            {/* Enhanced Guide Information */}
+            {/* Guide Information */}
             <div className="space-y-4">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="p-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg">
@@ -260,7 +266,7 @@ export function ViewDetails({
               </div>
             </div>
 
-            {/* Enhanced Symptoms Section */}
+            {/*  Symptoms Section */}
             {selectedGuide.guideProfile?.symptoms && selectedGuide.guideProfile.symptoms.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 mb-4">
@@ -294,7 +300,7 @@ export function ViewDetails({
               </div>
             )}
 
-            {/* Enhanced Diagnosis Section */}
+            {/*  Diagnosis Section */}
             {selectedGuide.guideProfile?.diagnosis && (
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 mb-4">
@@ -368,7 +374,7 @@ export function ViewDetails({
               </div>
             )}
 
-            {/* Enhanced Shared Symptoms */}
+            {/*  Shared Symptoms */}
             {selectedGuide.sharedSymptoms && selectedGuide.sharedSymptoms.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 mb-4">
@@ -390,7 +396,7 @@ export function ViewDetails({
               </div>
             )}
 
-            {/* Enhanced Effective Treatments */}
+            {/*  Effective Treatments */}
             {selectedGuide.effectiveTreatments && selectedGuide.effectiveTreatments.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 mb-4">
@@ -412,7 +418,7 @@ export function ViewDetails({
               </div>
             )}
 
-            {/* Enhanced Match Explanation */}
+            {/*  Match Explanation */}
             {selectedGuide.explanation && (
               <div className="p-6 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-purple-900/20 dark:via-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-purple-100 dark:border-purple-800/30">
                 <div className="flex items-start space-x-3 mb-3">
@@ -426,7 +432,7 @@ export function ViewDetails({
             )}
           </div>
 
-          {/* Enhanced Action Buttons */}
+          {/*  Action Buttons */}
           <div className="sticky bottom-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200 dark:border-gray-700 p-6">
             <div className="flex space-x-4">
               <Button
@@ -437,21 +443,35 @@ export function ViewDetails({
                 Close
               </Button>
               <Button
-                disabled={!guideUserId || isConnecting}
+                disabled={!guideUserId || isConnecting || isConnectionAccepted || isConnectionRejected}
                 onClick={() => {
                   if (guideUserId) {
                     onConnectionClick(String(guideUserId), guideName);
                   }
                 }}
                 className={`flex-1 transition-all duration-300 shadow-lg hover:shadow-xl ${
-                  hasRequestSent 
+                  isConnectionAccepted
+                    ? "bg-green-500 hover:bg-green-500 text-white cursor-not-allowed opacity-75"
+                    : isConnectionRejected
+                    ? "bg-red-500 hover:bg-red-500 text-white cursor-not-allowed opacity-75"
+                    : hasRequestSent 
                     ? "bg-yellow-500 hover:bg-yellow-600 text-white cursor-not-allowed opacity-75"
                     : hasRequestReceived
                     ? "bg-green-500 hover:bg-green-600 text-white"
                     : "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                 }`}
               >
-                {hasRequestSent ? (
+                {isConnectionAccepted ? (
+                  <>
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Connection Accepted
+                  </>
+                ) : isConnectionRejected ? (
+                  <>
+                    <XCircle className="w-5 h-5 mr-2" />
+                    Connection Rejected
+                  </>
+                ) : hasRequestSent ? (
                   <>
                     <CheckCircle className="w-5 h-5 mr-2" />
                     Connection Requested

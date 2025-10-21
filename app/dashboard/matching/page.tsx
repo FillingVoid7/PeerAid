@@ -60,6 +60,8 @@ export default function MatchingPage() {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [sentRequestIds, setSentRequestIds] = useState<Set<string>>(new Set());
   const [receivedRequestIds, setReceivedRequestIds] = useState<Set<string>>(new Set());
+  const [acceptedConnectionIds, setAcceptedConnectionIds] = useState<Set<string>>(new Set());
+  const [rejectedConnectionIds, setRejectedConnectionIds] = useState<Set<string>>(new Set());
   const [loadingStatuses, setLoadingStatuses] = useState(false);
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
   const [selectedGuideForConnection, setSelectedGuideForConnection] = useState<{ id: string; name: string } | null>(null);
@@ -70,17 +72,30 @@ export default function MatchingPage() {
     console.log('Checking connection requests for:', userIds);
     setLoadingStatuses(true);
     try {
-      const res = await fetch("/api/connections/pending", { cache: "no-store" });
-      const data = await res.json();
+      // Fetch all connection statuses in parallel
+      const [pendingRes, acceptedRes, rejectedRes] = await Promise.all([
+        fetch("/api/connections/pending", { cache: "no-store" }),
+        fetch("/api/connections/accepted", { cache: "no-store" }),
+        fetch("/api/connections/rejected", { cache: "no-store" })
+      ]);
       
-      console.log('Pending API response:', data);
+      const [pendingData, acceptedData, rejectedData] = await Promise.all([
+        pendingRes.json(),
+        acceptedRes.json(),
+        rejectedRes.json()
+      ]);
       
-      if (res.ok && data.requests) {
-        const sentRequestUserIds = new Set<string>();
-        const receivedRequestUserIds = new Set<string>();
-        
-        data.requests.forEach((req: any) => {
-          console.log('Processing request:', {
+      console.log('Pending API response:', pendingData);
+      console.log('Accepted API response:', acceptedData);
+      console.log('Rejected API response:', rejectedData);
+      
+      // Process pending requests
+      const sentRequestUserIds = new Set<string>();
+      const receivedRequestUserIds = new Set<string>();
+      
+      if (pendingRes.ok && pendingData.requests) {
+        pendingData.requests.forEach((req: any) => {
+          console.log('Processing pending request:', {
             fromUser: req.fromUser?._id,
             toUser: req.toUser?._id,
             status: req.status
@@ -101,14 +116,69 @@ export default function MatchingPage() {
             console.log('Added to receivedRequestUserIds:', fromUserId);
           }
         });
-        
-        setSentRequestIds(sentRequestUserIds);
-        setReceivedRequestIds(receivedRequestUserIds);
-        console.log('Final sentRequestIds:', Array.from(sentRequestUserIds));
-        console.log('Final receivedRequestIds:', Array.from(receivedRequestUserIds));
-      } else {
-        console.log('No pending requests found or API error:', data);
       }
+      
+      // Process accepted connections
+      const acceptedUserIds = new Set<string>();
+      if (acceptedRes.ok && acceptedData.requests) {
+        acceptedData.requests.forEach((req: any) => {
+          console.log('Processing accepted request:', {
+            fromUser: req.fromUser?._id,
+            toUser: req.toUser?._id,
+            status: req.status
+          });
+          
+          const fromUserId = req.fromUser?._id || req.fromUser?.id;
+          const toUserId = req.toUser?._id || req.toUser?.id;
+          
+          // Add both users to accepted connections since it's a mutual connection
+          if (fromUserId && userIds.includes(fromUserId)) {
+            acceptedUserIds.add(fromUserId);
+            console.log('Added to acceptedUserIds:', fromUserId);
+          }
+          if (toUserId && userIds.includes(toUserId)) {
+            acceptedUserIds.add(toUserId);
+            console.log('Added to acceptedUserIds:', toUserId);
+          }
+        });
+      }
+      
+      // Process rejected connections
+      const rejectedUserIds = new Set<string>();
+      if (rejectedRes.ok && rejectedData.requests) {
+        rejectedData.requests.forEach((req: any) => {
+          console.log('Processing rejected request:', {
+            fromUser: req.fromUser?._id,
+            toUser: req.toUser?._id,
+            status: req.status
+          });
+          
+          const fromUserId = req.fromUser?._id || req.fromUser?.id;
+          const toUserId = req.toUser?._id || req.toUser?.id;
+          
+          // Add both users to rejected connections
+          if (fromUserId && userIds.includes(fromUserId)) {
+            rejectedUserIds.add(fromUserId);
+            console.log('Added to rejectedUserIds:', fromUserId);
+          }
+          if (toUserId && userIds.includes(toUserId)) {
+            rejectedUserIds.add(toUserId);
+            console.log('Added to rejectedUserIds:', toUserId);
+          }
+        });
+      }
+      
+      // Update all state variables
+      setSentRequestIds(sentRequestUserIds);
+      setReceivedRequestIds(receivedRequestUserIds);
+      setAcceptedConnectionIds(acceptedUserIds);
+      setRejectedConnectionIds(rejectedUserIds);
+      
+      console.log('Final sentRequestIds:', Array.from(sentRequestUserIds));
+      console.log('Final receivedRequestIds:', Array.from(receivedRequestUserIds));
+      console.log('Final acceptedConnectionIds:', Array.from(acceptedUserIds));
+      console.log('Final rejectedConnectionIds:', Array.from(rejectedUserIds));
+      
     } catch (e) {
       console.error('Error checking connection requests:', e);
     } finally {
@@ -276,11 +346,20 @@ export default function MatchingPage() {
       const data = await res.json();
       
       if (res.ok) {
+        // Remove from received requests (no longer pending)
         setReceivedRequestIds(prev => {
           const newSet = new Set(prev);
           newSet.delete(fromUserId);
           return newSet;
         });
+        
+        // Add to accepted connections
+        setAcceptedConnectionIds(prev => {
+          const newSet = new Set(prev);
+          newSet.add(fromUserId);
+          return newSet;
+        });
+        
         toast.success("Connection request accepted!");
       } else {
         toast.error(data.message || "Failed to accept connection request");
@@ -414,6 +493,8 @@ export default function MatchingPage() {
                     : (match as any).seekerProfile?.userId?._id;
                   const hasRequestSent = sentRequestIds.has(String(profileUserId));
                   const hasRequestReceived = receivedRequestIds.has(String(profileUserId));
+                  const isConnectionAccepted = acceptedConnectionIds.has(String(profileUserId));
+                  const isConnectionRejected = rejectedConnectionIds.has(String(profileUserId));
                   const isConnecting = sendingId === String(profileUserId);
                   
                   return (
@@ -579,11 +660,15 @@ export default function MatchingPage() {
                             View Details
                           </Button>
                           <Button
-                            disabled={!profileUserId || isConnecting || loadingStatuses}
+                            disabled={!profileUserId || isConnecting || loadingStatuses || isConnectionAccepted || isConnectionRejected}
                             onClick={() => handleConnectionClick(String(profileUserId), profileName)}
                             size="sm"
                             className={`flex-1 ${
-                              hasRequestSent 
+                              isConnectionAccepted
+                                ? "bg-green-100 text-green-800 border-green-200 cursor-not-allowed opacity-75 hover:bg-green-100 hover:text-green-800"
+                                : isConnectionRejected
+                                ? "bg-red-100 text-red-800 border-red-200 cursor-not-allowed opacity-75 hover:bg-red-100 hover:text-red-800"
+                                : hasRequestSent 
                                 ? "bg-yellow-100 text-yellow-800 border-yellow-200 cursor-not-allowed opacity-75 hover:bg-yellow-100 hover:text-yellow-800"
                                 : hasRequestReceived
                                 ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"
@@ -594,6 +679,16 @@ export default function MatchingPage() {
                               <>
                                 <Clock className="w-4 h-4 mr-2 animate-spin" />
                                 Loading...
+                              </>
+                            ) : isConnectionAccepted ? (
+                              <>
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Connection Accepted
+                              </>
+                            ) : isConnectionRejected ? (
+                              <>
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Connection Rejected
                               </>
                             ) : hasRequestSent ? (
                               <>
@@ -701,6 +796,8 @@ export default function MatchingPage() {
                         const profileUserId = profile.userId?._id || profile.userId?.id || "";
                         const hasRequestSent = sentRequestIds.has(String(profileUserId));
                         const hasRequestReceived = receivedRequestIds.has(String(profileUserId));
+                        const isConnectionAccepted = acceptedConnectionIds.has(String(profileUserId));
+                        const isConnectionRejected = rejectedConnectionIds.has(String(profileUserId));
                         const isConnecting = sendingId === String(profileUserId);
                         const profileRole = profile.role || (userRole === 'seeker' ? 'guide' : 'seeker');
                         
@@ -752,17 +849,31 @@ export default function MatchingPage() {
                                 )}
                               </div>
                               <Button
-                                disabled={!profileUserId || isConnecting}
+                                disabled={!profileUserId || isConnecting || isConnectionAccepted || isConnectionRejected}
                                 onClick={() => handleConnectionClick(String(profileUserId), profileName)}
                                 className={`w-full mt-4 ${
-                                  hasRequestSent 
+                                  isConnectionAccepted
+                                    ? "bg-green-100 text-green-800 border-green-200 cursor-not-allowed opacity-75 hover:bg-green-100 hover:text-green-800"
+                                    : isConnectionRejected
+                                    ? "bg-red-100 text-red-800 border-red-200 cursor-not-allowed opacity-75 hover:bg-red-100 hover:text-red-800"
+                                    : hasRequestSent 
                                     ? "bg-yellow-100 text-yellow-800 border-yellow-200 cursor-not-allowed opacity-75 hover:bg-yellow-100 hover:text-yellow-800"
                                     : hasRequestReceived
                                     ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-200"
                                     : "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                                 }`}
                               >
-                                {hasRequestSent ? (
+                                {isConnectionAccepted ? (
+                                  <>
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Connection Accepted
+                                  </>
+                                ) : isConnectionRejected ? (
+                                  <>
+                                    <XCircle className="w-4 h-4 mr-2" />
+                                    Connection Rejected
+                                  </>
+                                ) : hasRequestSent ? (
                                   <>
                                     <CheckCircle className="w-4 h-4 mr-2" />
                                     Connection Requested
@@ -801,6 +912,8 @@ export default function MatchingPage() {
           selectedGuide={selectedGuide}
           sentRequestIds={sentRequestIds}
           receivedRequestIds={receivedRequestIds}
+          acceptedConnectionIds={acceptedConnectionIds}
+          rejectedConnectionIds={rejectedConnectionIds}
           sendingId={sendingId}
           onClose={() => setSelectedGuide(null)}
           onConnectionClick={(userId: string, userName: string) => {
