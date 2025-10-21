@@ -100,6 +100,10 @@ export default function Navigation() {
       onClick: handleHealthProfile
     },
     ...(isSeeker ? [{ label: "Find Guides", href: "/dashboard/matching" }] : []),
+    ...(isSeeker !== null ? [{ 
+      label: "Connections", 
+      href: isSeeker === true ? "/dashboard/connections/seekerConnections" : "/dashboard/connections/guideConnections"
+    }] : []),
     { label: "Features", href: "#features" },
     { label: "About", href: "/about" },
   ];

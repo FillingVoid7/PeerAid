@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModeToggle } from "@/components/ui/ThemeToggle";
 import { 
   Users, 
   Clock, 
@@ -22,7 +24,13 @@ import {
   User,
   ThumbsUp,
   ThumbsDown,
-  Mail
+  Mail,
+  Home,
+  ArrowLeft,
+  Sparkles,
+  TrendingUp,
+  Award,
+  Target
 } from "lucide-react";
 import { generateAvatar, getAvatarProps } from "@/lib/utilities/avatarGenerator";
 import { Toaster, toast } from "sonner";
@@ -65,6 +73,7 @@ const ITEMS_PER_PAGE = 6;
 
 export default function GuideConnectionsPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("pending");
   const [connections, setConnections] = useState<{
     pending: ConnectionWithProfile[];
@@ -121,7 +130,7 @@ export default function GuideConnectionsPage() {
   };
 
   const lastLoadedAtRef = useRef<number>(0);
-  const REFRESH_TTL_MS = 30000; // 30 seconds
+  const REFRESH_TTL_MS = 300000; 
 
   const loadAllConnections = async (force: boolean = false) => {
     if (!force) {
@@ -152,15 +161,8 @@ export default function GuideConnectionsPage() {
     }
   };
 
-  useEffect(() => {
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && session?.user?.id) {
-        loadAllConnections(false);
-      }
-    };
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
-  }, [session?.user?.id]);
+  // Removed auto-refresh on visibility change to prevent unnecessary API calls
+  // Data will only refresh when explicitly needed or cache expires
 
   const handleConnectionAction = async (requestId: string, action: 'accept' | 'reject') => {
     setProcessingRequest(requestId);
@@ -244,29 +246,18 @@ export default function GuideConnectionsPage() {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     });
-  };
-
-  const calculateDaysAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const diffTime = Math.abs(today.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
   };
 
   const ConnectionCard = ({ connection }: { connection: ConnectionWithProfile }) => {
     const seekerProfile = connection.seekerProfile;
     const avatar = seekerProfile ? generateAvatar(seekerProfile.alias) : generateAvatar(connection.fromUser.alias);
     const avatarProps = getAvatarProps(avatar);
-    const daysAgo = calculateDaysAgo(connection.createdAt);
     const isProcessing = processingRequest === connection._id;
 
     return (
-      <Card className="group hover:shadow-lg hover:ring-1 hover:ring-purple-200 transition-all duration-300 border-0 shadow-md bg-white/90 backdrop-blur-sm">
+      <Card className="group hover:shadow-2xl hover:ring-2 hover:ring-emerald-200 dark:hover:ring-emerald-700 hover:scale-[1.02] transition-all duration-300 border-0 shadow-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3">
@@ -286,9 +277,10 @@ export default function GuideConnectionsPage() {
                 </Badge>
               </div>
             </div>
-            <div className="text-right text-xs text-gray-500">
-              <div>{daysAgo === 1 ? '1 day ago' : `${daysAgo} days ago`}</div>
-              {connection.status !== 'pending' && (
+            <div className="text-right text-xs text-gray-500 dark:text-gray-400">
+              {connection.status === 'pending' ? (
+                <div>Sent: {formatDate(connection.createdAt)}</div>
+              ) : (
                 <div>Updated: {formatDate(connection.updatedAt)}</div>
               )}
             </div>
@@ -435,19 +427,31 @@ export default function GuideConnectionsPage() {
     return (
       <div className="space-y-6">
         {paginatedConnections.length === 0 ? (
-          <Card className="text-center py-12 bg-white/80 border-0 shadow-sm">
+          <Card className="text-center py-16 bg-white/90 dark:bg-gray-800/90 border-0 shadow-lg dark:shadow-xl backdrop-blur-sm">
             <CardContent>
-              <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                <Users className="w-8 h-8 text-purple-500" />
+              <div className="mx-auto mb-6 w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-blue-100 dark:from-emerald-900/50 dark:to-blue-900/50 flex items-center justify-center shadow-lg">
+                <Users className="w-10 h-10 text-emerald-500 dark:text-emerald-400" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">
                 No {type} connection requests
               </h3>
-              <p className="text-gray-500">
-                {type === 'pending' && "No pending requests from seekers at the moment."}
-                {type === 'accepted' && "No accepted connections yet. Accept some requests to start helping!"}
-                {type === 'rejected' && "No declined requests."}
+              <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto leading-relaxed">
+                {type === 'pending' && "No pending requests from seekers at the moment. Your expertise will be valued when seekers reach out!"}
+                {type === 'accepted' && "No accepted connections yet. Accept some requests to start making a meaningful impact in someone's journey!"}
+                {type === 'rejected' && "No declined requests. You're maintaining high standards for meaningful connections!"}
               </p>
+              
+              {type === 'pending' && (
+                <div className="mt-6">
+                  <Button 
+                    onClick={() => window.location.href = '/dashboard/matching'}
+                    className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    <Award className="w-4 h-4 mr-2" />
+                    Explore Community
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -489,11 +493,11 @@ export default function GuideConnectionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
         <div className="max-w-7xl mx-auto p-6 space-y-8">
           <div className="space-y-2">
-            <div className="h-9 w-72 bg-purple-200/40 rounded-md animate-pulse" />
-            <div className="h-5 w-96 bg-purple-100/40 rounded-md animate-pulse" />
+            <div className="h-9 w-72 bg-emerald-200/40 dark:bg-emerald-700/40 rounded-md animate-pulse" />
+            <div className="h-5 w-96 bg-emerald-100/40 dark:bg-emerald-800/40 rounded-md animate-pulse" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -536,92 +540,165 @@ export default function GuideConnectionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Connection Requests
-            </h1>
-            <p className="text-lg text-gray-600">
-              Manage incoming connection requests from seekers looking for guidance
-            </p>
+        {/*  Header */}
+        <div className="relative">
+          {/* Background decoration */}
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/10 to-blue-600/10 dark:from-emerald-400/20 dark:to-blue-400/20 rounded-3xl -z-10 blur-3xl"></div>
+          
+          <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-gray-700/20 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-4">
+                <Button
+                  onClick={() => router.push('/')}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center space-x-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-300"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <Home className="w-4 h-4" />
+                  <span className="hidden sm:inline">Back to Home</span>
+                </Button>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
+                  <Award className="w-4 h-4" />
+                  <span>Guide Dashboard</span>
+                </div>
+                <ModeToggle />
+              </div>
+            </div>
+            
+            <div className="text-center space-y-4">
+              <div className="flex items-center justify-center space-x-2 mb-2">
+                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse delay-100"></div>
+                <div className="h-2 w-2 rounded-full bg-purple-400 animate-pulse delay-200"></div>
+              </div>
+              
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-emerald-400 dark:via-blue-400 dark:to-purple-400">
+                Connection Requests
+              </h1>
+              
+              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+                Manage incoming connection requests from seekers looking for your guidance and expertise
+              </p>
+              
+              <div className="flex items-center justify-center space-x-6 text-sm text-gray-500 dark:text-gray-400 mt-4">
+                <div className="flex items-center space-x-2">
+                  <Target className="w-4 h-4 text-emerald-500" />
+                  <span>Guide Network</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Heart className="w-4 h-4 text-red-500" />
+                  <span>Help Seekers</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Award className="w-4 h-4 text-blue-500" />
+                  <span>Share Experience</span>
+                </div>
+              </div>
+            </div>
           </div>
-          {/* refresh button removed per requirements */}
         </div>
 
-        {/* Stats Cards */}
+        {/*  Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="bg-yellow-50 border-yellow-200">
+          <Card className="group bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border-amber-200 dark:border-amber-800/30 hover:shadow-2xl hover:scale-105 transition-all duration-300">
             <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-yellow-100 rounded-full">
-                  <Clock className="w-6 h-6 text-yellow-600" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="p-4 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-lg group-hover:shadow-amber-200 dark:group-hover:shadow-amber-900/50 transition-all duration-300">
+                    <Clock className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-bold text-amber-800 dark:text-amber-200">{connections.pending.length}</h3>
+                    <p className="text-amber-600 dark:text-amber-400 font-medium">Pending Requests</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-yellow-800">{connections.pending.length}</h3>
-                  <p className="text-yellow-600">Pending Requests</p>
+                <div className="text-amber-300 opacity-20 group-hover:opacity-40 transition-opacity">
+                  <Clock className="w-12 h-12" />
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-green-50 border-green-200">
+          <Card className="group bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border-emerald-200 dark:border-emerald-800/30 hover:shadow-2xl hover:scale-105 transition-all duration-300">
             <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-green-100 rounded-full">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="p-4 bg-gradient-to-br from-emerald-400 to-green-500 rounded-2xl shadow-lg group-hover:shadow-emerald-200 dark:group-hover:shadow-emerald-900/50 transition-all duration-300">
+                    <CheckCircle className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-bold text-emerald-800 dark:text-emerald-200">{connections.accepted.length}</h3>
+                    <p className="text-emerald-600 dark:text-emerald-400 font-medium">Active Mentorships</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-green-800">{connections.accepted.length}</h3>
-                  <p className="text-green-600">Active Mentorships</p>
+                <div className="text-emerald-300 opacity-20 group-hover:opacity-40 transition-opacity">
+                  <CheckCircle className="w-12 h-12" />
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-red-50 border-red-200">
+          <Card className="group bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/20 dark:to-red-900/20 border-rose-200 dark:border-rose-800/30 hover:shadow-2xl hover:scale-105 transition-all duration-300">
             <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-red-100 rounded-full">
-                  <XCircle className="w-6 h-6 text-red-600" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="p-4 bg-gradient-to-br from-rose-400 to-red-500 rounded-2xl shadow-lg group-hover:shadow-rose-200 dark:group-hover:shadow-rose-900/50 transition-all duration-300">
+                    <XCircle className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-bold text-rose-800 dark:text-rose-200">{connections.rejected.length}</h3>
+                    <p className="text-rose-600 dark:text-rose-400 font-medium">Declined</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-red-800">{connections.rejected.length}</h3>
-                  <p className="text-red-600">Declined</p>
+                <div className="text-rose-300 opacity-20 group-hover:opacity-40 transition-opacity">
+                  <XCircle className="w-12 h-12" />
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Connections Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 rounded-xl bg-white/60 backdrop-blur border border-purple-100">
-            <TabsTrigger value="pending" className="flex items-center space-x-2">
-              <Clock className="w-4 h-4" />
-              <span>Pending ({connections.pending.length})</span>
+        {/*  Connections Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <TabsList className="grid w-full grid-cols-3 rounded-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl border border-emerald-100 dark:border-emerald-800/30 shadow-xl p-2 h-auto min-h-[60px]">
+            <TabsTrigger 
+              value="pending" 
+              className="group flex items-center justify-center space-x-2 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-amber-200/50 dark:data-[state=active]:shadow-amber-900/30 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-gray-600 dark:text-gray-300 data-[state=active]:transform data-[state=active]:scale-[1.02] relative z-10"
+            >
+              <Clock className="w-4 h-4 group-data-[state=active]:animate-pulse" />
+              <span className="whitespace-nowrap">Pending ({connections.pending.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="accepted" className="flex items-center space-x-2">
-              <CheckCircle className="w-4 h-4" />
-              <span>Accepted ({connections.accepted.length})</span>
+            <TabsTrigger 
+              value="accepted" 
+              className="group flex items-center justify-center space-x-2 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-200/50 dark:data-[state=active]:shadow-emerald-900/30 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-gray-600 dark:text-gray-300 data-[state=active]:transform data-[state=active]:scale-[1.02] relative z-10"
+            >
+              <CheckCircle className="w-4 h-4 group-data-[state=active]:animate-pulse" />
+              <span className="whitespace-nowrap">Accepted ({connections.accepted.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="rejected" className="flex items-center space-x-2">
-              <XCircle className="w-4 h-4" />
-              <span>Rejected ({connections.rejected.length})</span>
+            <TabsTrigger 
+              value="rejected" 
+              className="group flex items-center justify-center space-x-2 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-red-200/50 dark:data-[state=active]:shadow-red-900/30 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-600 dark:text-gray-300 data-[state=active]:transform data-[state=active]:scale-[1.02] relative z-10"
+            >
+              <XCircle className="w-4 h-4 group-data-[state=active]:animate-pulse" />
+              <span className="whitespace-nowrap">Rejected ({connections.rejected.length})</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pending">
+          <TabsContent value="pending" className="animate-in fade-in-50 duration-300">
             <PaginatedConnections connections={connections.pending} type="pending" />
           </TabsContent>
 
-          <TabsContent value="accepted">
+          <TabsContent value="accepted" className="animate-in fade-in-50 duration-300">
             <PaginatedConnections connections={connections.accepted} type="accepted" />
           </TabsContent>
 
-          <TabsContent value="rejected">
+          <TabsContent value="rejected" className="animate-in fade-in-50 duration-300">
             <PaginatedConnections connections={connections.rejected} type="rejected" />
           </TabsContent>
         </Tabs>

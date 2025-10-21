@@ -72,7 +72,6 @@ export default function MatchingPage() {
     console.log('Checking connection requests for:', userIds);
     setLoadingStatuses(true);
     try {
-      // Fetch all connection statuses in parallel
       const [pendingRes, acceptedRes, rejectedRes] = await Promise.all([
         fetch("/api/connections/pending", { cache: "no-store" }),
         fetch("/api/connections/accepted", { cache: "no-store" }),
@@ -89,7 +88,6 @@ export default function MatchingPage() {
       console.log('Accepted API response:', acceptedData);
       console.log('Rejected API response:', rejectedData);
       
-      // Process pending requests
       const sentRequestUserIds = new Set<string>();
       const receivedRequestUserIds = new Set<string>();
       
@@ -104,21 +102,16 @@ export default function MatchingPage() {
           const fromUserId = req.fromUser?._id || req.fromUser?.id;
           const toUserId = req.toUser?._id || req.toUser?.id;
           
-          // Check if this is a request sent TO one of the users we're checking
           if (toUserId && userIds.includes(toUserId)) {
             sentRequestUserIds.add(toUserId);
-            console.log('Added to sentRequestUserIds:', toUserId);
           }
           
-          // Check if this is a request FROM one of the users we're checking (received by current user)
           if (fromUserId && userIds.includes(fromUserId)) {
             receivedRequestUserIds.add(fromUserId);
-            console.log('Added to receivedRequestUserIds:', fromUserId);
           }
         });
       }
       
-      // Process accepted connections
       const acceptedUserIds = new Set<string>();
       if (acceptedRes.ok && acceptedData.requests) {
         acceptedData.requests.forEach((req: any) => {
@@ -131,7 +124,6 @@ export default function MatchingPage() {
           const fromUserId = req.fromUser?._id || req.fromUser?.id;
           const toUserId = req.toUser?._id || req.toUser?.id;
           
-          // Add both users to accepted connections since it's a mutual connection
           if (fromUserId && userIds.includes(fromUserId)) {
             acceptedUserIds.add(fromUserId);
             console.log('Added to acceptedUserIds:', fromUserId);
@@ -143,7 +135,6 @@ export default function MatchingPage() {
         });
       }
       
-      // Process rejected connections
       const rejectedUserIds = new Set<string>();
       if (rejectedRes.ok && rejectedData.requests) {
         rejectedData.requests.forEach((req: any) => {
@@ -156,7 +147,6 @@ export default function MatchingPage() {
           const fromUserId = req.fromUser?._id || req.fromUser?.id;
           const toUserId = req.toUser?._id || req.toUser?.id;
           
-          // Add both users to rejected connections
           if (fromUserId && userIds.includes(fromUserId)) {
             rejectedUserIds.add(fromUserId);
             console.log('Added to rejectedUserIds:', fromUserId);
@@ -168,7 +158,6 @@ export default function MatchingPage() {
         });
       }
       
-      // Update all state variables
       setSentRequestIds(sentRequestUserIds);
       setReceivedRequestIds(receivedRequestUserIds);
       setAcceptedConnectionIds(acceptedUserIds);
@@ -325,7 +314,6 @@ export default function MatchingPage() {
     }
     
     if (receivedRequestIds.has(guideUserId)) {
-      // This user has sent us a request, we should accept it
       acceptConnectionRequest(guideUserId);
       return;
     }
@@ -346,14 +334,12 @@ export default function MatchingPage() {
       const data = await res.json();
       
       if (res.ok) {
-        // Remove from received requests (no longer pending)
         setReceivedRequestIds(prev => {
           const newSet = new Set(prev);
           newSet.delete(fromUserId);
           return newSet;
         });
         
-        // Add to accepted connections
         setAcceptedConnectionIds(prev => {
           const newSet = new Set(prev);
           newSet.add(fromUserId);
