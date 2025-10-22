@@ -30,6 +30,7 @@ import {
   Home,
   ArrowLeft
 } from 'lucide-react';
+import { DashboardBreadcrumb } from '@/components/ui/dashboard-breadcrumb';
 
 interface HealthProfile {
   _id: string;
@@ -248,17 +249,9 @@ const ViewProfilePage = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50/50 via-white to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/50">
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-5xl mx-auto space-y-6">
-          {/* Back to Home Button */}
+          {/* Breadcrumb */}
           <div className="flex justify-start">
-            <Button 
-              onClick={() => router.push('/')}
-              variant="ghost" 
-              size="sm"
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Home
-            </Button>
+            <DashboardBreadcrumb />
           </div>
           
           {/* Header */}

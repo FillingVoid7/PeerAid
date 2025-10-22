@@ -33,6 +33,7 @@ import {
   Target
 } from "lucide-react";
 import { generateAvatar, getAvatarProps } from "@/lib/utilities/avatarGenerator";
+import { DashboardBreadcrumb } from "@/components/ui/dashboard-breadcrumb";
 import { Toaster, toast } from "sonner";
 import { Skeleton } from "@/components/isLoading";
 
@@ -542,6 +543,11 @@ export default function GuideConnectionsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* Breadcrumb */}
+        <div className="flex justify-start">
+          <DashboardBreadcrumb />
+        </div>
+        
         {/*  Header */}
         <div className="relative">
           {/* Background decoration */}
@@ -549,18 +555,7 @@ export default function GuideConnectionsPage() {
           
           <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-gray-700/20 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-4">
-                <Button
-                  onClick={() => router.push('/')}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center space-x-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all duration-300"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <Home className="w-4 h-4" />
-                  <span className="hidden sm:inline">Back to Home</span>
-                </Button>
-              </div>
+
               
               <div className="flex items-center space-x-3">
                 <div className="flex items-center space-x-2 text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">

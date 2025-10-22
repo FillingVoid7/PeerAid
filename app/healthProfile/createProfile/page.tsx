@@ -14,6 +14,7 @@ import { UserRole } from "@/models/types/profile.type";
 import { LoadingSpinner } from "@/components/isLoading";
 import profileService from "@/lib/Services/profileService";
 import ProfileExistsDialog from "@/components/profile/ProfileExistsDialog";
+import { DashboardBreadcrumb } from "@/components/ui/dashboard-breadcrumb";
 
 export default function ProfileSetup() {
   const router = useRouter();
@@ -219,6 +220,11 @@ export default function ProfileSetup() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-background to-indigo-50 dark:from-slate-900 dark:via-background dark:to-indigo-950">
+      {/* Breadcrumb */}
+      <div className="relative z-10 pt-4 px-4 sm:px-6 lg:px-8">
+        <DashboardBreadcrumb />
+      </div>
+      
       {/* Background Pattern */}
       <div className={`${showProfileExistsDialog ? 'blur-sm pointer-events-none' : ''}`}>
       <div className="absolute inset-0 opacity-5">

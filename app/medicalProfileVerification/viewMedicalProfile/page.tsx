@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/dialog';
 import medicalVerificationService from '@/lib/Services/medicalVerificationService';
 import { IMedicalValidation } from '@/models/medicalValidation';
+import { DashboardBreadcrumb } from '@/components/ui/dashboard-breadcrumb';
 
 export default function ViewMedicalProfile() {
   const { data: session, status } = useSession();
@@ -110,6 +111,11 @@ export default function ViewMedicalProfile() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Breadcrumb */}
+        <div className="mb-6">
+          <DashboardBreadcrumb />
+        </div>
+        
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
             <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

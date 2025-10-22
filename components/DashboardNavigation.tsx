@@ -3,7 +3,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { MessageCircle, Users, Search, Home } from 'lucide-react';
+import { MessageCircle, Users, Search, User, Shield, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -11,35 +11,76 @@ import { useChat } from '@/lib/chat-context';
 
 interface NavigationProps {
   className?: string;
+  userRole?: boolean | null; 
 }
 
-export const DashboardNavigation: React.FC<NavigationProps> = ({ className }) => {
+export const DashboardNavigation: React.FC<NavigationProps> = ({ className, userRole }) => {
   const pathname = usePathname();
   const { conversations } = useChat();
 
   const totalUnread = conversations?.reduce((sum, c) => sum + (c.unreadCount || 0), 0) || 0;
 
-  const navItems = [
+  const getSeekerNavItems = () => [
     {
       href: '/dashboard/matching',
-      label: 'Matching',
+      label: 'Find Guides',
       icon: Search,
-      description: 'Find peer support'
+      description: 'Search for experienced guides',
+      isDefault: true
     },
     {
-      href: '/dashboard/connections',
+      href: '/healthProfile/viewProfile',
+      label: 'Health Profile',
+      icon: User,
+      description: 'Manage your health profile'
+    },
+    {
+      href: '/dashboard/connections/seekerConnections',
       label: 'Connections',
       icon: Users,
-      description: 'Manage connections'
+      description: 'Your guide connections'
     },
     {
       href: '/dashboard/chat',
       label: 'Chat',
       icon: MessageCircle,
-      description: 'Messages',
+      description: 'Messages with guides',
       badge: totalUnread > 0 ? String(Math.min(totalUnread, 99)) : undefined
     }
   ];
+
+  const getGuideNavItems = () => [
+    {
+      href: '/healthProfile/viewProfile',
+      label: 'Health Profile',
+      icon: User,
+      description: 'Manage your health profile',
+      isDefault: true
+    },
+    {
+      href: '/medicalProfileVerification/viewMedicalProfile',
+      label: 'Medical Profile',
+      icon: Shield,
+      description: 'Medical verification profile'
+    },
+    {
+      href: '/dashboard/connections/guideConnections',
+      label: 'Connections',
+      icon: Users,
+      description: 'Your seeker connections'
+    },
+    {
+      href: '/dashboard/chat',
+      label: 'Chat',
+      icon: MessageCircle,
+      description: 'Messages with seekers',
+      badge: totalUnread > 0 ? String(Math.min(totalUnread, 99)) : undefined
+    }
+  ];
+
+  const navItems = userRole === true ? getSeekerNavItems() : 
+                   userRole === false ? getGuideNavItems() : 
+                   []; 
 
   return (
     <nav className={cn("flex items-center gap-2", className)}>
@@ -52,7 +93,7 @@ export const DashboardNavigation: React.FC<NavigationProps> = ({ className }) =>
             <Button
               variant={isActive ? "default" : "ghost"}
               className={cn(
-                "flex items-center gap-2 relative",
+                "flex items-center gap-1 relative",
                 isActive && "bg-blue-600 hover:bg-blue-700 text-white"
               )}
             >

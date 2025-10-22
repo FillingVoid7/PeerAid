@@ -7,7 +7,28 @@ import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/ThemeToggle";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import profileService from "@/lib/Services/profileService";
-import { Menu, X, Shield, LogIn, LogOut, Heart } from "lucide-react";
+import { Menu, X, Shield, LogIn, LogOut, Heart, ChevronDown, Search, User, Users, MessageCircle, LucideIcon } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+interface DashboardItem {
+  label: string;
+  href?: string;
+  onClick?: () => void;
+  icon: LucideIcon;
+  description: string;
+}
+
+interface NavItem {
+  label: string;
+  href?: string;
+  onClick?: () => void;
+}
 
 export default function Navigation() {
   const router = useRouter();
@@ -93,17 +114,38 @@ export default function Navigation() {
     return hasProfile ? "My Profile" : "Create Profile";
   }, [isAuthed, hasProfile]);
 
-  const navItems = [
+  const getDashboardItems = (): DashboardItem[] => {
+    if (!isAuthed || isSeeker === null) return [];
+    
+    if (isSeeker) {
+      return [
+        { label: "Find Guides", href: "/dashboard/matching", icon: Search, description: "Search for experienced guides" },
+        { 
+          label: healthProfileCtaLabel, 
+          onClick: handleHealthProfile, 
+          icon: User, 
+          description: "Manage your health profile" 
+        },
+        { label: "Connections", href: "/dashboard/connections/seekerConnections", icon: Users, description: "Your guide connections" },
+        { label: "Chat", href: "/dashboard/chat", icon: MessageCircle, description: "Messages with guides" },
+      ];
+    } else {
+      return [
+        { 
+          label: healthProfileCtaLabel, 
+          onClick: handleHealthProfile, 
+          icon: User, 
+          description: "Manage your health profile" 
+        },
+        { label: "Medical Profile", href: "/medicalProfileVerification/viewMedicalProfile", icon: Shield, description: "Medical verification profile" },
+        { label: "Connections", href: "/dashboard/connections/guideConnections", icon: Users, description: "Your seeker connections" },
+        { label: "Chat", href: "/dashboard/chat", icon: MessageCircle, description: "Messages with seekers" },
+      ];
+    }
+  };
+
+  const navItems: NavItem[] = [
     { label: "Home", href: "/" },
-    { 
-      label: healthProfileCtaLabel, 
-      onClick: handleHealthProfile
-    },
-    ...(isSeeker ? [{ label: "Find Guides", href: "/dashboard/matching" }] : []),
-    ...(isSeeker !== null ? [{ 
-      label: "Connections", 
-      href: isSeeker === true ? "/dashboard/connections/seekerConnections" : "/dashboard/connections/guideConnections"
-    }] : []),
     { label: "Features", href: "#features" },
     { label: "About", href: "/about" },
   ];
@@ -132,6 +174,67 @@ export default function Navigation() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
+            {isAuthed && isSeeker !== null && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="text-sm font-medium transition-colors duration-200 group bg-transparent hover:bg-transparent border-none shadow-none p-0 h-auto"
+                  >
+                    <span className="relative flex items-center gap-1 hover:text-emerald-600 transition-colors duration-200">
+                      Dashboard
+                      <ChevronDown className="w-3 h-3" />
+                      <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-500 to-cyan-500 group-hover:w-full transition-all duration-300" />
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-64 bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border border-emerald-200 dark:border-emerald-800 mt-2">
+                  <div className="px-2 py-0.3">
+                  </div>
+                  <DropdownMenuSeparator />
+                  {getDashboardItems().map((item, index) => {
+                    const Icon = item.icon;
+                    return (
+                      <DropdownMenuItem key={index} className="p-0">
+                        {item.href ? (
+                          <Link 
+                            href={item.href}
+                            className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-sm w-full"
+                          >
+                            <Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {item.label}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {item.description}
+                              </div>
+                            </div>
+                          </Link>
+                        ) : (
+                          <button 
+                            onClick={item.onClick}
+                            className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-sm w-full text-left"
+                          >
+                            <Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {item.label}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {item.description}
+                              </div>
+                            </div>
+                          </button>
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {/* Regular Navigation Items */}
             {navItems.map((item, index) => (
               <div key={index}>
                 {item.href ? (
@@ -205,6 +308,58 @@ export default function Navigation() {
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-lg">
             <div className="px-4 py-6 space-y-4">
+              {isAuthed && isSeeker !== null && (
+                <div className="space-y-2">
+                  <div className="px-2 py-1">
+                    <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">
+                      {isSeeker ? 'Seeker Dashboard' : 'Guide Dashboard'}
+                    </p>
+                  </div>
+                  {getDashboardItems().map((item, index) => {
+                    const Icon = item.icon;
+                    return item.href ? (
+                      <Link 
+                        key={index}
+                        href={item.href} 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors"
+                      >
+                        <Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                            {item.label}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {item.description}
+                          </div>
+                        </div>
+                      </Link>
+                    ) : (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          item.onClick?.();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors w-full text-left"
+                      >
+                        <Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <div>
+                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                            {item.label}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {item.description}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  <div className="border-t border-border/50 my-4" />
+                </div>
+              )}
+
+              {/* Regular Navigation Items */}
               {navItems.map((item, index) => (
                 <div key={index}>
                   {item.href ? (

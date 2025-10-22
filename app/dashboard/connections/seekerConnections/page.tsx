@@ -28,6 +28,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { generateAvatar, getAvatarProps } from "@/lib/utilities/avatarGenerator";
+import { DashboardBreadcrumb } from "@/components/ui/dashboard-breadcrumb";
 import { Toaster, toast } from "sonner";
 import { Skeleton } from "@/components/isLoading";
 
@@ -445,26 +446,18 @@ export default function SeekerConnectionsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* Breadcrumb */}
+        <div className="flex justify-start">
+          <DashboardBreadcrumb />
+        </div>
+        
         {/*  Header */}
         <div className="relative">
           {/* Background decoration */}
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10 dark:from-purple-400/20 dark:to-blue-400/20 rounded-3xl -z-10 blur-3xl"></div>
           
           <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-gray-700/20 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-4">
-                <Button
-                  onClick={() => router.push('/')}
-                  variant="outline"
-                  size="sm"
-                  className="group bg-transparent border-none hover:bg-white/20 dark:hover:bg-gray-700/30 hover:backdrop-blur-sm hover:shadow-lg transition-all duration-300 ease-out text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">Back to Home</span>
-                </Button>
-              </div>
 
-            </div>
             
             <div className="text-center space-y-4">
               <div className="flex items-center justify-center space-x-2 mb-4">

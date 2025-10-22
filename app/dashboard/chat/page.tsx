@@ -6,6 +6,7 @@ import { ChatProvider, useChat } from '@/lib/chat-context';
 import { ConversationList } from '@/components/chat/ConversationList';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { DashboardNavigation } from '@/components/DashboardNavigation';
+import { DashboardBreadcrumb } from '@/components/ui/dashboard-breadcrumb';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import type { ChatConversation } from '@/lib/chat-context';
@@ -57,6 +58,10 @@ const ChatPageContent = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+      {/* Breadcrumb */}
+      <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+        <DashboardBreadcrumb />
+      </div>
       {/* Navigation Bar */}
       <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
         <DashboardNavigation />

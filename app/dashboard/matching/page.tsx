@@ -38,6 +38,7 @@ import { generateAvatar, getAvatarProps } from "@/lib/utilities/avatarGenerator"
 import { MatchResult } from "@/lib/Services/matchingService";
 import { Toaster, toast } from "sonner";
 import { ViewDetails } from "@/components/matching";
+import { DashboardBreadcrumb } from "@/components/ui/dashboard-breadcrumb";
 
 type SearchResult = any;
 
@@ -162,11 +163,6 @@ export default function MatchingPage() {
       setReceivedRequestIds(receivedRequestUserIds);
       setAcceptedConnectionIds(acceptedUserIds);
       setRejectedConnectionIds(rejectedUserIds);
-      
-      console.log('Final sentRequestIds:', Array.from(sentRequestUserIds));
-      console.log('Final receivedRequestIds:', Array.from(receivedRequestUserIds));
-      console.log('Final acceptedConnectionIds:', Array.from(acceptedUserIds));
-      console.log('Final rejectedConnectionIds:', Array.from(rejectedUserIds));
       
     } catch (e) {
       console.error('Error checking connection requests:', e);
@@ -386,16 +382,8 @@ export default function MatchingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
       <div className="max-w-7xl mx-auto p-4 space-y-8">
-        <div className="flex justify-start pt-4 bg-transparent ">
-          <Link href="/">
-            <Button 
-              variant="ghost" 
-              className="group bg-transparent border-none hover:bg-white/20 dark:hover:bg-gray-700/30 hover:backdrop-blur-sm hover:shadow-lg transition-all duration-300 ease-out text-gray-700 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
-              <span>Back to Home</span>
-            </Button>
-          </Link>
+        <div className="flex justify-start pt-4 bg-transparent">
+          <DashboardBreadcrumb />
         </div>
         
         {/* Enhanced Header */}
