@@ -175,22 +175,32 @@ class MedicalVerificationService {
         }
       );
 
+      if(!response.data.success) {
+        console.log('Medical report not found for user:', userId);
+        return {
+          success: false,
+          hasReport: false,
+          message: 'Medical report not found',
+        };
+      }
+
       return {
         success: true,
         hasReport: Boolean(response.data.report),
         report: response.data.report || undefined,
       };
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return {
+          success: true,
+          hasReport: false,
+          report: undefined,
+        };
+      }
+      
       console.error('Get medical report error:', error);
       
       if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          return {
-            success: true,
-            hasReport: false,
-            report: undefined,
-          };
-        }
         return {
           success: false,
           hasReport: false,

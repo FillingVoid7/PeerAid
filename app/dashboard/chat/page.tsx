@@ -62,10 +62,6 @@ const ChatPageContent = () => {
       <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 px-4 py-3">
         <DashboardBreadcrumb />
       </div>
-      {/* Navigation Bar */}
-      <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
-        <DashboardNavigation />
-      </div>
       
       {/* Chat Layout */}
       <div className="flex flex-1 overflow-hidden">

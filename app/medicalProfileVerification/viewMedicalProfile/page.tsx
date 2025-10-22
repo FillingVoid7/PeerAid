@@ -10,6 +10,7 @@ import { ConfirmationDialog } from '@/components/ui/dialog';
 import medicalVerificationService from '@/lib/Services/medicalVerificationService';
 import { IMedicalValidation } from '@/models/medicalValidation';
 import { DashboardBreadcrumb } from '@/components/ui/dashboard-breadcrumb';
+import { ModeToggle } from '@/components/ui/ThemeToggle';
 
 export default function ViewMedicalProfile() {
   const { data: session, status } = useSession();
@@ -19,7 +20,6 @@ export default function ViewMedicalProfile() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (status === 'loading') return;
     if (!session) {
@@ -27,7 +27,6 @@ export default function ViewMedicalProfile() {
     }
   }, [session, status, router]);
 
-  // Load medical report
   useEffect(() => {
     if (session?.user?.id) {
       loadMedicalReport();
@@ -109,35 +108,36 @@ export default function ViewMedicalProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900 -py-2">
+      <div className="max-w-7xl mx-auto p-6 space-y-10">
+
         {/* Breadcrumb */}
-        <div className="mb-6">
-          <DashboardBreadcrumb />
-        </div>
+          <div className="flex justify-start">
+                <DashboardBreadcrumb />
+          </div>
         
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
-            <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="text-center mb-16 mt-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 dark:bg-purple-900/20 rounded-full mb-4">
+            <svg className="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Medical Profile</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">Medical Profile</h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             View your medical verification status and documents
           </p>
         </div>
 
         {!medicalReport ? (
-          <Card className="text-center py-16 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+          <Card className="text-center py-2 shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
             <CardContent>
-              <div className="mx-auto w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6">
-                <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="mx-auto w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-16 h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-semibold text-gray-900 mb-4">No Medical Profile Found</h3>
-              <p className="text-gray-600 mb-8 text-lg max-w-md mx-auto">
+              <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">No Medical Profile Found</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-8 text-lg max-w-md mx-auto">
                 You haven't uploaded any medical documents yet. Create your medical profile to get started with verification.
               </p>
               <Button

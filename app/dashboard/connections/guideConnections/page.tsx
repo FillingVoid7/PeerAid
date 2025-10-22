@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ModeToggle } from "@/components/ui/ThemeToggle";
+
 import { 
   Users, 
   Clock, 
@@ -24,13 +24,11 @@ import {
   User,
   ThumbsUp,
   ThumbsDown,
-  Mail,
   Home,
   ArrowLeft,
   Sparkles,
   TrendingUp,
-  Award,
-  Target
+  Award
 } from "lucide-react";
 import { generateAvatar, getAvatarProps } from "@/lib/utilities/avatarGenerator";
 import { DashboardBreadcrumb } from "@/components/ui/dashboard-breadcrumb";
@@ -209,7 +207,7 @@ export default function GuideConnectionsPage() {
       const data = await response.json();
       
       if (data.success) {
-        window.location.href = `/dashboard/chat?conversation=${data.conversation._id}`;
+        window.location.href = `/dashboard/chat?conversationId=${data.conversation._id}`;
       } else {
         toast.error(`Failed to start conversation with ${seekerName}`);
       }
@@ -269,7 +267,7 @@ export default function GuideConnectionsPage() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h3 className="font-semibold text-gray-900">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                   {seekerProfile?.alias || connection.fromUser.alias}
                 </h3>
                 <Badge variant="outline" className={`${getStatusColor(connection.status)} text-xs`}>
@@ -280,9 +278,9 @@ export default function GuideConnectionsPage() {
             </div>
             <div className="text-right text-xs text-gray-500 dark:text-gray-400">
               {connection.status === 'pending' ? (
-                <div>Sent: {formatDate(connection.createdAt)}</div>
+                <div>{formatDate(connection.createdAt)}</div>
               ) : (
-                <div>Updated: {formatDate(connection.updatedAt)}</div>
+                <div>{formatDate(connection.updatedAt)}</div>
               )}
             </div>
           </div>
@@ -291,19 +289,19 @@ export default function GuideConnectionsPage() {
         <CardContent className="space-y-4">
           {seekerProfile && (
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="flex items-center space-x-2 text-gray-600">
+              <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
                 <Stethoscope className="w-4 h-4" />
                 <span>{seekerProfile.condition}</span>
               </div>
-              <div className="flex items-center space-x-2 text-gray-600">
+              <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
                 <MapPin className="w-4 h-4" />
                 <span>{seekerProfile.location}</span>
               </div>
-              <div className="flex items-center space-x-2 text-gray-600">
+              <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
                 <User className="w-4 h-4" />
                 <span>{seekerProfile.gender}, {seekerProfile.age}</span>
               </div>
-              <div className="flex items-center space-x-2 text-gray-600">
+              <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
                 <Calendar className="w-4 h-4" />
                 <span>Diagnosed {seekerProfile.diagnosisDate}</span>
               </div>
@@ -311,20 +309,14 @@ export default function GuideConnectionsPage() {
           )}
 
           {connection.message && (
-            <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-400">
-              <div className="flex items-start space-x-2">
-                <Mail className="w-4 h-4 text-blue-600 mt-0.5" />
-                <div>
-                  <p className="text-xs font-medium text-blue-800 mb-1">Message from seeker:</p>
-                  <p className="text-sm text-blue-700">"{connection.message}"</p>
-                </div>
-              </div>
+            <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
+              <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{connection.message}"</p>
             </div>
           )}
 
           {seekerProfile?.symptoms && seekerProfile.symptoms.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">Current symptoms:</h4>
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Current symptoms:</h4>
               <div className="flex flex-wrap gap-1">
                 {seekerProfile.symptoms.slice(0, 4).map((symptom, idx) => (
                   <Badge key={idx} variant="secondary" className="text-xs">
@@ -342,7 +334,7 @@ export default function GuideConnectionsPage() {
 
           {seekerProfile?.supportType && seekerProfile.supportType.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">Looking for:</h4>
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Looking for:</h4>
               <div className="flex flex-wrap gap-1">
                 {seekerProfile.supportType.map((type, idx) => (
                   <Badge key={idx} variant="outline" className="text-xs">
@@ -402,7 +394,7 @@ export default function GuideConnectionsPage() {
                   size="sm"
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />
-                  Start Chat
+                  Start Conversation
                 </Button>
               </div>
             )}
@@ -442,14 +434,14 @@ export default function GuideConnectionsPage() {
                 {type === 'rejected' && "No declined requests. You're maintaining high standards for meaningful connections!"}
               </p>
               
-              {type === 'pending' && (
+              {(type === 'pending' || type === 'accepted') && (
                 <div className="mt-6">
                   <Button 
                     onClick={() => window.location.href = '/dashboard/matching'}
                     className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
                   >
                     <Award className="w-4 h-4 mr-2" />
-                    Explore Community
+                    {type === 'pending' ? 'Explore Community' : 'Find More Seekers'}
                   </Button>
                 </div>
               )}
@@ -473,7 +465,7 @@ export default function GuideConnectionsPage() {
                 >
                   Previous
                 </Button>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
                   Page {currentPage[type]} of {totalPages}
                 </span>
                 <Button
@@ -499,22 +491,6 @@ export default function GuideConnectionsPage() {
           <div className="space-y-2">
             <div className="h-9 w-72 bg-emerald-200/40 dark:bg-emerald-700/40 rounded-md animate-pulse" />
             <div className="h-5 w-96 bg-emerald-100/40 dark:bg-emerald-800/40 rounded-md animate-pulse" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[0,1,2].map((i) => (
-              <Card key={i} className="bg-white/70 border-0 shadow-sm">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-gray-100 rounded-full h-12 w-12 animate-pulse" />
-                    <div className="space-y-2 flex-1">
-                      <div className="h-5 w-12 bg-gray-100 rounded animate-pulse" />
-                      <div className="h-4 w-24 bg-gray-100 rounded animate-pulse" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -554,114 +530,26 @@ export default function GuideConnectionsPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/10 to-blue-600/10 dark:from-emerald-400/20 dark:to-blue-400/20 rounded-3xl -z-10 blur-3xl"></div>
           
           <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-gray-700/20 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-
-              
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2 text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
-                  <Award className="w-4 h-4" />
-                  <span>Guide Dashboard</span>
-                </div>
-                <ModeToggle />
-              </div>
-            </div>
             
             <div className="text-center space-y-4">
-              <div className="flex items-center justify-center space-x-2 mb-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></div>
+              <div className="flex items-center justify-center space-x-2 mb-4">
+                <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
                 <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse delay-100"></div>
                 <div className="h-2 w-2 rounded-full bg-purple-400 animate-pulse delay-200"></div>
               </div>
               
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-emerald-400 dark:via-blue-400 dark:to-purple-400">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 via-blue-600 to-purple-600 bg-clip-text text-transparent dark:from-emerald-400 dark:via-blue-400 dark:to-purple-400">
                 Connection Requests
-              </h1>
-              
-              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-                Manage incoming connection requests from seekers looking for your guidance and expertise
-              </p>
-              
-              <div className="flex items-center justify-center space-x-6 text-sm text-gray-500 dark:text-gray-400 mt-4">
-                <div className="flex items-center space-x-2">
-                  <Target className="w-4 h-4 text-emerald-500" />
-                  <span>Guide Network</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Heart className="w-4 h-4 text-red-500" />
-                  <span>Help Seekers</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Award className="w-4 h-4 text-blue-500" />
-                  <span>Share Experience</span>
-                </div>
-              </div>
+              </h1>              
             </div>
           </div>
         </div>
 
-        {/*  Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="group bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border-amber-200 dark:border-amber-800/30 hover:shadow-2xl hover:scale-105 transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="p-4 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl shadow-lg group-hover:shadow-amber-200 dark:group-hover:shadow-amber-900/50 transition-all duration-300">
-                    <Clock className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-3xl font-bold text-amber-800 dark:text-amber-200">{connections.pending.length}</h3>
-                    <p className="text-amber-600 dark:text-amber-400 font-medium">Pending Requests</p>
-                  </div>
-                </div>
-                <div className="text-amber-300 opacity-20 group-hover:opacity-40 transition-opacity">
-                  <Clock className="w-12 h-12" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="group bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border-emerald-200 dark:border-emerald-800/30 hover:shadow-2xl hover:scale-105 transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="p-4 bg-gradient-to-br from-emerald-400 to-green-500 rounded-2xl shadow-lg group-hover:shadow-emerald-200 dark:group-hover:shadow-emerald-900/50 transition-all duration-300">
-                    <CheckCircle className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-3xl font-bold text-emerald-800 dark:text-emerald-200">{connections.accepted.length}</h3>
-                    <p className="text-emerald-600 dark:text-emerald-400 font-medium">Active Mentorships</p>
-                  </div>
-                </div>
-                <div className="text-emerald-300 opacity-20 group-hover:opacity-40 transition-opacity">
-                  <CheckCircle className="w-12 h-12" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="group bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/20 dark:to-red-900/20 border-rose-200 dark:border-rose-800/30 hover:shadow-2xl hover:scale-105 transition-all duration-300">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="p-4 bg-gradient-to-br from-rose-400 to-red-500 rounded-2xl shadow-lg group-hover:shadow-rose-200 dark:group-hover:shadow-rose-900/50 transition-all duration-300">
-                    <XCircle className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-3xl font-bold text-rose-800 dark:text-rose-200">{connections.rejected.length}</h3>
-                    <p className="text-rose-600 dark:text-rose-400 font-medium">Declined</p>
-                  </div>
-                </div>
-                <div className="text-rose-300 opacity-20 group-hover:opacity-40 transition-opacity">
-                  <XCircle className="w-12 h-12" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+
 
         {/*  Connections Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-3 rounded-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl border border-emerald-100 dark:border-emerald-800/30 shadow-xl p-2 h-auto min-h-[60px]">
+          <TabsList className="grid w-full grid-cols-3 rounded-2xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl border border-purple-100 dark:border-purple-800/30 shadow-xl p-2 h-auto min-h-[60px]">
             <TabsTrigger 
               value="pending" 
               className="group flex items-center justify-center space-x-2 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-amber-200/50 dark:data-[state=active]:shadow-amber-900/30 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-gray-600 dark:text-gray-300 data-[state=active]:transform data-[state=active]:scale-[1.02] relative z-10"
