@@ -165,6 +165,8 @@ class MedicalVerificationService {
   // Get medical report for a user
   async getMedicalReport(userId: string): Promise<MedicalReportResponse> {
     try {
+      console.log('API URL:', `${this.baseURL}/view_details/${userId}`);
+      
       const response = await axios.get(
         `${this.baseURL}/view_details/${userId}`,
         {
@@ -174,19 +176,10 @@ class MedicalVerificationService {
           timeout: 10000,
         }
       );
-
-      if(!response.data.success) {
-        console.log('Medical report not found for user:', userId);
-        return {
-          success: false,
-          hasReport: false,
-          message: 'Medical report not found',
-        };
-      }
-
+      const hasExistingVerification = Boolean(response.data.report);
       return {
         success: true,
-        hasReport: Boolean(response.data.report),
+        hasReport: hasExistingVerification,
         report: response.data.report || undefined,
       };
     } catch (error) {
@@ -222,7 +215,6 @@ class MedicalVerificationService {
     updates: Partial<MedicalVerificationFormData>
   ): Promise<MedicalVerificationResponse> {
     try {
-      // Include userId in the request body
       const payload = {
         userId,
         ...updates
