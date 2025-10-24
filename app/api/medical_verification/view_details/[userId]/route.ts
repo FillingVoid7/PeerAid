@@ -1,5 +1,5 @@
 import { NextRequest,NextResponse } from "next/server";
-import MedicalValidation from "@/models/medicalValidation";
+import MedicalValidation, { IMedicalValidation } from "@/models/medicalValidation";
 import connectDB from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../auth/[...nextauth]/route";
@@ -87,7 +87,7 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const updateData: any = {};
+        const updateData: Partial<IMedicalValidation> = {};
         
         if (body.document_metadata) {
             updateData.document_metadata = {

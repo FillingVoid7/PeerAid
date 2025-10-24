@@ -278,7 +278,7 @@ export default function SeekerConnectionsPage() {
 
           {connection.message && (
             <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
-              <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{connection.message}"</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 italic">&quot;{connection.message}&quot;</p>
             </div>
           )}
 

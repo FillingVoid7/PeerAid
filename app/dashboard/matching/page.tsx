@@ -40,8 +40,6 @@ import { Toaster, toast } from "sonner";
 import { ViewDetails } from "@/components/matching";
 import { DashboardBreadcrumb } from "@/components/ui/dashboard-breadcrumb";
 
-type SearchResult = any;
-
 export default function MatchingPage() {
   const { data: session } = useSession();
   const [loadingMatches, setLoadingMatches] = useState(false);
@@ -57,7 +55,7 @@ export default function MatchingPage() {
   const [location, setLocation] = useState("");
   const [gender, setGender] = useState("");
   const [searching, setSearching] = useState(false);
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<MatchResult[]>([]);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [sentRequestIds, setSentRequestIds] = useState<Set<string>>(new Set());
   const [receivedRequestIds, setReceivedRequestIds] = useState<Set<string>>(new Set());
@@ -908,7 +906,7 @@ export default function MatchingPage() {
         >
           <div className="space-y-4">
             <p className="text-gray-600">
-              Send a personalized message to introduce yourself and explain why you'd like to connect.
+              Send a personalized message to introduce yourself and explain why you&apos;d like to connect.
             </p>
             <div className="space-y-2">
               <label htmlFor="connectionMessage" className="text-sm font-medium text-gray-700">

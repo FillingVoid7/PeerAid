@@ -4,7 +4,6 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectDB from "@/lib/db";
 import { Types } from "mongoose";
 import ConnectionRequest from "@/models/connectionRequest";
-import HealthProfile from "@/models/healthProfile";
 
 export async function GET(req: NextRequest) {
   try {
@@ -35,9 +34,9 @@ export async function GET(req: NextRequest) {
       requests: rejectedRequests,
       count: rejectedRequests.length
     }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/connections/rejected error", error);
-    const message = error?.message || "Failed to load rejected connections";
+    const message = error instanceof Error ? error.message : "Failed to load rejected connections";
     return NextResponse.json({ message }, { status: 500 });
   }
 }

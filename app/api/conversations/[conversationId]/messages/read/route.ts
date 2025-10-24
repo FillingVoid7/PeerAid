@@ -4,11 +4,11 @@ import connectDB from "@/lib/db";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { conversationId: string } }
+  { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
     await connectDB();
-    const { conversationId } = params;
+    const { conversationId } = await params;
     const body = await req.json();
     const { userId, messageIds } = body;
     
@@ -29,7 +29,7 @@ export async function PUT(
         sender: { $ne: userId },
         status: { $ne: 'read' }
       }).select('_id');
-      targetIds = unread.map((m: any) => String(m._id));
+      targetIds = unread.map((m) => String(m._id));
     }
 
     if (targetIds.length === 0) {

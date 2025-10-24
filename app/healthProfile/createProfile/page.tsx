@@ -367,7 +367,7 @@ export default function ProfileSetup() {
                   <div>
                     <h3 className="font-bold text-blue-900 dark:text-blue-100 mb-3 text-lg">Need Help?</h3>
                     <p className="text-blue-700 dark:text-blue-300 leading-relaxed">
-                      All information is optional and can be updated later. Focus on sharing what you're comfortable with. 
+                      All information is optional and can be updated later. Focus on sharing what you&apos;re comfortable with. 
                       Your privacy and security are our top priorities.
                     </p>
                   </div>

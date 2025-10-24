@@ -3,10 +3,10 @@ import { getOnlineUsers } from "@/lib/websocket-client";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { conversationId: string } }
+  { params }: { params: Promise<{ conversationId: string }> }
 ) {
   try {
-    const { conversationId } = params;
+    const { conversationId } = await params;
     
     // Get online users from WebSocket server
     const onlineUsers = await getOnlineUsers(conversationId);

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +11,6 @@ import {
   Brain,
   UserCheck,
   ArrowRight,
-  Info,
   Handshake,
   ArrowLeft,
 } from "lucide-react";
@@ -32,7 +30,7 @@ export default function AboutPage() {
     {
       icon: <Users className="w-6 h-6" />,
       title: "Community-Driven",
-      description: "Built by and for our users' real needs",
+      description: "Built by and for our users&apos; real needs",
     },
     {
       icon: <Shield className="w-6 h-6" />,
@@ -101,7 +99,7 @@ export default function AboutPage() {
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               PeerAId is the first peer-to-peer health experience platform that
               connects you with verified individuals who have overcome the exact
-              health challenges you're facing.
+              health challenges you&apos;re facing.
             </p>
           </div>
         </div>
@@ -229,7 +227,7 @@ export default function AboutPage() {
               >
                 <Link href="/auth/login">
                   <Heart className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform" />
-                  Start Your Journey - It's Free
+                  Start Your Journey - It&apos;s Free
                   <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </Button>

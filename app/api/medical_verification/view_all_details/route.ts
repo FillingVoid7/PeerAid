@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
         const status = url.searchParams.get('status'); 
                                                                                                                         
         // Build query
-        let query: any = {};
+        const query: { 'verificationInfo.verificationStatus'?: string } = {};
         if (status && ['pending', 'verified', 'rejected'].includes(status)) {
             query['verificationInfo.verificationStatus'] = status;
         }
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
             })
             .lean();
 
-        const reportsByUserId: { [key: string]: any[] } = {};
+        const reportsByUserId: { [key: string]: typeof medicalReports } = {};
         medicalReports.forEach(report => {
             const userId = report.document_metadata?.userId?.toString() || 'unknown';
             if (!reportsByUserId[userId]) {

@@ -1,12 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectDB from "@/lib/db";
 import { Types } from "mongoose";
 import ConnectionRequest from "@/models/connectionRequest";
-import HealthProfile from "@/models/healthProfile";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -34,9 +33,9 @@ export async function GET(req: NextRequest) {
       requests: acceptedRequests,
       count: acceptedRequests.length
     }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/connections/accepted error", error);
-    const message = error?.message || "Failed to load accepted connections";
+    const message = error instanceof Error ? error.message : "Failed to load accepted connections";
     return NextResponse.json({ message }, { status: 500 });
   }
 }

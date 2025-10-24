@@ -4,7 +4,6 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectDB from "@/lib/db";
 import { ConnectionService } from "@/lib/Services/connectionService";
 import { Types } from "mongoose";
-import { returnGuideProfile } from "@/lib/utilities/profileValidationService";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,9 +20,9 @@ export async function POST(req: NextRequest) {
     const service = new ConnectionService();
     const result = await service.rejectConnectionRequest(requestId, userId);
     return NextResponse.json(result, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST /api/connections/reject error", error);
-    const message = error?.message || "Failed to reject request";
+    const message = error instanceof Error ? error.message : "Failed to reject request";
     return NextResponse.json({ message }, { status: 500 });
   }
 }

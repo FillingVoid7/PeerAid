@@ -4,6 +4,12 @@ import {faker} from '@faker-js/faker';
 import User from "@/models/User";
 import connectDB from "@/lib/db";
 
+interface ExtendedUser {
+  dbId?: string;
+  alias?: string;
+  email?: string | null;
+}
+
 async function generateAnonymousAlias() {
   const patterns = [
     () => `${faker.word.adjective()}${faker.animal.type()}${faker.number.int({ min: 100, max: 999 })}`,
@@ -57,18 +63,18 @@ export const authOptions: NextAuthOptions = {
       if (!existingUser) {
         const alias = await generateAnonymousAlias();
         const created = await User.create({ email: user.email!, alias });
-        (user as any).dbId = created._id.toString();
-        (user as any).alias = created.alias;
+        (user as ExtendedUser).dbId = created._id.toString();
+        (user as ExtendedUser).alias = created.alias;
       } else {
-        (user as any).dbId = existingUser._id.toString();
-        (user as any).alias = existingUser.alias;
+        (user as ExtendedUser).dbId = existingUser._id.toString();
+        (user as ExtendedUser).alias = existingUser.alias;
       }
       return true;
     },
     async jwt({ token, user }) {
       if (user) {
-        token.id = (user as any).dbId as string;
-        token.alias = (user as any).alias as string;
+        token.id = (user as ExtendedUser).dbId as string;
+        token.alias = (user as ExtendedUser).alias as string;
       }
       return token;
     },

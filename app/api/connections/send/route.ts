@@ -23,9 +23,9 @@ export async function POST(req: NextRequest) {
     const guideObjectId = new Types.ObjectId(guideId as string);    
     const created = await service.sendConnectionRequest(requesterId, guideObjectId, requesterMessage);
     return NextResponse.json({ request: created }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST /api/connections/send error", error);
-    const message = error?.message || "Failed to send request";
+    const message = error instanceof Error ? error.message : "Failed to send request";
     return NextResponse.json({ message }, { status: 500 });
   }
 }

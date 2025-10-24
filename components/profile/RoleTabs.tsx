@@ -47,7 +47,7 @@ export default function RoleTabs({ selectedRole, onRoleChange }: RoleTabsProps) 
         {!selectedRole && (
           <div className="text-muted-foreground">
             <p className="font-bold text-lg">Choose Your Role</p>
-            <p>Select whether you're seeking guidance or offering to guide others.</p>
+            <p>Select whether you&apos;re seeking guidance or offering to guide others.</p>
           </div>
         )}
       </div>

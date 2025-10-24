@@ -36,7 +36,7 @@ export default function DiagnosisTreatmentStep({ data, onChange, onNext, onBack 
     <div className="space-y-8">
       <div className="text-center">
         <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Diagnosis & Treatment Information</h2>
-        <p className="text-muted-foreground text-lg">Please provide information about your diagnosis and any treatments you've tried.</p>
+        <p className="text-muted-foreground text-lg">Please provide information about your diagnosis and any treatments you&apos;ve tried.</p>
       </div>
 
       {/* Diagnosis Section */}

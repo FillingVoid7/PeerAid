@@ -38,7 +38,11 @@ export async function POST(req: NextRequest) {
             }, { status: 404 });
         }
 
-        const updateData: any = {
+        const updateData: {
+            "verificationInfo.verificationStatus": string;
+            "verificationInfo.isVerified": boolean;
+            "verificationInfo.verifiedAt"?: Date;
+        } = {
             "verificationInfo.verificationStatus": verificationStatus,
             "verificationInfo.isVerified": verificationStatus === "verified"
         };

@@ -2,7 +2,7 @@ import express from 'express';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import cors from 'cors';
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -259,7 +259,7 @@ io.on('connection', (socket) => {
       await newMessage.save();
 
       // Update conversation's last message
-      conversation.lastMessage = newMessage._id;
+      conversation.lastMessage = newMessage._id as Types.ObjectId;
       await conversation.save();
 
       // Populate sender info for the response

@@ -18,7 +18,7 @@ export default function Footer() {
             </div>
             <p className="text-muted-foreground max-w-md">
               Find Your Health Twin. Connect with verified individuals who have overcome 
-              the exact health challenges you're facing.
+              the exact health challenges you&apos;re facing.
             </p>
             <div className="flex gap-3">
               <a href="#" className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-emerald-600 transition-colors">

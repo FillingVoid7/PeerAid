@@ -138,7 +138,7 @@ export default function ViewMedicalProfile() {
               </div>
               <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">No Medical Profile Found</h3>
               <p className="text-gray-600 dark:text-gray-300 mb-8 text-lg max-w-md mx-auto">
-                You haven't uploaded any medical documents yet. Create your medical profile to get started with verification.
+                You haven&apos;t uploaded any medical documents yet. Create your medical profile to get started with verification.
               </p>
               <Button
                 onClick={() => router.push('/medicalProfileVerification/createMedicalProfile')}

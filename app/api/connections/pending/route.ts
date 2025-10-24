@@ -4,7 +4,6 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectDB from "@/lib/db";
 import { Types } from "mongoose";
 import ConnectionRequest from "@/models/connectionRequest";
-import HealthProfile from "@/models/healthProfile";
 
 export async function GET(req: NextRequest) {
   try {
@@ -29,9 +28,9 @@ export async function GET(req: NextRequest) {
       requests: pendingRequests,
       count: pendingRequests.length
     }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET /api/connections/pending error", error);
-    const message = error?.message || "Failed to load pending requests";
+    const message = error instanceof Error ? error.message : "Failed to load pending connections";
     return NextResponse.json({ message }, { status: 500 });
   }
 }

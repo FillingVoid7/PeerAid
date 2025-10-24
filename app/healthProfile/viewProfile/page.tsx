@@ -232,7 +232,7 @@ const ViewProfilePage = () => {
               No Profile Found
             </CardTitle>
             <CardDescription>
-              You haven't created a health profile yet.
+              You haven&apos;t created a health profile yet.
             </CardDescription>
           </CardHeader>
           <CardContent>
