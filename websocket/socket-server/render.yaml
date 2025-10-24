@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: peeraid-websocket-server
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        fromService:
+          type: web
+          name: peeraid-websocket-server
+          property: port
+      - key: MONGODB_URI
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://peer-aid.vercel.app
+      - key: JWT_SECRET
+        sync: false
+      - key: REDIS_URL
+        sync: false
+    healthCheckPath: /health
+    autoDeploy: true
+    disk:
+      name: peeraid-websocket-disk
+      mountPath: /opt/render/project/src
+      sizeGB: 1
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+    headers:
+      - path: /*
+        name: Access-Control-Allow-Origin
+        value: https://peer-aid.vercel.app
+      - path: /*
+        name: Access-Control-Allow-Methods
+        value: GET,POST,PUT,DELETE,OPTIONS
+      - path: /*
+        name: Access-Control-Allow-Headers
+        value: Content-Type,Authorization
+      - path: /*
+        name: Access-Control-Allow-Credentials
+        value: "true"
