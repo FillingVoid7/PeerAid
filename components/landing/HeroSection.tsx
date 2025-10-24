@@ -124,37 +124,42 @@ export default function HeroSection() {
     <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
       {/* Animated background elements */}
       <div className="absolute inset-0 -z-10">
-        {/* Main gradient orbs */}
-        <div className="absolute top-20 left-1/4 w-72 h-72 bg-gradient-to-br from-emerald-400/30 via-cyan-400/20 to-transparent rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-1/4 w-96 h-96 bg-gradient-to-br from-violet-400/20 via-purple-400/10 to-transparent rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-gradient-to-br from-rose-400/10 via-pink-400/5 to-transparent rounded-full blur-3xl animate-pulse delay-2000" />
+        {/* Main gradient orbs - responsive sizes */}
+        <div className="absolute top-10 sm:top-20 left-1/4 w-48 h-48 sm:w-72 sm:h-72 bg-gradient-to-br from-emerald-400/30 via-cyan-400/20 to-transparent rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-10 sm:bottom-20 right-1/4 w-64 h-64 sm:w-96 sm:h-96 bg-gradient-to-br from-violet-400/20 via-purple-400/10 to-transparent rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[200px] sm:w-[600px] sm:h-[400px] bg-gradient-to-br from-rose-400/10 via-pink-400/5 to-transparent rounded-full blur-3xl animate-pulse delay-2000" />
         
-        {/* Floating particles */}
-        <div className="absolute top-1/4 left-1/3 w-2 h-2 bg-emerald-400 rounded-full animate-bounce delay-300" />
-        <div className="absolute top-3/4 right-1/3 w-1 h-1 bg-cyan-400 rounded-full animate-bounce delay-700" />
-        <div className="absolute top-1/2 left-1/4 w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce delay-1100" />
+        {/* Floating particles - hidden on small screens */}
+        <div className="hidden sm:block absolute top-1/4 left-1/3 w-2 h-2 bg-emerald-400 rounded-full animate-bounce delay-300" />
+        <div className="hidden sm:block absolute top-3/4 right-1/3 w-1 h-1 bg-cyan-400 rounded-full animate-bounce delay-700" />
+        <div className="hidden sm:block absolute top-1/2 left-1/4 w-1.5 h-1.5 bg-violet-400 rounded-full animate-bounce delay-1100" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
-        <div className="space-y-16">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 py-8 sm:py-12 md:py-16 lg:py-20">
+        <div className="space-y-8 sm:space-y-12 lg:space-y-16">
           {/* Hero Header */}
-          <div className="text-center max-w-4xl mx-auto space-y-8">
+          <div className="text-center max-w-4xl mx-auto space-y-6 sm:space-y-8">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border bg-background/70 backdrop-blur-sm px-4 py-2 text-sm shadow-lg">
+            <div className="inline-flex items-center gap-2 rounded-full border bg-background/70 backdrop-blur-sm px-3 sm:px-4 py-2 text-xs sm:text-sm shadow-lg">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-emerald-700 dark:text-emerald-300 font-medium">Building compassionate connections</span>
+                <span className="text-emerald-700 dark:text-emerald-300 font-medium">
+                  <span className="hidden sm:inline">Building compassionate connections</span>
+                  <span className="sm:hidden">Compassionate connections</span>
+                </span>
               </div>
             </div>
 
             {/* Main Headline */}
-            <div className="space-y-6">
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight leading-tight">
+            <div className="space-y-4 sm:space-y-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-tight">
                 <span className="inline">Find Your </span>
                 <span className="inline bg-gradient-to-r from-emerald-600 via-cyan-600 to-violet-600 bg-clip-text text-transparent">
                   Health Twin
                 </span>
-                <span className="block text-xl sm:text-2xl lg:text-3xl mt-6 font-normal text-muted-foreground leading-relaxed">Connect with People Who Truly Understand Your Journey</span>
+                <span className="block text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl mt-3 sm:mt-4 lg:mt-6 font-normal text-muted-foreground leading-relaxed px-2 sm:px-0">
+                  Connect with People Who Truly Understand Your Journey
+                </span>
               </h1>
               
               {/* <p className="text-xl sm:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
@@ -163,44 +168,50 @@ export default function HeroSection() {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row justify-center gap-6">
+            <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 px-2 sm:px-0">
               <Button 
                 size="lg" 
                 onClick={handleHealthProfile}
-                className="relative bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-600 hover:from-emerald-600 hover:via-cyan-600 hover:to-emerald-700 text-white shadow-2xl hover:shadow-emerald-500/25 transition-all duration-300 group px-20 py-6 text-lg font-semibold rounded-2xl border-0 overflow-hidden"
+                className="relative bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-600 hover:from-emerald-600 hover:via-cyan-600 hover:to-emerald-700 text-white shadow-2xl hover:shadow-emerald-500/25 transition-all duration-300 group px-6 sm:px-12 md:px-16 lg:px-20 py-4 sm:py-5 md:py-6 text-sm sm:text-base lg:text-lg font-semibold rounded-xl sm:rounded-2xl border-0 overflow-hidden touch-manipulation"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <Heart className="w-6 h-6 mr-3 group-hover:scale-110 group-hover:animate-pulse transition-all duration-300" />
-                <span className="relative z-10">Start Your Health Journey - Find Your Match</span>
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-emerald-400/0 via-cyan-400/0 to-emerald-400/0 group-hover:from-emerald-400/20 group-hover:via-cyan-400/20 group-hover:to-emerald-400/20 transition-all duration-300" />
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-2 sm:mr-3 group-hover:scale-110 group-hover:animate-pulse transition-all duration-300 flex-shrink-0" />
+                <span className="relative z-10">
+                  <span className="hidden sm:inline">Start Your Health Journey - Find Your Match</span>
+                  <span className="sm:hidden">Find Your Match</span>
+                </span>
+                <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-400/0 via-cyan-400/0 to-emerald-400/0 group-hover:from-emerald-400/20 group-hover:via-cyan-400/20 group-hover:to-emerald-400/20 transition-all duration-300" />
               </Button>
               
               <Button 
                 size="lg" 
                 onClick={handleGuideProfile}
-                className="relative bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500 hover:from-violet-600 hover:via-purple-600 hover:to-pink-600 text-white shadow-2xl hover:shadow-violet-500/25 transition-all duration-300 group px-20 py-6 text-lg font-semibold rounded-2xl border-0 overflow-hidden"
+                className="relative bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500 hover:from-violet-600 hover:via-purple-600 hover:to-pink-600 text-white shadow-2xl hover:shadow-violet-500/25 transition-all duration-300 group px-6 sm:px-12 md:px-16 lg:px-20 py-4 sm:py-5 md:py-6 text-sm sm:text-base lg:text-lg font-semibold rounded-xl sm:rounded-2xl border-0 overflow-hidden touch-manipulation"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <Users className="w-6 h-6 mr-3 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300" />
-                <span className="relative z-10">Join as a Guide - Share Your Experience</span>
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-violet-400/0 via-purple-400/0 to-pink-400/0 group-hover:from-violet-400/20 group-hover:via-purple-400/20 group-hover:to-pink-400/20 transition-all duration-300" />
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-2 sm:mr-3 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300 flex-shrink-0" />
+                <span className="relative z-10">
+                  <span className="hidden sm:inline">Join as a Guide - Share Your Experience</span>
+                  <span className="sm:hidden">Become a Guide</span>
+                </span>
+                <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-violet-400/0 via-purple-400/0 to-pink-400/0 group-hover:from-violet-400/20 group-hover:via-purple-400/20 group-hover:to-pink-400/20 transition-all duration-300" />
               </Button>
             </div>
           </div>
 
           {/* Real Results - Horizontal Section */}
-          <div className="space-y-8">        
-            <div className="grid md:grid-cols-3 gap-8">
+          <div className="space-y-6 sm:space-y-8">        
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
               {stats.map((stat, index) => (
                 <Card key={index} className="border-0 bg-background/60 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 group">
-                  <CardContent className="p-8 text-center space-y-4">
-                    <div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 text-emerald-600 group-hover:scale-110 transition-transform duration-300">
+                  <CardContent className="p-4 sm:p-6 lg:p-8 text-center space-y-3 sm:space-y-4">
+                    <div className="inline-flex p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 text-emerald-600 group-hover:scale-110 transition-transform duration-300">
                       {stat.icon}
                     </div>
-                    <div className="space-y-2">
-                      <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">{stat.value}</div>
-                      <div className="text-xl font-semibold">{stat.label}</div>
-                      <div className="text-muted-foreground">{stat.description}</div>
+                    <div className="space-y-1 sm:space-y-2">
+                      <div className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">{stat.value}</div>
+                      <div className="text-lg sm:text-xl font-semibold">{stat.label}</div>
+                      <div className="text-sm sm:text-base text-muted-foreground leading-tight">{stat.description}</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -209,32 +220,32 @@ export default function HeroSection() {
           </div>
 
           {/* Why Choose PeerAId - Standalone Section */}
-          <div className="space-y-12">
-            <div className="text-center max-w-3xl mx-auto">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">Why Choose PeerAId?</h2>
-              <p className="text-xl text-muted-foreground">Experience the difference of genuine peer support</p>
+          <div className="space-y-8 sm:space-y-12">
+            <div className="text-center max-w-3xl mx-auto px-2 sm:px-0">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">Why Choose PeerAId?</h2>
+              <p className="text-lg sm:text-xl text-muted-foreground">Experience the difference of genuine peer support</p>
             </div>
             
-            <div className="max-w-2xl mx-auto space-y-6">
+            <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
               {features.map((feature, index) => (
                 <Card key={index} className="border-0 bg-background/60 backdrop-blur-sm hover:bg-background/80 transition-all duration-300 group cursor-pointer overflow-hidden relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                  <CardContent className="p-8">
-                    <div className="flex items-start gap-6">
-                      <div className={`relative p-4 rounded-2xl bg-gradient-to-br ${feature.color} text-white shadow-xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
-                        <div className="absolute inset-0 rounded-2xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <CardContent className="p-4 sm:p-6 lg:p-8">
+                    <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
+                      <div className={`relative p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br ${feature.color} text-white shadow-xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 self-center sm:self-start flex-shrink-0`}>
+                        <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         <div className="relative z-10">
                           {feature.icon}
                         </div>
                       </div>
-                      <div className="flex-1 min-w-0 space-y-3">
-                        <h4 className="text-2xl font-bold group-hover:text-emerald-600 transition-colors duration-300">
+                      <div className="flex-1 min-w-0 space-y-2 sm:space-y-3 text-center sm:text-left">
+                        <h4 className="text-xl sm:text-2xl font-bold group-hover:text-emerald-600 transition-colors duration-300">
                           {feature.title}
                         </h4>
-                        <p className="text-lg text-muted-foreground leading-relaxed group-hover:text-foreground transition-colors duration-300">
+                        <p className="text-base sm:text-lg text-muted-foreground leading-relaxed group-hover:text-foreground transition-colors duration-300">
                           {feature.description}
                         </p>
-                        <div className="w-0 h-0.5 bg-gradient-to-r from-emerald-500 to-cyan-500 group-hover:w-20 transition-all duration-500" />
+                        <div className="w-0 h-0.5 bg-gradient-to-r from-emerald-500 to-cyan-500 group-hover:w-16 sm:group-hover:w-20 transition-all duration-500 mx-auto sm:mx-0" />
                       </div>
                     </div>
                   </CardContent>

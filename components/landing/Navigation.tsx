@@ -152,21 +152,21 @@ export default function Navigation() {
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50 supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8">
+        <div className="flex h-14 sm:h-16 items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink-0">
             <div className="relative">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 via-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 via-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg text-sm sm:text-base">
                 PA
               </div>
-              <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-2 w-2 sm:h-3 sm:w-3 rounded-full bg-emerald-400 animate-pulse" />
             </div>
-            <div>
-              <span className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
+            <div className="min-w-0">
+              <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
                 Peer-Aid
               </span>
-              <div className="text-xs text-muted-foreground -mt-0.5">
+              <div className="text-xs text-muted-foreground -mt-0.5 hidden sm:block">
                 Health Community Platform
               </div>
             </div>
@@ -263,42 +263,48 @@ export default function Navigation() {
           </nav>
 
           {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2 lg:gap-3">
             <ModeToggle />
             {isAuthed ? (
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 text-sm font-medium hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors duration-200"
+                className="flex items-center gap-2 px-2 lg:px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 text-sm font-medium hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors duration-200 max-w-[200px] truncate"
               >
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                {session?.user?.alias || session?.user?.email}
-                <LogOut className="w-3 h-3 ml-1" />
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+                <span className="truncate">
+                  {session?.user?.alias || session?.user?.email}
+                </span>
+                <LogOut className="w-3 h-3 ml-1 flex-shrink-0" />
               </button>
             ) : (
               <Link href="/auth/login">
                 <Button 
                   variant="default" 
-                  className="bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                  size="sm"
+                  className="bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 text-sm"
                 >
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Sign In
+                  <LogIn className="w-4 h-4 mr-1 lg:mr-2" />
+                  <span className="hidden lg:inline">Sign In</span>
+                  <span className="lg:hidden">Login</span>
                 </Button>
               </Link>
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          {/* Mobile Menu Button and Theme Toggle */}
+          <div className="flex items-center gap-2 md:hidden">
+            <ModeToggle />
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="relative"
+              className="relative p-2 hover:bg-muted/50 touch-manipulation"
+              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
             >
               {isMobileMenuOpen ? (
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5 transition-transform duration-200 rotate-90" />
               ) : (
-                <Menu className="h-5 w-5" />
+                <Menu className="h-5 w-5 transition-transform duration-200" />
               )}
             </Button>
           </div>
@@ -306,8 +312,8 @@ export default function Navigation() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-lg">
-            <div className="px-4 py-6 space-y-4">
+          <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-lg animate-in slide-in-from-top-2 duration-200">
+            <div className="px-3 sm:px-4 py-4 sm:py-6 space-y-3 sm:space-y-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
               {isAuthed && isSeeker !== null && (
                 <div className="space-y-2">
                   <div className="px-2 py-1">
@@ -322,14 +328,14 @@ export default function Navigation() {
                         key={index}
                         href={item.href} 
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors"
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors touch-manipulation active:scale-95"
                       >
-                        <Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                        <div>
-                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                        <Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                             {item.label}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 leading-tight">
                             {item.description}
                           </div>
                         </div>
@@ -341,21 +347,21 @@ export default function Navigation() {
                           item.onClick?.();
                           setIsMobileMenuOpen(false);
                         }}
-                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors w-full text-left"
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors w-full text-left touch-manipulation active:scale-95"
                       >
-                        <Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                        <div>
-                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                        <Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">
                             {item.label}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 leading-tight">
                             {item.description}
                           </div>
                         </div>
                       </button>
                     );
                   })}
-                  <div className="border-t border-border/50 my-4" />
+                  <div className="border-t border-border/50 my-3 sm:my-4" />
                 </div>
               )}
 
@@ -366,37 +372,38 @@ export default function Navigation() {
                     <Link 
                       href={item.href} 
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="block p-3 rounded-lg hover:bg-muted transition-colors"
+                      className="block p-3 rounded-lg hover:bg-muted transition-colors touch-manipulation active:scale-95"
                     >
-                      <span className="font-medium">{item.label}</span>
+                      <span className="font-medium text-sm sm:text-base">{item.label}</span>
                     </Link>
                   ) : (
                     <button 
                       onClick={item.onClick}
-                      className="block p-3 rounded-lg hover:bg-muted transition-colors w-full text-left"
+                      className="block p-3 rounded-lg hover:bg-muted transition-colors w-full text-left touch-manipulation active:scale-95"
                     >
-                      <span className="font-medium">{item.label}</span>
+                      <span className="font-medium text-sm sm:text-base">{item.label}</span>
                     </button>
                   )}
                 </div>
               ))}
               
-              <div className="pt-4 border-t border-border/50">
+              <div className="pt-3 sm:pt-4 border-t border-border/50">
                 {isAuthed ? (
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors w-full text-left"
+                    className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors w-full text-left touch-manipulation active:scale-95"
                   >
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-emerald-700 dark:text-emerald-300 font-medium flex-1">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+                    <span className="text-emerald-700 dark:text-emerald-300 font-medium flex-1 truncate text-sm sm:text-base">
                       {session?.user?.alias || session?.user?.email}
                     </span>
-                    <LogOut className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <LogOut className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                   </button>
                 ) : (
                   <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button 
-                      className="w-full bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white"
+                      size="lg"
+                      className="w-full bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 text-white py-3 touch-manipulation"
                     >
                       <LogIn className="w-4 h-4 mr-2" />
                       Sign In

@@ -131,7 +131,53 @@ const ViewProfilePage = () => {
       const data = await response.json();
       
       if (response.ok) {
-        setProfile(data.profile);
+        let profileData = data.profile;
+        
+        if (profileData) {
+          try {
+            const medicalValidationResponse = await fetch(`/api/medical_verification/view_details/${session.user.id}`,{
+              method: 'GET', 
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            });
+
+            if (medicalValidationResponse.ok) {
+              const validationData = await medicalValidationResponse.json();
+              console.log('Fetched medical validation data:', validationData);
+              
+              const hasAcceptedValidation = validationData.report?.verificationInfo?.verificationStatus === 'verified';
+              
+              console.log('Has accepted validation:', hasAcceptedValidation);
+              console.log('Current verification method:', profileData.verificationMethod);
+              
+              if (hasAcceptedValidation && profileData.verificationMethod !== 'medical-document') {
+                console.log('Updating verification method to medical-document');
+                profileData.verificationMethod = 'medical-document';
+                
+                const updateResponse = await fetch(`/api/get-profile/${session.user.id}`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    verificationMethod: 'medical-document'
+                  })
+                });
+                
+                if (updateResponse.ok) {
+                  console.log('Successfully updated verification method in database');
+                } else {
+                  console.error('Failed to update verification method in database');
+                }
+              }
+            }
+          } catch (medicalError) {
+            console.log('Medical validation check failed, continuing with profile display:', medicalError);
+          }
+        }
+        
+        setProfile(profileData);
         hasLoadedRef.current = session.user.id; 
       } else {
         toast.error(data.message || 'Failed to load profile');
@@ -201,18 +247,15 @@ const ViewProfilePage = () => {
     }
   };
 
-  // Utility function to safely render values, handling schema objects
   const safeRenderValue = (value: any): string => {
     if (value === null || value === undefined) return '';
     if (typeof value === 'string') return value;
     if (typeof value === 'number') return value.toString();
     if (typeof value === 'boolean') return value.toString();
     if (typeof value === 'object') {
-      // Handle schema objects with enum property
       if (value.enum && Array.isArray(value.enum)) {
         return value.enum[0] || '';
       }
-      // Handle other objects by converting to string
       return JSON.stringify(value);
     }
     return String(value);
@@ -247,7 +290,7 @@ const ViewProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50/50 via-white to-indigo-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/50">
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6 ">
         <div className="max-w-5xl mx-auto space-y-6">
           {/* Breadcrumb */}
           <div className="flex justify-start">
@@ -255,9 +298,9 @@ const ViewProfilePage = () => {
           </div>
           
           {/* Header */}
-          <div className="text-center space-y-4">
+          <div className="text-center space-y-6 ">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              Your Health Profile
+              Health Profile
             </h1>
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div className="flex items-center justify-center sm:justify-start gap-3">
@@ -312,61 +355,41 @@ const ViewProfilePage = () => {
                 Personal Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 p-5">
-              <div className="grid gap-3">
-                <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Calendar className="w-4 h-4 text-blue-500" />
-                    <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Age</span>
-                  </div>
-                  <div className="ml-6">
-                    <span className="text-base font-semibold text-gray-900 dark:text-white">{profile.age} years old</span>
-                  </div>
+            <CardContent className="space-y-4 p-5">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-blue-500" />
+                  <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Age:</span>
+                  <span className="text-base font-semibold text-gray-900 dark:text-white">{profile.age} years old</span>
                 </div>
 
-                <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                  <div className="flex items-center gap-2 mb-1">
-                    <User className="w-4 h-4 text-purple-500" />
-                    <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Gender</span>
-                  </div>
-                  <div className="ml-6">
-                    <span className="text-base font-semibold text-gray-900 dark:text-white capitalize">{profile.gender}</span>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <User className="w-4 h-4 text-purple-500" />
+                  <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Gender:</span>
+                  <span className="text-base font-semibold text-gray-900 dark:text-white capitalize">{profile.gender}</span>
                 </div>
 
-                <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-red-50/50 to-rose-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Heart className="w-4 h-4 text-red-500" />
-                    <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Blood Type</span>
-                  </div>
-                  <div className="ml-6">
-                    <span className="font-mono bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-1 rounded text-sm font-bold">
-                      {profile.bloodType}
-                    </span>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <Heart className="w-4 h-4 text-red-500" />
+                  <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Blood Type:</span>
+                  <span className="font-mono bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-1 rounded text-sm font-bold">
+                    {profile.bloodType}
+                  </span>
                 </div>
 
                 {profile.nationality && (
-                  <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                    <div className="flex items-center gap-2 mb-1">
-                      <MapPin className="w-4 h-4 text-green-500" />
-                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Nationality</span>
-                    </div>
-                    <div className="ml-6">
-                      <span className="text-base font-semibold text-gray-900 dark:text-white">{profile.nationality}</span>
-                    </div>
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-4 h-4 text-green-500" />
+                    <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Nationality:</span>
+                    <span className="text-base font-semibold text-gray-900 dark:text-white">{profile.nationality}</span>
                   </div>
                 )}
 
                 {profile.location && (
-                  <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-indigo-50/50 to-blue-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                    <div className="flex items-center gap-2 mb-1">
-                      <MapPin className="w-4 h-4 text-indigo-500" />
-                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Location</span>
-                    </div>
-                    <div className="ml-6">
-                      <span className="text-base font-semibold text-gray-900 dark:text-white">{profile.location}</span>
-                    </div>
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-4 h-4 text-indigo-500" />
+                    <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Location:</span>
+                    <span className="text-base font-semibold text-gray-900 dark:text-white">{profile.location}</span>
                   </div>
                 )}
               </div>
@@ -384,72 +407,49 @@ const ViewProfilePage = () => {
                   Health Condition
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 p-5">
-                <div className="grid gap-3">
+              <CardContent className="space-y-4 p-5">
+                <div className="space-y-3">
                   {profile.conditionCategory && (
-                    <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Tag className="w-4 h-4 text-purple-600" />
-                        <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Category</span>
-                      </div>
-                      <div className="ml-6">
-                        <span className="capitalize bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-full text-sm font-medium border border-purple-200 dark:border-purple-700">
-                          {String(profile.conditionCategory)}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-3">
+                      <Tag className="w-4 h-4 text-purple-600" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Category:</span>
+                      <span className="capitalize bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-full text-sm font-medium border border-purple-200 dark:border-purple-700">
+                        {String(profile.conditionCategory)}
+                      </span>
                     </div>
                   )}
 
                   {profile.conditionName && (
-                    <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Stethoscope className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Condition Name</span>
-                      </div>
-                      <div className="ml-6">
-                        <span className="text-base font-semibold text-gray-900 dark:text-white">{String(profile.conditionName)}</span>
-                      </div>
+                    <div className="flex items-center gap-3">
+                      <Stethoscope className="w-4 h-4 text-blue-600" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Condition Name:</span>
+                      <span className="text-base font-semibold text-gray-900 dark:text-white">{String(profile.conditionName)}</span>
                     </div>
                   )}
 
                   {profile.conditionDescription && (
-                    <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-gray-50/50 to-blue-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                      <div className="flex items-start gap-2 mb-1">
-                        <FileText className="w-4 h-4 text-gray-600 mt-0.5" />
-                        <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Description</span>
-                      </div>
-                      <div className="ml-6">
-                        <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
-                          {String(profile.conditionDescription)}
-                        </div>
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-4 h-4 text-gray-600 mt-0.5" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Description:</span>
+                      <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                        {String(profile.conditionDescription)}
                       </div>
                     </div>
                   )}
 
-                  {(profile.onsetYear || profile.resolvedYear) && (
-                    <div className="grid grid-cols-1 gap-4">
-                      {profile.onsetYear && (
-                        <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 bg-gradient-to-r from-orange-50/50 to-yellow-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                          <div className="flex items-center gap-3 mb-2">
-                            <Clock className="w-5 h-5 text-orange-600" />
-                            <span className="font-medium text-gray-700 dark:text-gray-300">Onset Date</span>
-                          </div>
-                          <div className="ml-8">
-                            <span className="text-lg font-semibold text-gray-900 dark:text-white">{formatDate(profile.onsetYear, profile.onsetMonth)}</span>
-                          </div>
-                        </div>
-                      )}
-                      {profile.resolvedYear && (
-                        <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-4 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                          <div className="flex items-center gap-3 mb-2">
-                            <Clock className="w-5 h-5 text-green-600" />
-                            <span className="font-medium text-gray-700 dark:text-gray-300">Resolved Date</span>
-                          </div>
-                          <div className="ml-8">
-                            <span className="text-lg font-semibold text-gray-900 dark:text-white">{formatDate(profile.resolvedYear, profile.resolvedMonth)}</span>
-                          </div>
-                        </div>
-                      )}
+                  {profile.onsetYear && (
+                    <div className="flex items-center gap-3">
+                      <Clock className="w-4 h-4 text-orange-600" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Onset Date:</span>
+                      <span className="text-base font-semibold text-gray-900 dark:text-white">{formatDate(profile.onsetYear, profile.onsetMonth)}</span>
+                    </div>
+                  )}
+
+                  {profile.resolvedYear && (
+                    <div className="flex items-center gap-3">
+                      <Clock className="w-4 h-4 text-green-600" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Resolved Date:</span>
+                      <span className="text-base font-semibold text-gray-900 dark:text-white">{formatDate(profile.resolvedYear, profile.resolvedMonth)}</span>
                     </div>
                   )}
                 </div>
@@ -469,24 +469,20 @@ const ViewProfilePage = () => {
                 Contact Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 p-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="space-y-4 p-5">
+              <div className="space-y-3">
                 {profile.contactInfo.contact_phone && (
-                  <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-slate-700 rounded-lg border border-green-200 dark:border-slate-600">
+                  <div className="flex items-center gap-3">
                     <Phone className="w-4 h-4 text-green-600" />
-                    <div>
-                      <span className="font-medium text-gray-600 dark:text-gray-300 text-sm">Phone:</span>
-                      <span className="ml-2 font-semibold text-gray-900 dark:text-white text-sm">{profile.contactInfo.contact_phone}</span>
-                    </div>
+                    <span className="font-medium text-gray-600 dark:text-gray-300 text-sm">Phone:</span>
+                    <span className="font-semibold text-gray-900 dark:text-white text-sm">{profile.contactInfo.contact_phone}</span>
                   </div>
                 )}
                 {profile.contactInfo.contact_email && (
-                  <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-slate-700 rounded-lg border border-blue-200 dark:border-slate-600">
+                  <div className="flex items-center gap-3">
                     <Mail className="w-4 h-4 text-blue-600" />
-                    <div>
-                      <span className="font-medium text-gray-600 dark:text-gray-300 text-sm">Email:</span>
-                      <span className="ml-2 font-semibold text-gray-900 dark:text-white text-sm">{profile.contactInfo.contact_email}</span>
-                    </div>
+                    <span className="font-medium text-gray-600 dark:text-gray-300 text-sm">Email:</span>
+                    <span className="font-semibold text-gray-900 dark:text-white text-sm">{profile.contactInfo.contact_email}</span>
                   </div>
                 )}
               </div>
@@ -507,10 +503,10 @@ const ViewProfilePage = () => {
                   Symptoms
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 p-5">
-                <div className="grid gap-3">
+              <CardContent className="space-y-4 p-5">
+                <div className="space-y-4">
                   {profile.symptoms.map((symptom, index) => (
-                    <div key={index} className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-orange-50/30 to-red-50/30 dark:from-slate-700/30 dark:to-slate-600/30">
+                    <div key={index} className="pb-3 border-b border-gray-200 dark:border-slate-600 last:border-b-0">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5" />
@@ -521,7 +517,7 @@ const ViewProfilePage = () => {
                         </span>
                       </div>
                       
-                      <div className="grid grid-cols-1 gap-2 text-xs ml-6">
+                      <div className="space-y-1 text-sm ml-6">
                         {symptom.frequency && (
                           <div className="flex items-center gap-2">
                             <Clock className="w-3 h-3 text-muted-foreground" />
@@ -540,8 +536,8 @@ const ViewProfilePage = () => {
                       
                       {symptom.symptomNotes && (
                         <div className="mt-2 ml-6">
-                          <span className="font-medium text-gray-600 dark:text-gray-300 text-xs">Notes:</span>
-                          <p className="text-gray-700 dark:text-gray-300 mt-1 text-xs leading-relaxed bg-white/50 dark:bg-slate-800/50 p-2 rounded border">{String(symptom.symptomNotes)}</p>
+                          <span className="font-medium text-gray-600 dark:text-gray-300 text-sm">Notes:</span>
+                          <p className="text-gray-700 dark:text-gray-300 mt-1 text-sm leading-relaxed">{String(symptom.symptomNotes)}</p>
                         </div>
                       )}
                     </div>
@@ -562,55 +558,38 @@ const ViewProfilePage = () => {
                   Diagnosis Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 p-5">
-                <div className="grid gap-3">
+              <CardContent className="space-y-4 p-5">
+                <div className="space-y-3">
                   {profile.diagnosis.diagnosedBy && (
-                    <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                      <div className="flex items-center gap-2 mb-1">
-                        <User className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Diagnosed by</span>
-                      </div>
-                      <div className="ml-6">
-                        <span className="text-base font-semibold text-gray-900 dark:text-white">{String(profile.diagnosis.diagnosedBy)}</span>
-                      </div>
+                    <div className="flex items-center gap-3">
+                      <User className="w-4 h-4 text-blue-600" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Diagnosed by:</span>
+                      <span className="text-base font-semibold text-gray-900 dark:text-white">{String(profile.diagnosis.diagnosedBy)}</span>
                     </div>
                   )}
                   
-                  <div className="grid grid-cols-1 gap-3">
-                    {profile.diagnosis.diagnosedYear && (
-                      <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Calendar className="w-4 h-4 text-green-600" />
-                          <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Diagnosis Date</span>
-                        </div>
-                        <div className="ml-6">
-                          <span className="text-base font-semibold text-gray-900 dark:text-white">{String(profile.diagnosis.diagnosedYear)}</span>
-                        </div>
-                      </div>
-                    )}
-                    {profile.diagnosis.certainty && (
-                      <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Target className="w-4 h-4 text-purple-600" />
-                          <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Certainty</span>
-                        </div>
-                        <div className="ml-6">
-                          <span className="text-base font-semibold text-gray-900 dark:text-white capitalize">{safeRenderValue(profile.diagnosis.certainty)}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  {profile.diagnosis.diagnosedYear && (
+                    <div className="flex items-center gap-3">
+                      <Calendar className="w-4 h-4 text-green-600" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Diagnosis Date:</span>
+                      <span className="text-base font-semibold text-gray-900 dark:text-white">{String(profile.diagnosis.diagnosedYear)}</span>
+                    </div>
+                  )}
+
+                  {profile.diagnosis.certainty && (
+                    <div className="flex items-center gap-3">
+                      <Target className="w-4 h-4 text-purple-600" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Certainty:</span>
+                      <span className="text-base font-semibold text-gray-900 dark:text-white capitalize">{safeRenderValue(profile.diagnosis.certainty)}</span>
+                    </div>
+                  )}
                   
                   {profile.diagnosis.diagnosisNotes && (
-                    <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-gray-50/50 to-blue-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                      <div className="flex items-start gap-2 mb-1">
-                        <FileText className="w-4 h-4 text-gray-600 mt-0.5" />
-                        <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Notes</span>
-                      </div>
-                      <div className="ml-6">
-                        <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed bg-white/50 dark:bg-slate-800/50 p-3 rounded border">
-                          {String(profile.diagnosis.diagnosisNotes)}
-                        </div>
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-4 h-4 text-gray-600 mt-0.5" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Notes:</span>
+                      <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                        {String(profile.diagnosis.diagnosisNotes)}
                       </div>
                     </div>
                   )}
@@ -633,10 +612,10 @@ const ViewProfilePage = () => {
                   Treatment History
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 p-5">
-                <div className="grid gap-3">
+              <CardContent className="space-y-4 p-5">
+                <div className="space-y-4">
                   {profile.treatments.map((treatment, index) => (
-                    <div key={index} className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-green-50/30 to-emerald-50/30 dark:from-slate-700/30 dark:to-slate-600/30">
+                    <div key={index} className="pb-3 border-b border-gray-200 dark:border-slate-600 last:border-b-0">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Pill className="w-4 h-4 text-green-600 mt-0.5" />
@@ -653,7 +632,7 @@ const ViewProfilePage = () => {
                         )}
                       </div>
                       
-                      <div className="grid grid-cols-1 gap-2 text-xs ml-6">
+                      <div className="space-y-1 text-sm ml-6">
                         {treatment.treatmentType && safeRenderValue(treatment.treatmentType).trim() !== '' && (
                           <div className="flex items-center gap-2">
                             <Tag className="w-3 h-3 text-muted-foreground" />
@@ -672,8 +651,8 @@ const ViewProfilePage = () => {
                       
                       {treatment.treatmentNotes && safeRenderValue(treatment.treatmentNotes).trim() !== '' && (
                         <div className="mt-2 ml-6">
-                          <span className="font-medium text-gray-600 dark:text-gray-300 text-xs">Notes:</span>
-                          <p className="text-gray-700 dark:text-gray-300 mt-1 text-xs leading-relaxed bg-white/50 dark:bg-slate-800/50 p-2 rounded border">{safeRenderValue(treatment.treatmentNotes)}</p>
+                          <span className="font-medium text-gray-600 dark:text-gray-300 text-sm">Notes:</span>
+                          <p className="text-gray-700 dark:text-gray-300 mt-1 text-sm leading-relaxed">{safeRenderValue(treatment.treatmentNotes)}</p>
                         </div>
                       )}
                     </div>
@@ -693,38 +672,25 @@ const ViewProfilePage = () => {
                 Profile Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 p-5">
-              <div className="grid gap-3">
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Clock className="w-4 h-4 text-blue-600" />
-                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Created</span>
-                    </div>
-                    <div className="ml-6">
-                      <span className="text-base font-semibold text-gray-900 dark:text-white">{new Date(profile.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                  <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Clock className="w-4 h-4 text-green-600" />
-                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Last Updated</span>
-                    </div>
-                    <div className="ml-6">
-                      <span className="text-base font-semibold text-gray-900 dark:text-white">{new Date(profile.updatedAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
+            <CardContent className="space-y-4 p-5">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-4 h-4 text-blue-600" />
+                  <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Created:</span>
+                  <span className="text-base font-semibold text-gray-900 dark:text-white">{new Date(profile.createdAt).toLocaleDateString()}</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Clock className="w-4 h-4 text-green-600" />
+                  <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Last Updated:</span>
+                  <span className="text-base font-semibold text-gray-900 dark:text-white">{new Date(profile.updatedAt).toLocaleDateString()}</span>
                 </div>
                 
                 {profile.verificationMethod && (
-                  <div className="border border-gray-200 dark:border-slate-600 rounded-lg p-3 bg-gradient-to-r from-purple-50/50 to-pink-50/50 dark:from-slate-700/50 dark:to-slate-600/50">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Shield className="w-4 h-4 text-purple-600" />
-                      <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Verification Method</span>
-                    </div>
-                    <div className="ml-6">
-                      <span className="text-base font-semibold text-gray-900 dark:text-white capitalize">{String(profile.verificationMethod).replace('_', ' ')}</span>
-                    </div>
+                  <div className="flex items-center gap-3">
+                    <Shield className="w-4 h-4 text-purple-600" />
+                    <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Verification Method:</span>
+                    <span className="text-base font-semibold text-gray-900 dark:text-white capitalize">{String(profile.verificationMethod).replace('_', ' ')}</span>
                   </div>
                 )}
               </div>

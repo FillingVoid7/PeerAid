@@ -74,7 +74,7 @@ const HealthProfileSchema: Schema = new Schema(
     isVerified: { type: Boolean, default: false, index: true },
     verificationMethod: {
       type: String,
-      enum: ["self-declared", "community-validated", "medical_document"],
+      enum: ["self-declared", "community-validated", "medical-document"],
     },
     verificationDate: { type: Date },
 
