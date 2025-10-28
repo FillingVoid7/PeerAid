@@ -4,14 +4,13 @@ services:
     runtime: node
     plan: starter
     region: oregon
-    rootDir: websocket/socket-server
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: cd websocket/socket-server && npm install && npm run build
+    startCommand: cd websocket/socket-server && npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 10000  
+        value: 10000
       - key: MONGODB_URI
         sync: false
       - key: NEXT_PUBLIC_APP_URL
