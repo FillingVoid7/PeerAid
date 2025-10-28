@@ -27,12 +27,10 @@ export default function LoginForm() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Theme Toggle - Top Right Corner */}
       <div className="absolute top-4 right-4 z-20">
         <ModeToggle />
       </div>
 
-      {/* Animated background elements */}
       <div className="absolute inset-0 opacity-30 dark:opacity-20">
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-400 dark:bg-emerald-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
         <div className="absolute top-3/4 right-1/4 w-72 h-72 bg-purple-400 dark:bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse delay-1000"></div>
@@ -43,19 +41,18 @@ export default function LoginForm() {
         <Card className="shadow-2xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl overflow-hidden">
           <CardHeader className="space-y-8 pb-8 pt-12 px-8">
             <div className="text-center">
-              {/* Updated logo to match navigation bar */}
-              <div className="flex items-center justify-center gap-3 mb-6">
-                <div className="relative">
-                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-500 via-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg text-xl transform hover:scale-105 transition-transform duration-300">
+              <div className="flex flex-col items-center justify-center mb-6">
+                <div className="relative mb-4">
+                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-emerald-500 via-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold shadow-lg text-2xl transform hover:scale-105 transition-transform duration-300">
                     PA
                   </div>
                   <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 animate-pulse" />
                 </div>
-                <div className="min-w-0">
-                  <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
+                <div className="text-center">
+                  <span className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
                     Peer-Aid
                   </span>
-                  <div className="text-sm text-muted-foreground -mt-1">
+                  <div className="text-sm text-muted-foreground mt-1">
                     Health Community Platform
                   </div>
                 </div>
@@ -83,7 +80,6 @@ export default function LoginForm() {
                   <ButtonLoading text="Signing in..." />
                 ) : (
                   <div className="flex items-center justify-center space-x-4">
-                    {/* Enhanced Google icon with better styling */}
                     <div className="w-6 h-6 flex items-center justify-center">
                       <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path
@@ -109,7 +105,6 @@ export default function LoginForm() {
                 )}
               </Button>
               
-              {/* Enhanced divider */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-200 dark:border-gray-600"></div>
@@ -123,7 +118,6 @@ export default function LoginForm() {
           </CardContent>
         </Card>
         
-        {/* Subtle floating elements with dark mode support */}
         <div className="absolute -top-4 -right-4 w-8 h-8 bg-emerald-200 dark:bg-emerald-700 rounded-full opacity-60 animate-bounce delay-300"></div>
         <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-cyan-200 dark:bg-cyan-700 rounded-full opacity-60 animate-bounce delay-700"></div>
       </div>
