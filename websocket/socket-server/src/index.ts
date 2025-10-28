@@ -29,7 +29,7 @@ app.use(cors({
 // Socket.IO configuration 
 const io = new SocketIOServer(server, {                                // both http server and socket.io server share the same port
   cors: {
-    origin: [frontendUrl, 'http://localhost:3000', 'https://peer-aid.vercel.app'],
+    origin: [frontendUrl, 'https://peeraid.onrender.com', 'https://peer-aid.vercel.app'],
     methods: ['GET', 'POST'],
     credentials: true
   },
