@@ -4,16 +4,14 @@ services:
     runtime: node
     plan: starter
     region: oregon
+    rootDir: websocket/socket-server
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        fromService:
-          type: web
-          name: peeraid-websocket-server
-          property: port
+        value: 10000  
       - key: MONGODB_URI
         sync: false
       - key: NEXT_PUBLIC_APP_URL
@@ -24,10 +22,6 @@ services:
         sync: false
     healthCheckPath: /health
     autoDeploy: true
-    disk:
-      name: peeraid-websocket-disk
-      mountPath: /opt/render/project/src
-      sizeGB: 1
     scaling:
       minInstances: 1
       maxInstances: 3
