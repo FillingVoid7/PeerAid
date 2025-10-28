@@ -58,12 +58,8 @@ export default function LoginForm() {
                 </div>
               </div>
               
-              <CardTitle className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2 tracking-tight">
-                Welcome Back
-              </CardTitle>
-              <CardDescription className="text-gray-600 dark:text-gray-300 text-base leading-relaxed">
+              <CardDescription className="text-gray-600 dark:text-gray-300 text-base leading-relaxed ">
                 Connect with people sharing common health experiences.<br />
-                Sign in to continue your journey.
               </CardDescription>
             </div>
           </CardHeader>
