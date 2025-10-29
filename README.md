@@ -58,7 +58,6 @@ A Tinder-like matching system that pairs people based on:
 ### Prerequisites
 - Node.js 18+ 
 - MongoDB instance
-- Environment variables (see `.env.example`)
 
 ### Installation
 
