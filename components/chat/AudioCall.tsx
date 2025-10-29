@@ -97,21 +97,18 @@ export const AudioCall: React.FC<AudioCallProps> = ({ className }) => {
     }
   }, [audioCall.callId, currentConversation, setAudioCallState]);
 
-  // Start call timer
   const startCallTimer = useCallback(() => {
     callTimerRef.current = setInterval(() => {
       setCallDuration(prev => prev + 1);
     }, 1000);
   }, []);
 
-  // Format call duration
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Handle answer call
   const handleAnswer = useCallback(async () => {
     try {
       await answerAudioCall(audioCall.callId!);
@@ -123,7 +120,6 @@ export const AudioCall: React.FC<AudioCallProps> = ({ className }) => {
     }
   }, [answerAudioCall, audioCall.callId, initializePeerConnection, setAudioCallState]);
 
-  // Handle reject call
   const handleReject = useCallback(async () => {
     try {
       await rejectAudioCall(audioCall.callId!);
@@ -134,7 +130,6 @@ export const AudioCall: React.FC<AudioCallProps> = ({ className }) => {
     }
   }, [rejectAudioCall, audioCall.callId]);
 
-  // Handle end call
   const handleEnd = useCallback(async () => {
     try {
       await endAudioCall(audioCall.callId!);
@@ -145,7 +140,6 @@ export const AudioCall: React.FC<AudioCallProps> = ({ className }) => {
     }
   }, [endAudioCall, audioCall.callId]);
 
-  // Toggle mute
   const toggleMute = useCallback(() => {
     if (localStreamRef.current) {
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
@@ -156,14 +150,10 @@ export const AudioCall: React.FC<AudioCallProps> = ({ className }) => {
     }
   }, [isMuted]);
 
-  // Toggle speaker
   const toggleSpeaker = useCallback(() => {
     setIsSpeakerOn(!isSpeakerOn);
-    // Note: Speaker control is limited in web browsers
-    // This would primarily be visual feedback
   }, [isSpeakerOn]);
 
-  // Cleanup function
   const cleanup = useCallback(() => {
     if (callTimerRef.current) {
       clearInterval(callTimerRef.current);
@@ -181,7 +171,6 @@ export const AudioCall: React.FC<AudioCallProps> = ({ className }) => {
     }
   }, []);
 
-  // Handle incoming call offer
   const handleIncomingOffer = useCallback(async (offer: RTCSessionDescriptionInit) => {
     if (!peerConnectionRef.current) {
       await initializePeerConnection();
@@ -201,7 +190,6 @@ export const AudioCall: React.FC<AudioCallProps> = ({ className }) => {
     }
   }, [initializePeerConnection, audioCall.callId, currentConversation]);
 
-  // Handle incoming answer
   const handleIncomingAnswer = useCallback(async (answer: RTCSessionDescriptionInit) => {
     if (peerConnectionRef.current) {
       try {
@@ -212,7 +200,6 @@ export const AudioCall: React.FC<AudioCallProps> = ({ className }) => {
     }
   }, []);
 
-  // Handle ICE candidates
   const handleIceCandidate = useCallback((candidate: RTCIceCandidate) => {
     if (peerConnectionRef.current) {
       peerConnectionRef.current.addIceCandidate(candidate).catch(console.error);
@@ -279,7 +266,6 @@ export const AudioCall: React.FC<AudioCallProps> = ({ className }) => {
     }
   }, [remoteOffer, audioCall.isIncoming, audioCall.status, handleIncomingOffer]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return cleanup;
   }, [cleanup]);

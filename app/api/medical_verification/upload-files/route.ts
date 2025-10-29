@@ -100,7 +100,6 @@ export async function POST(req: NextRequest) {
       } catch (uploadError) {
         console.error('Standard PDF upload failed, trying alternative method:', uploadError);
         
-        // Alternative approach: upload as auto resource type
         result = await cloudinary.uploader.upload(
           `data:application/pdf;base64,${base64Data}`,
           {
@@ -126,7 +125,6 @@ export async function POST(req: NextRequest) {
         version: result.version
       });
       
-      // Try multiple URL construction methods
       const urls = {
         direct: result.secure_url,
         manual_raw: cloudinary.url(result.public_id, {
@@ -149,7 +147,6 @@ export async function POST(req: NextRequest) {
       
       console.log('PDF URL options:', urls);
       
-      // Use the direct URL from Cloudinary response
       finalUrl = result.secure_url;
     } else {
       result = await new Promise<UploadApiResponse>((resolve, reject) => {

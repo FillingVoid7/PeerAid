@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
     
     console.log('Rejected endpoint - userId:', userId);
 
-    // Get rejected connections for the user using User IDs
     const rejectedRequests = await ConnectionRequest.find({
       $or: [
         { fromUser: userId, status: 'rejected' },

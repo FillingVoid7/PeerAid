@@ -160,9 +160,6 @@ export default function GuideConnectionsPage() {
     }
   };
 
-  // Removed auto-refresh on visibility change to prevent unnecessary API calls
-  // Data will only refresh when explicitly needed or cache expires
-
   const handleConnectionAction = async (requestId: string, action: 'accept' | 'reject') => {
     setProcessingRequest(requestId);
     

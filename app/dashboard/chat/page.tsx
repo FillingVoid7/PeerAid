@@ -65,7 +65,6 @@ const ChatPageContent = () => {
       
       {/* Chat Layout */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Conversation List - Hidden on mobile when chat is open */}
         <div className={cn(
           "w-full md:w-80 lg:w-96 border-r border-gray-200 dark:border-gray-700",
           isMobileViewOpen ? "hidden md:block" : "block"
@@ -76,7 +75,6 @@ const ChatPageContent = () => {
           />
         </div>
 
-        {/* Chat Interface - Hidden on mobile when no conversation selected */}
         <div className={cn(
           "flex-1",
           !isMobileViewOpen && !currentConversation ? "hidden md:block" : "block"

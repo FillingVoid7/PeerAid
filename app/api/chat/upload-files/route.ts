@@ -61,7 +61,6 @@ export async function POST(req: NextRequest) {
     let finalUrl: string;
     
     if (mediaType === 'image') {
-      // Handle image uploads
       result = await new Promise<UploadApiResponse>((resolve, reject) => {
         const uploadOptions = {
           folder: 'peer-aid-chat-attachments/images',
@@ -94,7 +93,6 @@ export async function POST(req: NextRequest) {
       
       finalUrl = result.secure_url;
     } else {
-      // Handle document and archive uploads (as raw files)
       const base64Data = buffer.toString('base64');
       const mimeType = file.type;
       
@@ -116,7 +114,6 @@ export async function POST(req: NextRequest) {
       } catch (uploadError) {
         console.error(`${mediaType} upload failed:`, uploadError);
         
-        // Alternative approach: upload as auto resource type
         result = await cloudinary.uploader.upload(
           `data:${mimeType};base64,${base64Data}`,
           {
@@ -134,7 +131,6 @@ export async function POST(req: NextRequest) {
       finalUrl = result.secure_url;
     }
 
-    // Generate file metadata
     const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
     const fileName = file.name;
 

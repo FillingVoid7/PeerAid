@@ -226,7 +226,6 @@ export default function MatchingPage() {
       const searchResults = data.results || [];
       setResults(searchResults);
       
-      // Check connection statuses for search results
       const userIds = searchResults.map((profile: any) => 
         profile.userId?._id || profile.userId?.id
       ).filter(Boolean);

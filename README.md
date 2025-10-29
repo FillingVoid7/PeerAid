@@ -1,36 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PeerAid
 
-## Getting Started
+**A Peer-to-Peer Verified Health Experience Platform**
 
-First, run the development server:
+*"Find your health twin. Connect with someone who truly knows what you're going through."*
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🎯 Overview
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+PeerAid connects individuals facing health challenges (**Seekers**) with those who have successfully navigated similar conditions (**Guides**). Built on authenticated experience rather than medical authority, our platform provides structured, empathetic peer support through verified health journeys.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### The Problem We Solve
 
-## Learn More
+Traditional health communities suffer from:
+- **Unverified anecdotes** and misinformation
+- **Noise and irrelevance** - difficulty finding exact symptom/demographic matches
+- **Lack of structure** in conversations and advice
+- **Risk of dangerous non-medical guidance**
 
-To learn more about Next.js, take a look at the following resources:
+### Our Solution
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+A Tinder-like matching system that pairs people based on:
+- ✅ **Verified health experiences** (optional medical document verification)
+- 🎯 **Precise symptom and demographic matching**
+- 📊 **Structured health profiles** with standardized data
+- 💬 **Private, secure communication channels**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🚀 Key Features
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 🔍 Smart Matching Algorithm
+- **Match Score Calculation**: Weighted algorithm considering symptoms, demographics, treatments, and verification status
+- **Role-Based Matching**: Seekers (ongoing conditions) matched with Guides (resolved conditions)
+- **Advanced Filtering**: Age, gender, blood type, location, and condition-specific criteria
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 👤 Structured Health Profiles
+- **Personal Information**: Age, gender, nationality, blood type, contact preferences
+- **Condition Details**: Category, onset timeline, symptom severity and frequency
+- **Treatment History**: Medications, therapies, lifestyle changes with effectiveness ratings
+- **Verification Options**: Self-declared, community-validated, or medical document verification
+
+### 💬 Real-Time Communication
+- **Secure Chat Interface** with typing indicators
+- **Audio Calling** via WebRTC for deeper conversations
+- **Connection Management** with request/accept workflow
+
+### 🏥 Medical Verification System
+- **Document Upload**: Redacted medical records for authenticity
+- **Verification Badges**: Visual trust indicators
+- **Privacy-First**: All personal information secured and encrypted
+
+---
+
+## 🚦 Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- MongoDB instance
+- Environment variables (see `.env.example`)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/FillingVoid7/PeerAid.git
+   cd peer-aid
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env.local
+   # Configure your MongoDB URI, NextAuth secret, Cloudinary credentials, etc.
+   ```
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 🎮 User Journey
+
+### 1. **Onboarding**
+- Choose role: Seeker (ongoing condition) or Guide (resolved condition)
+- Complete structured health profile
+- Optional medical document verification
+
+### 2. **Matching** (For Seekers)
+- Browse potential Guides with match scores
+- Swipe right to send connection requests
+- View detailed compatibility breakdowns
+
+### 3. **Connection**
+- Guides receive and can accept/decline requests
+- Matched users unlock private chat channels
+- Option for voice calls for deeper conversations
+
+### 4. **Support Exchange**
+- Share experiences, treatments, and coping strategies
+- Structured conversation guided by profile data
+- Rate and provide feedback on connections
+
+---
+
+## 🔒 Privacy & Safety
+
+- **No Personal Identifiable Information (PII)** sharing
+- **Encrypted communications** and secure data storage
+- **Mandatory disclaimers**: "This is not medical advice"
+- **Easy reporting tools** for inappropriate content
+
+---
+
+**⚠️ Important Disclaimer**: PeerAid provides peer support based on shared experiences. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult qualified healthcare providers for medical decisions.

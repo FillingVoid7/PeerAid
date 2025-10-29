@@ -165,11 +165,11 @@ const VerifyMedicalProfile: React.FC = () => {
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'verified':
-        return 'default'; // 
+        return 'default'; 
       case 'rejected':
-        return 'destructive'; // Red
+        return 'destructive'; 
       case 'pending':
-        return 'secondary'; // Gray/Yellow
+        return 'secondary'; 
       default:
         return 'outline';
     }

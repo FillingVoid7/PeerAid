@@ -18,7 +18,6 @@ export async function GET(req: NextRequest) {
         const url = new URL(req.url);
         const status = url.searchParams.get('status'); 
                                                                                                                         
-        // Build query
         const query: { 'verificationInfo.verificationStatus'?: string } = {};
         if (status && ['pending', 'verified', 'rejected'].includes(status)) {
             query['verificationInfo.verificationStatus'] = status;
@@ -33,8 +32,8 @@ export async function GET(req: NextRequest) {
                 'updatedAt': 1
             })
             .sort({ 
-                'verificationInfo.verificationStatus': 1, // pending first
-                'createdAt': -1 // newest first
+                'verificationInfo.verificationStatus': 1, 
+                'createdAt': -1 
             })
             .lean();
 

@@ -75,7 +75,6 @@ export default function CreateMedicalProfile() {
     isConsentChecked: false
   });
 
-  // Load draft on component mount
   useEffect(() => {
     const draft = medicalVerificationService.loadDraft();
     if (draft) {
@@ -97,7 +96,6 @@ export default function CreateMedicalProfile() {
     }
   }, []);
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (status === 'loading') return;
     if (!session) {
@@ -105,7 +103,6 @@ export default function CreateMedicalProfile() {
     }
   }, [session, status, router]);
 
-  // Check if profile already exists
   useEffect(() => {
     const checkExistingProfile = async () => {
       if (session?.user?.id) {

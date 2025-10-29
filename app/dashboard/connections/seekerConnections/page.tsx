@@ -125,7 +125,7 @@ export default function SeekerConnectionsPage() {
   };
 
   const lastLoadedAtRef = useRef<number>(0);
-  const REFRESH_TTL_MS = 300000; // 5 minutes cache
+  const REFRESH_TTL_MS = 300000; 
 
   const loadAllConnections = async (force: boolean = false) => {
     if (!force) {
@@ -156,9 +156,6 @@ export default function SeekerConnectionsPage() {
       setLoading(false);
     }
   };
-
-  // Removed auto-refresh on visibility change to prevent unnecessary API calls
-  // Data will only refresh when explicitly needed or cache expires
 
   useEffect(() => {
     if (session?.user?.id) {

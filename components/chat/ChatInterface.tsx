@@ -44,21 +44,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [unreadMessageIds, setUnreadMessageIds] = useState<string[]>([]);
 
-  // Get the other participant (not the current user)
   const otherParticipant = currentConversation ? (
     currentConversation.participants.seeker._id === session?.user?.id
       ? currentConversation.participants.guide
       : currentConversation.participants.seeker
   ) : null;
 
-  // Check if other user is online
   const isOtherUserOnline = currentConversation && onlineUsers.some(
     user => user.conversationId === currentConversation._id && 
              user.userId === otherParticipant?._id && 
              user.isOnline
   );
 
-  // Get typing users for current conversation
   const currentTypingUsers = currentConversation ? typingUsers
     .filter(typing => typing.conversationId === currentConversation._id && typing.isTyping)
     .map(typing => ({
@@ -67,7 +64,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
       isTyping: true
     })) : [];
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollAreaRef.current && messages.length > 0) {
       const scrollElement = scrollAreaRef.current;
@@ -84,7 +80,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ onBack, className 
     }
   }, [messages.length]); 
 
-  // Scroll to bottom when conversation changes
   useEffect(() => {
     if (scrollAreaRef.current && currentConversation) {
       const scrollElement = scrollAreaRef.current;

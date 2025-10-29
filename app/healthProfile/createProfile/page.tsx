@@ -63,7 +63,6 @@ export default function ProfileSetup() {
       return;
     }
 
-    // Check if user already has a profile
     const checkExistingProfile = async () => {
       if (session?.user?.id) {
         try {
@@ -133,13 +132,13 @@ export default function ProfileSetup() {
 
   const validateStep = (stepIndex: number) => {
     switch (stepIndex) {
-      case 0: // Personal Info
+      case 0: 
         return personalInfo.age && personalInfo.gender && personalInfo.bloodType;
-      case 1: // Medical Condition
+      case 1: 
         return medicalCondition.conditionCategory && medicalCondition.onsetYear;
-      case 2: // Symptoms
+      case 2: 
         return symptoms.name_of_symptoms && symptoms.severity;
-      case 3: // Diagnosis & Treatment
+      case 3: 
         return diagnosisTreatment.treatmentType;
       default:
         return true;
