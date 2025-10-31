@@ -259,7 +259,7 @@ export class MatchingService {
     }
     
     if (breakdown.demographicMatch > 60) {
-      explanations.push("Similar background");
+      explanations.push("Similar demographic background background");
     }
     
     if (breakdown.treatmentMatch > 50) {

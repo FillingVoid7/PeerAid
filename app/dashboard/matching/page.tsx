@@ -82,11 +82,7 @@ export default function MatchingPage() {
         acceptedRes.json(),
         rejectedRes.json()
       ]);
-      
-      console.log('Pending API response:', pendingData);
-      console.log('Accepted API response:', acceptedData);
-      console.log('Rejected API response:', rejectedData);
-      
+
       const sentRequestUserIds = new Set<string>();
       const receivedRequestUserIds = new Set<string>();
       
@@ -125,11 +121,9 @@ export default function MatchingPage() {
           
           if (fromUserId && userIds.includes(fromUserId)) {
             acceptedUserIds.add(fromUserId);
-            console.log('Added to acceptedUserIds:', fromUserId);
           }
           if (toUserId && userIds.includes(toUserId)) {
             acceptedUserIds.add(toUserId);
-            console.log('Added to acceptedUserIds:', toUserId);
           }
         });
       }
@@ -148,11 +142,9 @@ export default function MatchingPage() {
           
           if (fromUserId && userIds.includes(fromUserId)) {
             rejectedUserIds.add(fromUserId);
-            console.log('Added to rejectedUserIds:', fromUserId);
           }
           if (toUserId && userIds.includes(toUserId)) {
             rejectedUserIds.add(toUserId);
-            console.log('Added to rejectedUserIds:', toUserId);
           }
         });
       }
@@ -190,9 +182,7 @@ export default function MatchingPage() {
               ? match.guideProfile?.userId?._id 
               : match.seekerProfile?.userId?._id;
           }).filter(Boolean) || [];
-          
-          console.log('User IDs to check status for:', userIds);
-          
+                    
           if (userIds.length > 0) {
             await checkConnectionRequests(userIds);
           }
@@ -505,117 +495,130 @@ export default function MatchingPage() {
                         </div>
                       </CardHeader>
                       
-                      <CardContent className="space-y-2 relative z-10">
+                      <CardContent className="space-y-2 relative z-10 mt-2">
                         {/* Match Breakdown */}
-                        <div className="space-y-3 p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700/50 dark:to-gray-600/50 rounded-lg">
-                          <h4 className="font-semibold text-gray-800 dark:text-gray-200 text-sm flex items-center">
-                            <TrendingUp className="w-4 h-4 mr-2 text-purple-600" />
+                        <div className="space-y-3 p-4 bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-800/50 dark:to-slate-800/50 rounded-lg border border-gray-200 dark:border-gray-600/50 shadow-sm">
+                          <h4 className="font-semibold text-gray-800 dark:text-gray-100 text-sm flex items-center">
+                            <TrendingUp className="w-4 h-4 mr-2 text-purple-600 dark:text-purple-400" />
                             Compatibility Analysis
                           </h4>
-                          <div className="space-y-2">
+                          <div className="space-y-3">
                             <div>
-                              <div className="flex items-center justify-between text-sm mb-1">
-                                <span className="text-gray-700 dark:text-gray-300 font-medium">Condition Match</span>
+                              <div className="flex items-center justify-between text-sm mb-2">
+                                <span className="text-gray-700 dark:text-gray-200 font-medium">Condition Match</span>
                                 <span className="font-bold text-purple-600 dark:text-purple-400">{match.breakdown.conditionMatch}%</span>
                               </div>
-                              <Progress value={match.breakdown.conditionMatch} className="h-2 bg-gray-200 dark:bg-gray-600" />
+                              <Progress value={match.breakdown.conditionMatch} className="h-2.5 bg-gray-200 dark:bg-gray-700" />
                             </div>
                             
                             <div>
-                              <div className="flex items-center justify-between text-sm mb-1">
-                                <span className="text-gray-700 dark:text-gray-300 font-medium">Symptom Match</span>
+                              <div className="flex items-center justify-between text-sm mb-2">
+                                <span className="text-gray-700 dark:text-gray-200 font-medium">Symptom Match</span>
                                 <span className="font-bold text-blue-600 dark:text-blue-400">{match.breakdown.symptomMatch}%</span>
                               </div>
-                              <Progress value={match.breakdown.symptomMatch} className="h-2 bg-gray-200 dark:bg-gray-600" />
+                              <Progress value={match.breakdown.symptomMatch} className="h-2.5 bg-gray-200 dark:bg-gray-700" />
                             </div>
                           </div>
                         </div>
 
-                        {/* Key Information */}
+                        {/* Profile Information */}
+                        <div className="space-y-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30">
                           <h4 className="font-semibold text-gray-800 dark:text-gray-200 text-sm flex items-center">
                             <Users className="w-4 h-4 mr-2 text-blue-600" />
                             Profile Information
                           </h4>
-                          <div className="grid grid-cols-1 gap-3">
-                          {userRole === 'seeker' ? (
-                            <>
-                              {match.guideProfile?.conditionName && (
-                                <div className="flex items-center space-x-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-md border border-red-100 dark:border-red-800/30">
-                                  <Heart className="w-4 h-4 text-red-500 flex-shrink-0" />
-                                  <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">{match.guideProfile.conditionName}</span>
-                                </div>
-                              )}
-                              {match.guideProfile?.location && (
-                                <div className="flex items-center space-x-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-100 dark:border-blue-800/30">
-                                  <MapPin className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                                  <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">{match.guideProfile.location}</span>
-                                </div>
-                              )}
-                              {match.guideProfile?.age && (
-                                <div className="flex items-center space-x-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-100 dark:border-green-800/30">
-                                  <Calendar className="w-4 h-4 text-green-500 flex-shrink-0" />
-                                  <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">{match.guideProfile.age} years old</span>
-                                </div>
-                              )}
-                              {match.guideProfile?.bloodType && (
-                                <div className="flex items-center space-x-2 p-2 bg-pink-50 dark:bg-pink-900/20 rounded-md border border-pink-100 dark:border-pink-800/30">
-                                  <Droplets className="w-4 h-4 text-pink-500 flex-shrink-0" />
-                                  <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">Blood Type: {match.guideProfile.bloodType}</span>
-                                </div>
-                              )}
-                              {match.guideProfile?.verificationMethod && (
-                                <div className="flex items-center space-x-2 p-2 bg-purple-50 dark:bg-purple-900/20 rounded-md border border-purple-100 dark:border-purple-800/30">
-                                  <Shield className="w-4 h-4 text-purple-500 flex-shrink-0" />
-                                  <span className="text-gray-800 dark:text-gray-200 font-medium text-sm capitalize">{match.guideProfile.verificationMethod}</span>
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              {(match as any).seekerProfile?.conditionName && (
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                  <Heart className="w-4 h-4 text-red-500" />
-                                  <span>{(match as any).seekerProfile.conditionName}</span>
-                                </div>
-                              )}
-                              {(match as any).seekerProfile?.location && (
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                  <MapPin className="w-4 h-4 text-blue-500" />
-                                  <span>{(match as any).seekerProfile.location}</span>
-                                </div>
-                              )}
-                              {(match as any).seekerProfile?.age && (
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                  <Calendar className="w-4 h-4 text-green-500" />
-                                  <span>{(match as any).seekerProfile.age} years old</span>
-                                </div>
-                              )}
-                              {(match as any).seekerProfile?.bloodType && (
-                                <div className="flex items-center space-x-2 text-gray-600">
-                                  <Droplets className="w-4 h-4 text-red-600" />
-                                  <span>Blood Type: {(match as any).seekerProfile.bloodType}</span>
-                                </div>
-                              )}
-                            </>
-                          )}
-                          {match.sharedSymptoms && match.sharedSymptoms.length > 0 && (
-                            <div className="flex items-start space-x-2 text-gray-600">
-                              <TrendingUp className="w-4 h-4 text-green-500 mt-0.5" />
-                              <div>
-                                <span className="font-medium">Shared Symptoms:</span>
-                                <div className="text-xs mt-1">
-                                  {match.sharedSymptoms.slice(0, 2).join(", ")}
-                                  {match.sharedSymptoms.length > 2 && ` +${match.sharedSymptoms.length - 2} more`}
+                          <div className="space-y-2">
+                            {userRole === 'seeker' ? (
+                              <>
+                                {match.guideProfile?.conditionName && (
+                                  <div className="flex items-center space-x-2">
+                                    <Heart className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                    <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">{match.guideProfile.conditionName}</span>
+                                  </div>
+                                )}
+                                {match.guideProfile?.location && (
+                                  <div className="flex items-center space-x-2">
+                                    <MapPin className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                    <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">{match.guideProfile.location}</span>
+                                  </div>
+                                )}
+                                {match.guideProfile?.age && (
+                                  <div className="flex items-center space-x-2">
+                                    <Calendar className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                    <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">{match.guideProfile.age} years old</span>
+                                  </div>
+                                )}
+                                {match.guideProfile?.bloodType && (
+                                  <div className="flex items-center space-x-2">
+                                    <Droplets className="w-4 h-4 text-pink-500 flex-shrink-0" />
+                                    <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">Blood Type: {match.guideProfile.bloodType}</span>
+                                  </div>
+                                )}
+                                {match.guideProfile?.verificationMethod && (
+                                  <div className="flex items-center space-x-2">
+                                    <Shield className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                                    <span className="text-gray-800 dark:text-gray-200 font-medium text-sm capitalize">{match.guideProfile.verificationMethod}</span>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                {(match as any).seekerProfile?.conditionName && (
+                                  <div className="flex items-center space-x-2">
+                                    <Heart className="w-4 h-4 text-red-500" />
+                                    <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">{(match as any).seekerProfile.conditionName}</span>
+                                  </div>
+                                )}
+                                {(match as any).seekerProfile?.location && (
+                                  <div className="flex items-center space-x-2">
+                                    <MapPin className="w-4 h-4 text-blue-500" />
+                                    <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">{(match as any).seekerProfile.location}</span>
+                                  </div>
+                                )}
+                                {(match as any).seekerProfile?.age && (
+                                  <div className="flex items-center space-x-2">
+                                    <Calendar className="w-4 h-4 text-green-500" />
+                                    <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">{(match as any).seekerProfile.age} years old</span>
+                                  </div>
+                                )}
+                                {(match as any).seekerProfile?.bloodType && (
+                                  <div className="flex items-center space-x-2">
+                                    <Droplets className="w-4 h-4 text-red-600" />
+                                    <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">Blood Type: {(match as any).seekerProfile.bloodType}</span>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            {match.sharedSymptoms && match.sharedSymptoms.length > 0 && (
+                              <div className="flex items-start space-x-2">
+                                <TrendingUp className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">Shared Symptoms:</span>
+                                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                    {match.sharedSymptoms.slice(0, 2).join(", ")}
+                                    {match.sharedSymptoms.length > 2 && ` +${match.sharedSymptoms.length - 2} more`}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
 
                         {/* Match Explanation */}
                         {match.explanation && (
-                          <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-3 rounded-lg">
-                            <p className="text-sm text-gray-700 font-medium">{match.explanation}</p>
+                          <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 p-3 rounded-lg border border-purple-100 dark:border-purple-800/30">
+                            {match.explanation.includes('•') ? (
+                              <ul className="space-y-1">
+                                {match.explanation.split(' • ').map((point, index) => (
+                                  <li key={index} className="text-sm text-gray-700 dark:text-gray-300 font-medium flex items-start">
+                                    <span className="text-purple-600 dark:text-purple-400 mr-2 mt-0.5">•</span>
+                                    <span>{point.trim()}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">{match.explanation}</p>
+                            )}
                           </div>
                         )}
 
@@ -625,7 +628,7 @@ export default function MatchingPage() {
                             onClick={() => loadGuideDetails(profileId)}
                             variant="outline"
                             size="sm"
-                            className="flex-1 hover:bg-purple-50 hover:border-purple-300"
+                            className="flex-1 hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-900/20 dark:hover:border-purple-600 dark:hover:text-purple-100"
                           >
                             <MessageCircle className="w-4 h-4 mr-2" />
                             View Details
