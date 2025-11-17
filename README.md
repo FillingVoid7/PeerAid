@@ -2,6 +2,24 @@
 
 **A Peer-to-Peer Verified Health Experience Platform**
 
+## Docker Image
+
+You can pull the Docker image directly from Docker Hub:
+
+```bash
+docker pull bhwn7/peer-aid:latest
+```
+
+Docker Hub repository: https://hub.docker.com/repository/docker/bhwn7/peer-aid/general
+
+Run the image locally (example):
+
+```bash
+# run detached and map port 3000 (adjust port and env as needed)
+docker run -d -p 3000:3000 --name peer-aid bhwn7/peer-aid:latest
+```
+
+
 *"Find your health twin. Connect with someone who truly knows what you're going through."*
 
 ---
