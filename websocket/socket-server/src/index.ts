@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import {User} from '../models/User.js';
 import { Conversation } from '../models/chatConversation.js';
 import { Message } from '../models/message.js';
+import { connectDB } from '../../../lib/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,10 +39,6 @@ const io = new SocketIOServer(server, {                                // both h
   pingInterval: 25000
 });
 
-const MONGODB_URI = process.env.MONGODB_URI;
-if (!MONGODB_URI) {
-  process.exit(1);
-}
 const mongooseOptions = {
   bufferCommands: false,
   maxPoolSize: 10,
@@ -51,15 +48,6 @@ const mongooseOptions = {
   family: 4
 };
 
-mongoose.connect(MONGODB_URI, mongooseOptions)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    console.log('User model registered:', User.modelName);
-  })
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);
-  });
 
 // Store active connections and conversation rooms
 const userSocketMap = new Map<string, string>();
@@ -687,7 +675,16 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 
 const PORT = process.env.SOCKET_PORT || process.env.PORT || 3001;
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
+  try {
+    await connectDB();
+    console.log('Connected to MongoDB');
+    console.log('User model registered:', User.modelName);
+  } catch (err) {
+    console.error('MongoDB connection error during startup:', err);
+    process.exit(1);
+  }
+
   console.log(`🚀 PeerAid WebSocket Server running on port ${PORT}`);
   console.log(`🌐 Frontend URL: ${frontendUrl}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);
