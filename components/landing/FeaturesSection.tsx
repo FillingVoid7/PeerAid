@@ -1,7 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { 
   Users, 
   Shield, 
@@ -16,145 +14,93 @@ import {
   Zap,
   Award
 } from "lucide-react";
+import React from "react";
 
 export default function FeaturesSection() {
   const mainFeatures = [
     {
       icon: <UserCheck className="w-6 h-6" />,
       title: "Verified Health Journeys",
-      description: "Every guide is verified to ensure authentic health experiences and credible advice.",
-      gradient: "from-emerald-500 to-cyan-600",
+      description: "Every guide on our platform goes through a strict verification process. We ensure their health journeys are authentic, providing you with credible advice and genuine empathy from someone who has truly been there.",
       benefits: ["Medical documentation", "Community validation", "Authentic experiences"]
     },
     {
       icon: <Brain className="w-6 h-6" />,
       title: "Precision Matching", 
-      description: "Advanced matching based on symptoms, treatments, and health journey similarities.",
-      gradient: "from-violet-500 to-purple-600",
+      description: "Finding the right person to talk to shouldn't be a guessing game. Our advanced algorithm matches you based on granular details like specific symptoms, treatment paths, and timeline similarities.",
       benefits: ["85% condition similarity", "75% symptom overlap", "70% treatment effectiveness"]
     },
     {
       icon: <Shield className="w-6 h-6" />,
       title: "Complete Privacy Control",
-      description: "Encrypted messaging with full anonymity controls and identity protection.",
-      gradient: "from-rose-500 to-pink-600",
+      description: "Your health information is sensitive. That's why we built our platform with privacy-first architecture, allowing you to share as much or as little as you want securely.",
       benefits: ["End-to-end encryption", "Random usernames", "You control visibility"]
     }
   ];
 
-  const additionalFeatures = [
-    {
-      icon: <MessageCircle className="w-6 h-6" />,
-      title: "Structured Health Profiles",
-      description: "Organized profiles with symptom tracking for better matching.",
-      color: "text-emerald-600"
-    },
-    {
-      icon: <Clock className="w-6 h-6" />,
-      title: "Audio Support Calls",
-      description: "Secure audio calls for deeper peer connections.",
-      color: "text-cyan-600"
-    },
-    {
-      icon: <Lock className="w-6 h-6" />,
-      title: "Identity Protection",
-      description: "Random usernames with optional profile visibility.",
-      color: "text-violet-600"
-    },
-    {
-      icon: <Smartphone className="w-6 h-6" />,
-      title: "Multiple Verification",
-      description: "Medical documentation and community validation.",
-      color: "text-rose-600"
-    },
-    {
-      icon: <Globe className="w-6 h-6" />,
-      title: "Community Moderation",
-      description: "AI filtering with 24/7 human moderation.",
-      color: "text-orange-600"
-    },
-    {
-      icon: <Zap className="w-6 h-6" />,
-      title: "Instant Matching",
-      description: "Get matched within minutes of profile completion.",
-      color: "text-blue-600"
-    }
-  ];
-
-
   return (
-    <section id="features" className="py-2 bg-gradient-to-br from-muted/30 via-background to-muted/20">
+    <section id="features" className="py-2 bg-background">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 rounded-full border bg-background/70 backdrop-blur-sm px-4 py-2 text-sm shadow-sm mb-6">
-            <Zap className="w-4 h-4 text-emerald-500" />
-            <span className="text-emerald-700 dark:text-emerald-300 font-medium">Powerful Features</span>
+        <div className="text-center max-w-3xl mx-auto mb-20">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 font-medium shadow-sm mb-8">
+            <Zap className="w-4 h-4" />
+            Powerful Features
           </div>
-          
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-6">
-            <span className="block">Everything you need for</span>
-            <span className="bg-gradient-to-r from-emerald-600 via-cyan-600 to-violet-600 bg-clip-text text-transparent">
-              meaningful peer support
-            </span>
-          </h2>
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            We've designed PeerAId to prioritize safety, relevance, and privacy.
+          </p>
         </div>
 
-        {/* Main Features */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
+        {/* Vertical Features Layout */}
+        <div className="space-y-32">
           {mainFeatures.map((feature, index) => (
-            <Card key={index} className="border-0 bg-card/50 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300 group overflow-hidden relative">
-              {/* Background gradient */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
-              
-              <CardHeader className="relative">
-                <div className={`inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-br ${feature.gradient} text-white shadow-lg mb-6 group-hover:scale-105 transition-transform duration-200`}>
-                  {feature.icon}
-                  <span className="font-bold text-lg">{feature.title}</span>
+            <div key={index} className={`flex flex-col lg:flex-row gap-12 lg:gap-24 items-center ${index % 2 !== 0 ? 'lg:flex-row-reverse' : ''}`}>
+              {/* Text Content */}
+              <div className="flex-1 space-y-8">
+                <div className="space-y-4">
+                  <h3 className="text-3xl sm:text-4xl font-bold text-foreground">{feature.title}</h3>
+                  <p className="text-lg text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
                 </div>
-              </CardHeader>
-              
-              <CardContent className="relative">
-                <p className="text-muted-foreground mb-6 leading-relaxed text-base">
-                  {feature.description}
-                </p>
-                
-                <div className="space-y-2">
+
+                <ul className="space-y-4 pt-4">
                   {feature.benefits.map((benefit, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      <span className="text-muted-foreground">{benefit}</span>
-                    </div>
+                    <li key={idx} className="flex items-center gap-4 text-foreground font-medium">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      </div>
+                      <span className="text-base sm:text-lg">{benefit}</span>
+                    </li>
                   ))}
+                </ul>
+              </div>
+
+              {/* Visual Graphic Area */}
+              <div className="flex-1 w-full max-w-xl lg:max-w-none flex items-center justify-center">
+                <div className="relative group">
+                  {/* Subtle background glow for the icon */}
+                  <div className="absolute inset-0 bg-emerald-500/20 blur-[100px] rounded-full group-hover:bg-emerald-500/30 transition-colors duration-500" />
+                  
+                  <div className="relative z-10 text-emerald-500 dark:text-emerald-400 drop-shadow-lg group-hover:scale-105 group-hover:-translate-y-2 transition-all duration-500">
+                    {React.cloneElement(feature.icon as any, { className: 'w-40 h-40 sm:w-40 sm:h-40' })}
+                  </div>
+                  
+                  {/* Small floating elements */}
+                  <div className="absolute -top-6 -right-6 w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center rotate-12 group-hover:rotate-6 transition-all duration-500">
+                    <Zap className="w-6 h-6" />
+                  </div>
+                  <div className="absolute -bottom-8 -left-4 w-16 h-16 bg-emerald-500/5 rounded-2xl flex items-center justify-center -rotate-6 group-hover:-rotate-12 transition-all duration-500">
+                    <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+
+            </div>
           ))}
         </div>
 
-
-        {/* Additional Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {additionalFeatures.map((feature, index) => (
-            <Card key={index} className="border-0 bg-background/40 backdrop-blur-sm hover:bg-background/60 transition-all duration-200 group">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className={`p-3 rounded-xl bg-gradient-to-br from-current/10 to-current/5 ${feature.color} group-hover:scale-110 transition-transform`}>
-                    {feature.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold mb-2 group-hover:text-emerald-600 transition-colors">
-                      {feature.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
       </div>
     </section>
   );

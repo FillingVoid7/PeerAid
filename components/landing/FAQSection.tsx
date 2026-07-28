@@ -76,13 +76,6 @@ export default function FAQSection() {
             <span className="text-emerald-700 dark:text-emerald-300 font-medium">Got Questions?</span>
           </div>
           
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-6">
-            <span className="block">Frequently Asked</span>
-            <span className="bg-gradient-to-r from-emerald-600 via-cyan-600 to-violet-600 bg-clip-text text-transparent">
-              Questions
-            </span>
-          </h2>
-          
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Find answers to common questions about Peer-Aid.
           </p>

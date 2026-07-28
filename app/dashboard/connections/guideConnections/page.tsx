@@ -130,7 +130,7 @@ export default function GuideConnectionsPage() {
 
   const lastLoadedAtRef = useRef<number>(0);
   const REFRESH_TTL_MS = 300000; 
-
+ 
   const loadAllConnections = async (force: boolean = false) => {
     if (!force) {
       const now = Date.now();
