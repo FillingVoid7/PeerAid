@@ -4,6 +4,10 @@ import {faker} from '@faker-js/faker';
 import User from "@/models/User";
 import connectDB from "@/lib/db";
 
+process.env.NEXTAUTH_URL =
+  process.env.NEXTAUTH_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
 interface ExtendedUser {
   dbId?: string;
   alias?: string;

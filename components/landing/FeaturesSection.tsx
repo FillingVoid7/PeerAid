@@ -48,7 +48,7 @@ export default function FeaturesSection() {
             Powerful Features
           </div>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            We've designed PeerAId to prioritize safety, relevance, and privacy.
+            We&apos;ve designed PeerAId to prioritize safety, relevance, and privacy.
           </p>
         </div>
 

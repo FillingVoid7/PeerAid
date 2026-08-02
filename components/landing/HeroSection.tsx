@@ -128,7 +128,7 @@ export default function HeroSection() {
                 Find Your <span className="text-emerald-600 dark:text-emerald-400">Health Twin</span>
               </h1>
               <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Connect with verified individuals who have overcome the exact health challenges you're facing. Real people, real experiences.
+                Connect with verified individuals who have overcome the exact health challenges you&apos;re facing. Real people, real experiences.
               </p>
             </div>
 
